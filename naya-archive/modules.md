@@ -65,6 +65,14 @@ telemetry. de/100b A/B are dock-side, not module-intrinsic: same Track module re
 A=0x37 on left vs 0x63 on right. True battery source TBD — needs interposer capture of
 NayaFlow's battery read (candidates: de/100b, fe/1006).
 
+### Power architecture (user-confirmed 2026-09-15)
+Off-USB, the halves are powered BY the docked modules over pogo (VBUS both ways:
+USB→base→module when plugged, module→base when unplugged). The 50mAh base cells are
+hot-swap buffers (keep the half alive while swapping modules), not the runtime source.
+Consequence for discharge tests: unplugged+docked drains the big module packs slowly;
+to sag the base cells, UNDOCK the modules overnight. Also reframes de/1008[7]:
+base↔module charge current fits the bidirectional power path.
+
 ### Screenshot ground truth (2026-09-15, tooltips + header)
 - Left = Lilac Badger, HWID 387976F73EFE5420 (= USB serial ✓), FW 0.3.41.0,
   internal batt 4091mV; module Touch FW 0.2.3.3 ✓ (= de/1008 VER), batt 100%, 4222mV.
