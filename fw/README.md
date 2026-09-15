@@ -49,4 +49,5 @@ Notes:
 - [x] metadata of all 25 upstream releases → `releases-metadata.json` (local)
 - [x] v1.25.1 full assets, v0.1.1/v1.3.11/v1.6.10/v1.11.11/v1.15.1/v1.21.0
       (arm64-mac zips) downloaded locally
-- [ ] re-uploaded as releases in this fork (in progress)
+- [x] re-uploaded as releases in this fork: v1.25.1 (full, 13 assets),
+      v0.1.1 / v1.3.11 / v1.6.10 / v1.11.11 / v1.15.1 / v1.21.0 (arm64-mac zips)
