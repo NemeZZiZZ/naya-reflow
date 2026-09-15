@@ -154,9 +154,30 @@ Full frames: `naya-archive/aux-left.txt`, `aux-right.txt`.
 | 30/100d | 136×4B LED map (below) | n/a | LED MAP |
 
 ### 30/100d LED MAP (decoded fully, `dumps/left-ledmap-*.json`)
-- Multipart (MORE/LAYER header like keymap), 544B/layer = **136 × [KK, 0x26, 0x00, 0x64]**.
-- KK = 0x00..0x87 sequential. Suffix constant: 0x26=38 (?), 0x00, 0x64=100 (brightness?).
-- IDENTICAL across L0/L1/L2 → layer-independent. 136 LEDs ≫ 74 keys (matrix + underglow?).
+- Multipart (MORE/LAYER header like keymap), 544B/layer = **136 × [KK, B1, B2, B3]**.
+- KK = 0x00..0x87 sequential. Factory default entry = `[KK, 0x26, 0x00, 0x64]`.
+- IDENTICAL across L0/L1/L2 at factory → layer-independent container, but color edits
+  land PER-LAYER (red flash on L0 changed L0 only).
+- **PROVEN: this is the per-key COLOR store** (red-flash experiment 2026-09-15):
+  NayaFlow color flash changed ONLY ledmap L0 entry KK=0x30 (Z key):
+  `[30,26,00,64]` → `[30,00,00,46]`. 100b and keymap untouched by color flash
+  (keymap diff vs factory-restored = exactly the 3 known customs F24+probe3, +8B).
+- So: B1/B3 encode the color, B2=0x00 so far. red = (B1=0x00, B3=0x46).
+  Encoding TBD — needs green/blue data points.
+- **DECIDED 2026-09-15 (RGBW experiment, single flash, L0):**
+  Z/red `(00,00,46)`, X/green `(78,00,46)`, C/blue `(F0,00,64)`, V/white `(00,00,00)`.
+  B1 = 0/120/240/0 = **HSV Hue in degrees** (exact match for R/G/B).
+  B3 = almost certainly **Saturation**: white S=0 ✓; presets at S=70/70/100.
+  No Value component → brightness is global (LED_BRIGHTNESS_* commands).
+- **CLOSED 2026-09-15 (4-color flash, L0):** B=#FF00FF, N=#00FFFF, M=purple, comma=teal →
+  KK34 `(2c,01,64)`, KK37 `(b4,00,64)`, KK38 `(0a,01,46)`, KK39 `(ab,00,64)`.
+  N=cyan H180=0xb4 ✓ (KK37); comma=teal H171=0xab ✓ (KK39);
+  B=magenta H300 → B1=44=300−256 with B2=01; M=purple H266 → B1=10 with B2=01.
+  **Entry = [KK, Hue_lo, Hue_hi, Sat]: H = (B2<<8)|B1 (9-bit hue, degrees),
+  S = B3.** Full table: red H0/S70, green H120/S70, blue H240/S100,
+  white H0/S0, magenta H300/S100, cyan H180/S100, purple H266/S70, teal H171/S100.
+  Factory default `(26,00,64)` = H38/S100 warm amber, same scheme. B2 = hue high bit.
+  OPEN: color WRITE command (stock flash writes it somehow — capture via interposer).
 - Client: `left ledmap [layer|all]`.
 
 ### 30/100b per-layer table (dumps/left-100b-*.json, semantics TBD)
@@ -167,6 +188,9 @@ Full frames: `naya-archive/aux-left.txt`, `aux-right.txt`.
 - Hypothesis: per-key colors (L0/L2 = defaults). 7B entries carry own HID codes
   (29,2b,4b,4e,50,4f) differing from keymap L1 → NOT a keymap echo. Resolve empirically
   (set key color in NayaFlow → diff 100b).
+- **REFUTED 2026-09-15: red-flash left 100b byte-identical on all 3 layers.**
+  100b is NOT the color store — the color lives in 30/100d (LED MAP). 100b semantics
+  still open (L1-only content, HID-like codes).
 - Client: `left dump100b`. NOTE: no 100b WRITE observed yet (stock flash used only 30/1004).
 
 ### Commit-token correction (supersedes stale-replay theory in part)
