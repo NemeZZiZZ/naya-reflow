@@ -34,13 +34,38 @@ and are flashed into modules **via MCUBoot through the base**
 (JSON keys), device kind `ModDock` (the dock itself is a device), `MODULE_BAT_RECOVERY`
 (factory battery recovery, strict 1-byte param), `FORCE_TOUCH/TRACK/TUNE_START` (factory test).
 
-## CDC module commands (aux-left.txt, left half; TBD live)
-| Cmd | Payload | Guess |
-|---|---|---|
-| de/1001 | `00 01 20 30` (left) / `00 01 11 01` (right) | module presence/type, static per half |
-| de/1008 | `00 20 00 00 02 03 03 3a` (left-only) | module info, static |
-| de/100b | 5B live, varies | live module status (battery?) |
-| fe/1006 | 4B live, varies | live status word |
+## CDC module commands — DECODED dock matrix (2026-09-15, live seat/remove/swap)
+Dumps: dumps/aux-{left,right}-{track,touch}-{seated,REMOVED}.txt. Setup ended swapped
+(Touch=left, Track=right). Module FW 0.2.3.3 both, base FW 0.3.41.0 (user-confirmed).
 
-## Next: dock/undock diff experiment (needs hands)
-Seat/remove Track/Touch → diff de/1001+de/1008+de/100b per half → type IDs + live fields.
+### de/1001 = [00, PRESENT, TYPE|HALF, X] — dock presence + module type
+| Setup | Payload | Read |
+|---|---|---|
+| L+Track | `00 01 20 30` | present, type 0x20, X 0x30 |
+| L+Touch | `00 01 10 00` | present, type 0x10, X 0x00 |
+| L+empty | `00 00 f0 e1` | absent (rest garbage) |
+| R+Touch | `00 01 11 01` | present, type 0x10\|1, X 0x00\|1 |
+| R+Track | `00 01 21 31` | present, type 0x20\|1, X 0x30\|1 |
+| R+empty | `00 00 f1 e0` | absent (rest garbage) |
+TYPE: Touch=0x10, Track=0x20, bit0 = half (0=left, 1=right). X: Track=0x30, Touch=0x00
+(+halfbit) — semantics open (battery? mode? NOT profile-enable: Touch-on-left is
+layout-disabled yet X=0x00 same as enabled Touch-on-right).
+
+### de/1008 (left-only) = left dock info: [00, TYPE, FLAG, 00, VER[3], BATT?]
+| Setup | Payload |
+|---|---|
+| L+Track | `00 20 00 00 02 03 03 3a` |
+| L+Touch | `00 10 00 00 02 03 03 0a` |
+| L+empty | `00 f0 01 00 00 00 00 e9` |
+VER = 02 03 03 = module FW 0.2.3.3 ✓ (zeroed when empty). Last byte 0x3a/0x0a/0xe9 —
+battery% candidate (Track 58 / Touch 10 / garbage) — AWAITING NayaFlow battery cross-check.
+
+### de/100b (5B live) — half-asymmetric
+Right: byte1 = presence (0x10 seated / 0x00 removed). Left: byte1 stays 0x10 with empty
+dock (left FW differs — merge host; maybe dock power, not presence). Bytes 2-4 drift
+every poll (battery ADC? temp?). Open.
+
+### Layout-side discovery (user-observed)
+Module enablement is per-half in the keymap profile: after re-seating, module showed
+DISABLED in NayaFlow layout until profile re-flashed. Touch works on right (its enabled
+half), shows only indication LED on left (disabled half) — hardware healthy both sides.
