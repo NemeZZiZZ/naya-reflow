@@ -58,7 +58,12 @@ layout-disabled yet X=0x00 same as enabled Touch-on-right).
 | L+Touch | `00 10 00 00 02 03 03 0a` |
 | L+empty | `00 f0 01 00 00 00 00 e9` |
 VER = 02 03 03 = module FW 0.2.3.3 ✓ (zeroed when empty). Last byte 0x3a/0x0a/0xe9 —
-battery% candidate (Track 58 / Touch 10 / garbage) — AWAITING NayaFlow battery cross-check.
+battery% candidate REFUTED 2026-09-15: NayaFlow shows Touch=100 / Track=97 at the same
+moment (dumps aux-left-touch-seated / aux-right-track-seated). New best candidate:
+charge current in mA at near-full (Track 58mA / Touch 10mA trickle — plausible) or dock
+telemetry. de/100b A/B are dock-side, not module-intrinsic: same Track module reads
+A=0x37 on left vs 0x63 on right. True battery source TBD — needs interposer capture of
+NayaFlow's battery read (candidates: de/100b, fe/1006).
 
 ### de/100b (5B live) — half-asymmetric
 Right: byte1 = presence (0x10 seated / 0x00 removed). Left: byte1 stays 0x10 with empty
