@@ -51,19 +51,24 @@ TYPE: Touch=0x10, Track=0x20, bit0 = half (0=left, 1=right). X: Track=0x30, Touc
 (+halfbit) — semantics open (battery? mode? NOT profile-enable: Touch-on-left is
 layout-disabled yet X=0x00 same as enabled Touch-on-right).
 
-### de/1008 (left-only) = left dock info: [00, TYPE, FLAG, 00, VER[3], BATT?]
-| Setup | Payload |
-|---|---|
-| L+Track | `00 20 00 00 02 03 03 3a` |
-| L+Touch | `00 10 00 00 02 03 03 0a` |
-| L+empty | `00 f0 01 00 00 00 00 e9` |
-VER = 02 03 03 = module FW 0.2.3.3 ✓ (zeroed when empty). Last byte 0x3a/0x0a/0xe9 —
-battery% candidate REFUTED 2026-09-15: NayaFlow shows Touch=100 / Track=97 at the same
-moment (dumps aux-left-touch-seated / aux-right-track-seated). New best candidate:
-charge current in mA at near-full (Track 58mA / Touch 10mA trickle — plausible) or dock
-telemetry. de/100b A/B are dock-side, not module-intrinsic: same Track module reads
-A=0x37 on left vs 0x63 on right. True battery source TBD — needs interposer capture of
-NayaFlow's battery read (candidates: de/100b, fe/1006).
+### de/1008 (left-only) = left dock info: 7B [00, TYPE, FLAG, 00, VER0, VER1, VER2]
+(LEN=09 → 2+7; the frame's last byte is CRC, NOT an 8th payload byte.)
+| Setup | Payload | CRC |
+|---|---|---|
+| L+Track | `00 20 00 00 02 03 03` | 0x3a |
+| L+Touch | `00 10 00 00 02 03 03` | 0x0a |
+| L+empty | `00 f0 01 00 00 00 00` | 0xe9 |
+VER = 02 03 03 = module FW 0.2.3.3 ✓ (zeroed when empty). The old 'battery byte'
+theory is dead BY FRAMING (killed 2026-09-16): those values were CRCs all along.
+Live dock 2026-09-16 re-confirmed: L+Touch presence=01/TYPE=0x10/VER=02 03 03,
+R+Track presence=01/TYPE=0x21/X=0x31; R fe/1006 = 4094mV, L fe/1006 = 4093mV.
+de/100b A-byte still the lead battery/current candidate (L+Touch A=0x64=100 @100%,
+R+Track A=0x5d=93; dock-side: same Track read 0x37 left vs 0x63 right earlier) —
+true source TBD via interposer capture of NayaFlow's battery read.
+UPDATE 2026-09-16 docked re-poll: L A=100→105, R A=93→96 within ~10 min; A EXCEEDS 100
+(105) → definitively NOT percent. Base mV drifted simultaneously (L 4093→4081,
+R 4094→4108, USB plugged/charger hunting). Dumps: aux-{left,right}-docked-20260916-*.txt.
+A = drifting dock-side telemetry (charge current? temp?) — needs controlled experiment.
 
 ### Power architecture (user-confirmed 2026-09-15)
 Off-USB, the halves are powered BY the docked modules over pogo (VBUS both ways:
