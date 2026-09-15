@@ -65,6 +65,19 @@ telemetry. de/100b A/B are dock-side, not module-intrinsic: same Track module re
 A=0x37 on left vs 0x63 on right. True battery source TBD — needs interposer capture of
 NayaFlow's battery read (candidates: de/100b, fe/1006).
 
+### Screenshot ground truth (2026-09-15, tooltips + header)
+- Left = Lilac Badger, HWID 387976F73EFE5420 (= USB serial ✓), FW 0.3.41.0,
+  internal batt 4091mV; module Touch FW 0.2.3.3 ✓ (= de/1008 VER), batt 100%, 4222mV.
+- Right = Focused Seal, HWID 97BEE34FA0A74D9C (= USB serial ✓), FW 0.3.41.0,
+  internal batt 4098mV; module Track FW 0.2.3.3 ✓, batt 100% (was 97 earlier — charged),
+  4203mV. Header tiles lag tooltips (98 vs 100 seen).
+- Base voltage candidate: fe/1006 bytes[1..2] big-endian mV — dumps read 4088 (left) /
+  4087 (right), screenshots 4091/4098 later — drift direction consistent with USB charging.
+- Module %/mV source STILL OPEN: de/100b A = 100 (Touch, 100%) / 99 (Track, 100%) is
+  tantalizing but contradicted by earlier left+Track A=55 (likely dock-settle transient
+  right after seating — cf. re-seat DISABLED episode). B = 111/104 for 4222/4203mV,
+  no clean mapping. Definitive answer needs interposer capture of NayaFlow's tooltip read.
+
 ### de/100b (5B live) — half-asymmetric
 Right: byte1 = presence (0x10 seated / 0x00 removed). Left: byte1 stays 0x10 with empty
 dock (left FW differs — merge host; maybe dock power, not presence). Bytes 2-4 drift
