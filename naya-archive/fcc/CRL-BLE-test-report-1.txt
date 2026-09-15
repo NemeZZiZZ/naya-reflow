@@ -1,0 +1,1825 @@
+Report No.: BTL-FCCP-1-2506C291 
+Report Version: R01 
+Page 1 of 79 
+FCC Radio Test Report 
+FCC ID: 2BQ4V0825CRL
+This report concerns: Original Grant 
+Project No. : 2506C291 
+Equipment : Ergonomic detachable wireless mechanical keyboard 
+Brand Name : NAYA TECH, Naya Create 
+Model Name : NAYA-800-1(NAYA-CREATE) 
+Applicant : Naya B.V. 
+Address : Wasaweg 3 
+Groningen, 9723JD, NL 
+Manufacturer : Dongguan Boen Intelligent Technology Co., Ltd. 
+Address : 2nd Floor & 3rd floor, Building A, No.23.Shiyang Street, Dongcheng 
+Street, Dongguan City, Guangdong Province, China 
+Factory : Dongguan Boen Intelligent Technology Co., Ltd. 
+Address : 2nd Floor & 3rd floor, Building A, No.23.Shiyang Street, Dongcheng 
+Street, Dongguan City, Guangdong Province, China 
+Date of Receipt : Jun. 20, 2025 
+Date of Test : Jun. 26, 2025 ~ Jul. 22, 2025 
+Issued Date : Aug. 27, 2025 
+Test Sample : Engineering Sample No.: DG20250620550-9 for average output power, 
+DG20250620550-2 for other conducted, DG20250620559-5 for others. 
+Standard(s) : FCC CFR Title 47, Part 15, Subpart C 
+The abov
+e equipment has been tested and found compliance with the requirement of the 
+relative standards by BTL Inc. (Dongguan) 
+Prepared by : 
+Sheldon Ou 
+Approved by : 
+Chay Cai 
+No.3, Jinshagang 1st Road, Dalang, Dongguan, Guangdong People’s Republic of China. 
+Tel: +86-769-8318-3000   Web: www.newbtl.com    Service mail: btl_qa@newbtl.com  
+
+Report No.: BTL-FCCP-1-2506C291 
+Report Version: R01  
+Page 2 of 79 
+ 
+ 
+ 
+Declaration 
+BTL represents to the client that testing is done in accordance with standard procedures as applicable and 
+that test instruments used has been calibrated with standards traceable to international standard(s) and/or 
+national standard(s). 
+BTL's reports apply only to the specific samples tested under conditions. It is manufacture’s responsibility 
+to ensure that additional production units of this model are manufactured with the identical electrical and 
+mechanical components. BTL assumes no responsibility for the data provided by the customer, any 
+statements, inferences or generalizations drawn by the customer or others from the reports issued by BTL. 
+The report must not be used by the client to claim product certification, approval, or endorsement by A2LA 
+or any agency of the U.S. Government. 
+This report is the confidential property of the client. As a mutual protection to the clients, the public and 
+ourselves, the test report shall not be reproduced, except in full, without our written approval. 
+BTL’s laboratory quality assurance procedures are in compliance with the ISO/IEC 17025: 2017 
+requirements, and accredited by the conformity assessment authorities listed in this test report. 
+BTL is not responsible for the sampling stage, so the results only apply to the sample as received. 
+The information, data and test plan are provided by manufacturer which may affect the validity of results, so 
+it is manufacturer’s responsibility to ensure that the apparatus meets the essential requirements of applied 
+standards and in all the possible configurations as representative of its intended use. 
+Limitation 
+For the use of the authority's logo is limited unless the Test Standard(s)/Scope(s)/Item(s) mentioned in this 
+test report is (are) included in the conformity assessment authorities acceptance respective. 
+Please note that the measurement uncertainty is provided for informational purpose only and are not use in 
+determining the Pass/Fail results. 
+ 
+Report No.: BTL-FCCP-1-2506C291 
+Report Version: R01  
+Page 3 of 79 
+ 
+ 
+ 
+Table of Contents 
+ 
+ 
+Page 
+REVISION HISTORY 6 
+1 . APPLICABLE STANDARDS 7 
+2 . SUMMARY OF TEST RESULTS 7 
+2.1 TEST FACILITY 8 
+2.2 MEASUREMENT UNCERTAINTY 8 
+2.3 TEST ENVIRONMENT CONDITIONS 9 
+3 . GENERAL INFORMATION 10 
+3.1 GENERAL DESCRIPTION OF EUT 10 
+3.2 DESCRIPTION OF TEST MODES 12 
+3.3 PARAMETERS OF TEST SOFTWARE 13 
+3.4 BLOCK DIAGRAM SHOWING THE CONFIGURATION OF SYSTEM TESTED 14 
+3.5 SUPPORT UNITS 14 
+3.6 CUSTOMER INFORMATION DESCRIPTION 14 
+4 . AC POWER LINE CONDUCTED EMISSIONS 15 
+4.1 LIMIT 15 
+4.2 TEST PROCEDURE 15 
+4.3 DEVIATION FROM TEST STANDARD 15 
+4.4 TEST SETUP 16 
+4.5 EUT OPERATING CONDITIONS 16 
+4.6 TEST RESULTS 16 
+5 . RADIATED EMISSIONS 17 
+5.1 LIMIT 17 
+5.2 TEST PROCEDURE 18 
+5.3 DEVIATION FROM TEST STANDARD 19 
+5.4 TEST SETUP 19 
+5.5 EUT OPERATING CONDITIONS 21 
+5.6 TEST RESULT - 9 KHZ TO 30 MHZ 21 
+5.7 TEST RESULT - 30 MHZ TO 1000 MHZ 21 
+5.8 TEST RESULT - ABOVE 1000 MHZ 21 
+6 . BANDWIDTH 22 
+6.1 LIMIT 22 
+Report No.: BTL-FCCP-1-2506C291 
+Report Version: R01  
+Page 4 of 79 
+ 
+ 
+Table of Contents 
+ 
+ 
+Page 
+6.2 TEST PROCEDURE 22 
+6.3 DEVIATION FROM STANDARD 22 
+6.4 TEST SETUP 22 
+6.5 EUT OPERATION CONDITIONS 22 
+6.6 TEST RESULTS 22 
+7 . MAXIMUM OUTPUT POWER 23 
+7.1 LIMIT 23 
+7.2 TEST PROCEDURE 23 
+7.3 DEVIATION FROM STANDARD 23 
+7.4 TEST SETUP 23 
+7.5 EUT OPERATION CONDITIONS 23 
+7.6 TEST RESULTS 23 
+8 . CONDUCTED SPURIOUS EMISSION 24 
+8.1 LIMIT 24 
+8.2 TEST PROCEDURE 24 
+8.3 DEVIATION FROM STANDARD 25 
+8.4 TEST SETUP 25 
+8.5 EUT OPERATION CONDITIONS 25 
+8.6 TEST RESULTS 25 
+9 . POWER SPECTRAL DENSITY 26 
+9.1 LIMIT 26 
+9.2 TEST PROCEDURE 26 
+9.3 DEVIATION FROM STANDARD 26 
+9.4 TEST SETUP 26 
+9.5 EUT OPERATION CONDITIONS 26 
+9.6 TEST RESULTS 26 
+10 . MEASUREMENT INSTRUMENTS LIST 27 
+11 . EUT TEST PHOTO 30 
+APPENDIX A - AC POWER LINE CONDUCTED EMISSIONS 36 
+APPENDIX B - RADIATED EMISSION - 9 KHZ TO 30 MHZ 39 
+APPENDIX C - RADIATED EMISSION - 30 MHZ TO 1000 MHZ 44 
+APPENDIX D - RADIATED EMISSION - ABOVE 1000 MHZ 47 
+Report No.: BTL-FCCP-1-2506C291 
+Report Version: R01  
+Page 5 of 79 
+ 
+ 
+Table of Contents 
+ 
+ 
+Page 
+APPENDIX E - BANDWIDTH 65 
+APPENDIX F - MAXIMUM OUTPUT POWER 69 
+APPENDIX G - CONDUCTED SPURIOUS EMISSION 73 
+APPENDIX H - POWER SPECTRAL DENSITY 77 
+ 
+Report No.: BTL-FCCP-1-2506C291 
+Report Version: R01  
+Page 6 of 79 
+ 
+ 
+REVISION HISTORY 
+            
+Report No. Version Description Issued Date Note 
+BTL-FCCP-1-2506C291 R00 Original Report. Aug. 15, 2025 Invalid 
+BTL-FCCP-1-2506C291 R01 
+This report changed the antenna gain in 
+section 3.1. lt is a revision of the report 
+BTL-FCCP-1-2506C291 R00. This is a 
+newly released report. replacing the 
+BTL-FCCP-1-2506C291 R00 report. 
+Aug. 27, 2025 Valid 
+ 
+Report No.: BTL-FCCP-1-2506C291 
+Report Version: R01  
+Page 7 of 79 
+ 
+ 
+1. APPLICABLE STANDARDS 
+ 
+According to the specifications of the manufacturer, the EUT must comply with the requirements of the 
+following standards: 
+ANSI C63.10-2013 
+The following reference test guidance is not within the scope of accreditation of A2LA: 
+KDB 558074 D01 15.247 Meas Guidance v05r02 
+ 
+2. SUMMARY OF TEST RESULTS 
+ 
+Test procedures according to the technical standard(s): 
+ 
+FCC CFR Title 47, Part 15, Subpart C 
+Standard(s) Section Test Item Test Result Judgment Remark 
+15.207 AC Power Line Conducted 
+Emissions APPENDIX A PASS ------ 
+15.247(d) 
+15.205(a) 
+15.209(a) 
+Radiated Emissions 
+APPENDIX B 
+APPENDIX C 
+APPENDIX D 
+PASS ------ 
+15.247(a)(2) Bandwidth APPENDIX E PASS ------ 
+15.247(b)(3) Maximum Output Power APPENDIX F PASS ------ 
+15.247(d) Conducted Spurious 
+Emission APPENDIX G PASS ------ 
+15.247(e) Power Spectral Density APPENDIX H PASS ------ 
+15.203 Antenna Requirement ------ PASS Note(2) 
+ 
+Note: 
+ (1) “N/A” denotes test is not applicable to this device. 
+ (2) The device what use a permanently attached antenna were considered sufficient to comply with 
+the provisions of 15.203. 
+Report No.: BTL-FCCP-1-2506C291 
+Report Version: R01  
+Page 8 of 79 
+ 
+ 
+2.1 TEST FACILITY 
+ The test facilities used to collect the test data in this report is at the location of  
+For Radiated emissions 1GHz to 18GHz: 
+Room 102 & 702, Building A3, No.9, Jinshagang 1st Road, Dalang, Dongguan, Guangdong People’s 
+Republic of China. 
+For others:  
+No.3, Jinshagang 1st Road, Dalang, Dongguan, Guangdong People’s Republic of China. 
+ BTL's Registration Number for FCC: 747969 
+BTL's Designation Number for FCC: CN1377 
+ 
+2.2 MEASUREMENT UNCERTAINTY 
+ ISO/IEC 17025 requires that an estimate of the measurement uncertainties associated with the 
+emissions test results be included in the report. The measurement uncertainties given below are based 
+on a 95.45% confidence level (based on a coverage factor (k=2)) 
+The BTL measurement uncertainty as below table: 
+ 
+A. AC power line conducted emissions Measurement: 
+ 
+Test Site Method Measurement Frequency Range U,(dB) 
+DG-C02 CISPR 150kHz ~ 30MHz 2.88 
+ 
+B. Radiated emissions Measurement: 
+ 
+Test Site Method Measurement Frequency Range U,(dB) 
+DG-CB03 CISPR 9kHz ~ 30MHz 2.36 
+ 
+Test Site Method Measurement Frequency Range Ant. 
+H / V U,(dB) 
+DG-CB03 
+(3m) CISPR 
+30MHz ~ 200MHz V 4.40 
+30MHz ~ 200MHz H 3.62 
+200MHz ~ 1,000MHz V 4.58 
+200MHz ~ 1,000MHz H 3.98 
+ 
+Test Site Method Measurement Frequency Range U,(dB) 
+DG-CB19 
+(3m) CISPR 
+1GHz ~ 6GHz 4.48 
+6GHz ~ 18GHz 3.88 
+ 
+Test Site Method Measurement Frequency Range U,(dB) 
+DG-CB03 
+(1m) CISPR 18 ~ 26.5 GHz 3.36 
+ 
+Report No.: BTL-FCCP-1-2506C291 
+Report Version: R01  
+Page 9 of 79 
+ 
+ 
+ C. Other Measurement: 
+ 
+Test Item Uncertainty 
+Bandwidth 0.90 % 
+Maximum Output Power 1.3 dB 
+Conducted Spurious Emission 1.9 dB 
+Power Spectral Density 1.4 dB 
+Temperature 0.8 °C 
+Humidity 2.2 % 
+ 
+Note: Unless specifically mentioned, the uncertainty of measurement has not been taken into account to 
+declare the compliance or non-compliance to the specification. 
+ 
+2.3 TEST ENVIRONMENT CONDITIONS 
+ 
+Test Item Temperature Humidity Test Voltage Tested By Test Date 
+AC Power Line Conducted 
+Emissions 24°C 54% AC 120V/60Hz Hayden Chen Jul. 17, 2025 
+Radiated Emissions 
+-9 kHz to 30 MHz 22°C 48% DC 5V Hayden Chen Jul. 01, 2025 
+Radiated Emissions 
+-30 MHz to 1000 MHz 23°C 55% DC 5V Calvin Wen Jul. 08, 2025 
+Radiated Emissions 
+-Above 1000 MHz 
+29°C 55% DC 5V Jensen Zhou Jul. 09, 2025 
+23°C 55% DC 5V Calvin Wen Jul. 09, 2025 
+Bandwidth 23°C 58% DC 5V Newnar Wang Jul. 08, 2025 
+Maximum Output Power  23°C 58% DC 5V Newnar Wang Jul. 08, 2025 
+22.3°C 58.9% DC 5V James Huang Jul. 22, 2025 
+Conducted Spurious 
+Emission 23°C 58% DC 5V Newnar Wang Jul. 08, 2025 
+Power Spectral Density 23°C 58% DC 5V Newnar Wang Jul. 08, 2025 
+ 
+Report No.: BTL-FCCP-1-2506C291 
+Report Version: R01  
+Page 10 of 79 
+ 
+ 
+3. GENERAL INFORMATION 
+ 
+3.1 GENERAL DESCRIPTION OF EUT 
+ 
+ 
+Equipment Ergonomic detachable wireless mechanical keyboard 
+Brand Name NAYA TECH, Naya Create 
+Test Model NAYA-800-1(NAYA-CREATE) 
+Model Name NAYA-800-1(NAYA-CREATE) 
+Model Difference(s) N/A 
+Keyboard Left Keyboard 
+Hardware Version Create_L_KB_20250220_V13,Create_R_KB_20250221_V13 
+Software Version Naya_Temp_Flash_Pair.exe 
+Power Source 
+1# Supplied from battery. 
+Model: 301217 
+2# Supplied from PC USB port. 
+Power Rating 1# DC 3.7V 50mAh 0.185Wh 
+2# DC 5V 
+Operation Frequency 2402 MHz ~ 2480 MHz 
+Modulation Type GFSK 
+Bit Rate of Transmitter 1Mbps, 2Mbps, 125kbps(S=8) 
+Max. Peak Output Power 2Mbps: 9.30 dBm (0.0085 W) 
+Max. Average Output Power 1Mbps: 7.14 dBm (0.0052 W) 
+ 
+Note: 
+1. The abov e EUT information is declared by manufacturer and for more detailed features description, 
+please refers to the manufacturer's specifications or user's manual. 
+ 
+Report No.: BTL-FCCP-1-2506C291 
+Report Version: R01  
+Page 11 of 79 
+ 
+ 
+2. Channel List: 
+Channel Frequency 
+(MHz) Channel Frequency 
+(MHz) 
+00 2402 20 2442 
+01 2404 21 2444 
+02 2406 22 2446 
+03 2408 23 2448 
+04 2410 24 2450 
+05 2412 25 2452 
+06 2414 26 2454 
+07 2416 27 2456 
+08 2418 28 2458 
+09 2420 29 2460 
+10 2422 30 2462 
+11 2424 31 2464 
+12 2426 32 2466 
+13 2428 33 2468 
+14 2430 34 2470 
+15 2432 35 2472 
+16 2434 36 2474 
+17 2436 37 2476 
+18 2438 38 2478 
+19 2440 39 2480 
+ 
+  
+3. Table for Filed Antenna:  
+Ant. Brand Model Name Antenna Type Connector Gain (dBi) 
+1 BOEN RF0400A PCB N/A 0.8 
+ 
+ 
+Report No.: BTL-FCCP-1-2506C291 
+Report Version: R01  
+Page 12 of 79 
+ 
+ 
+3.2 DESCRIPTION OF TEST MODES 
+ 
+The test system was pre-tested based on the consideration of all possible combinations of EUT operation 
+mode. 
+ 
+Pretest Mode Description 
+Mode 1 TX Mode_1Mbps Channel 00/19/39 
+Mode 2 TX Mode_2Mbps Channel 00/19/39 
+Mode 3 TX Mode_125kbps(S=8) Channel 00/19/39 
+Mode 4 TX Mode_2Mbps Channel 39 
+ 
+ 
+Following mode(s) was (were) found to be the worst case(s) and selected for the final test. 
+AC power line conducted emissions test 
+Final Test Mode Description 
+Mode 4 TX Mode_2Mbps Channel 39 
+ 
+Radiated emissions test - Below 1GHz & Above 18 GHz 
+Final Test Mode Description 
+Mode 4 TX Mode_2Mbps Channel 39 
+ 
+Radiated emissions test - 1 GHz - 18 GHz 
+Final Test Mode Description 
+Mode 1 TX Mode_1Mbps Channel 00/19/39 
+Mode 2 TX Mode_2Mbps Channel 00/19/39 
+Mode 3 TX Mode_125kbps(S=8) Channel 00/19/39 
+ 
+Conducted test 
+Final Test Mode Description 
+Mode 1 TX Mode_1Mbps Channel 00/19/39 
+Mode 2 TX Mode_2Mbps Channel 00/19/39 
+Mode 3 TX Mode_125kbps(S=8) Channel 00/19/39 
+ 
+Note: 
+(1) For radiated emission above 1 GHz test, the spurious points of 1GHz~26.5GHz have been pre-tested and 
+in this report only recorded the worst case. The remaining spurious points are all below the limit value of 
+20dB. 
+(2) For AC power line conducted emissions and radiated emissions below 1 GHz test, the 2Mbps Channel 39 
+is found to be the worst case and recorded. 
+(3) For radiated emission Harmonic 18-26.5GHz test, only tested the worst case and recorded. 
+(4) For radiated emission 1 GHz - 18 GHz test, both Vertical and Horizontal are evaluated, only the worst 
+polarization is recorded. 
+Report No.: BTL-FCCP-1-2506C291 
+Report Version: R01  
+Page 13 of 79 
+ 
+ 
+3.3 PARAMETERS OF TEST SOFTWARE 
+ 
+ During testing channel & power controlling software provided by the customer was used to control the 
+operating channel as well as the output power level. 
+ 
+Test Software Version nrfconnect-setup-5.1.0-x64 
+Frequency (MHz) 2402 2440 2480 
+1Mbps 8 8 8 
+2Mbps 8 8 8 
+125kbps(S=8) 8 8 8 
+ 
+Report No.: BTL-FCCP-1-2506C291 
+Report Version: R01  
+Page 14 of 79 
+ 
+ 
+3.4 BLOCK DIAGRAM SHOWING THE CONFIGURATION OF SYSTEM TESTED 
+ 
+ 
+ 
+3.5 SUPPORT UNITS 
+ 
+Item Equipment Brand Model No.  Series No. 
+A Notebook Huawei NbDE-WFH9 LR07GZNB 
+ 
+Item Cable Type Shielded Type Ferrite Core Length 
+1 USB Cable NO NO 0.8m 
+ 
+ 
+3.6 CUSTOMER INFORMATION DESCRIPTION 
+ 
+1) The antenna gain is provided by the manufacturer. 
+2) Except for AC power line conducted emissions and radiated emissions, the results of all test items 
+include cable losses. Part of the cable losses (0.5dB) are provided by the manufacturer, while the other 
+parts of the cable losses are provided by the testing laboratory. 
+ 
+Report No.: BTL-FCCP-1-2506C291 
+Report Version: R01  
+Page 15 of 79 
+ 
+ 
+4. AC POWER LINE CONDUCTED EMISSIONS 
+ 
+4.1 LIMIT 
+ 
+Frequency of Emission (MHz) 
+Limit (dBμV) 
+Quasi-peak Average 
+0.15 - 0.5 66 to 56* 56 to 46* 
+0.5 - 5.0 56 46 
+5.0 - 30.0 60 50 
+ 
+Note: 
+(1) The tighter limit applies at the band edges. 
+(2) The limit of " * " marked band means the limitation decreases linearly with the logarithm of the frequency 
+in the range. 
+(3) The test result calculated as following: 
+Measurement Value = Reading Level + Correct Factor 
+Correct Factor = Insertion Loss + Cable Loss + Attenuator Factor (if use) 
+Margin Level = Measurement Value - Limit Value 
+ 
+4.2 TEST PROCEDURE 
+a. The EUT was placed 0.8 meters from the horizontal ground plane with EUT being connected to the 
+power mains through a line impedance stabilization network (LISN). All other support equipment 
+powered from additional LISN(s). The LISN provide 50 Ohm/ 50uH of coupling impedance for the 
+measuring instrument.  
+b. Interconnecting cables that hang closer than 40 cm to the ground plane shall be folded back  
+and forth in the center forming a bundle 30 to 40 cm long. 
+c. I/O cables that are not connected to a peripheral shall be bundled in the center. The end of the  
+cable may be terminated, if required, using the correct terminating impedance. The overall  
+length shall not exceed 1 m. 
+d. LISN at least 80 cm from nearest part of EUT chassis. 
+e. For the actual test configuration, please refer to the related Item –EUT Test Photos. 
+ 
+The following table is the setting of the receiver: 
+Receiver Parameters Setting 
+Start Frequency 0.15 MHz 
+Stop Frequency 30 MHz 
+IF Bandwidth 9 kHz 
+ 
+4.3 DEVIATION FROM TEST STANDARD 
+No deviation. 
+Report No.: BTL-FCCP-1-2506C291 
+Report Version: R01  
+Page 16 of 79 
+ 
+ 
+4.4 TEST SETUP 
+LISN
+EUT Test Receiver40 cm
+80 cm
+Horizontal Reference Ground Plane 
+Vertical Reference Ground Plane 
+ 
+ 
+4.5 EUT OPERATING CONDITIONS 
+The EUT was configured for testing in a typical fashion (as a customer would normally use it). The EUT has 
+been programmed to continuously transmit during test. This operating condition was tested and used to 
+collect the included data. 
+ 
+4.6 TEST RESULTS 
+Please refer to the APPENDIX A. 
+ 
+Remark:  
+(1) All readings are QP Mode value unless otherwise stated AVG in column of『Note』. If the QP Mode 
+Measured value compliance with the QP Limits and lower than AVG Limits, the EUT shall be 
+deemed to meet both QP & AVG Limits and then only QP Mode was measured, but AVG Mode didn‘t 
+perform.In this case, a “ * ” marked in AVG Mode column of Interference Voltage Measured. 
+(2) Measuring frequency range from 150 kHz to 30 MHz. 
+ 
+Report No.: BTL-FCCP-1-2506C291 
+Report Version: R01  
+Page 17 of 79 
+ 
+ 
+5. RADIATED EMISSIONS 
+ 
+5.1 LIMIT 
+ 
+In case the emission fall within the restricted band specified on 15.205(a), then the 15.209(a) limit in the 
+table below has to be followed. 
+ 
+LIMITS OF RADIATED EMISSION MEASUREMENT (9 kHz-1000 MHz) 
+ 
+Frequency 
+(MHz) 
+Field Strength 
+(microvolts/meter) 
+Measurement Distance 
+(meters) 
+0.009-0.490 2400/F(kHz) 300 
+0.490-1.705 24000/F(kHz) 30 
+1.705-30.0 30 30 
+30-88 100 3 
+88-216 150 3 
+216-960 200 3 
+Above 960 500 3 
+ 
+ 
+LIMITS OF RADIATED EMISSION MEASUREMENT (Above 1000 MHz) 
+ 
+Frequency (MHz) 
+Band edge/ Harmonic 
+at 3m (dBµV/m) Harmonic at 1m (dBµV/m) 
+Peak Average Peak Average 
+Above 1000 74 54 83.5 (Note 5) 63.5 (Note 5) 
+ 
+ 
+Note: 
+(1) The limit for radiated test was performed according to FCC CFR Title 47, Part 15, Subpart C. 
+(2) The tighter limit applies at the band edges. 
+(3) Emission level (dBuV/m)=20log Emission level (uV/m). 
+(4) The test result calculated as following: 
+Measurement Value = Reading Level + Correct Factor 
+Correct Factor = Antenna Factor + Cable Loss - Amplifier Gain(if use) 
+Margin Level = Measurement Value - Limit Value 
+(5) 
+ 
+20log (dlimit/dmeasure)=20log (3/1)=9.5 dB. 
+FSlimit: Harmonic at 3m Peak and Average limit. 
+FSmax: Harmonic at 1m Peak and Average Maximum value. 
+dlimit: Harmonic at 3m test distance. 
+dmeasure: Harmonic Actual test distance. 
+ 
+Report No.: BTL-FCCP-1-2506C291 
+Report Version: R01  
+Page 18 of 79 
+ 
+ 
+5.2 TEST PROCEDURE 
+a. The measuring distance of 3 m shall be used for measurements. The EUT was placed on the top of a 
+rotating table 0.8 meter above the ground at a 3 meter semi-anechoic chamber. The table was rotated 
+360 degrees to determine the position of the highest radiation.(below 1 GHz) 
+b. The measuring distance of 3 m or 1m shall be used for measurements. The EUT was placed on the top 
+of a rotating table 1.5 meter above the ground at a 3 meter semi-anechoic chamber. The table was 
+rotated 360 degrees to determine the position of the highest radiation.(above 1GHz) 
+c. The height of the equipment or of the substitution antenna shall be 0.8m or 1.5m; the height of the test 
+antenna shall vary between 1 m to 4 m. Both horizontal and vertical polarizations of the antenna are set 
+to make the measurement.  
+d. For each suspected emission, the EUT was arranged to its worst case and then the antenna was tuned 
+to heights find the maximum reading (used Bore sight function). 
+e. The receiver system was set to peak and average detect function and specified bandwidth with 
+maximum hold mode when the test frequency is above 1 GHz. 
+f. The initial step in collecting radiated emission data is a receiver peak detector mode pre-scanning the 
+measurement frequency range. Significant peaks are then marked and then Quasi Peak detector mode 
+re-measured.   
+g. All readings are Peak unless otherwise stated QP in column of Note. Peak denotes that the Peak 
+reading compliance with the QP Limits and then QP Mode measurement didn‘t perform. 
+(below 1 GHz) 
+h. All readings are Peak Mode value unless otherwise stated AVG in column of Note. If the Peak Mode 
+Measured value compliance with the Peak Limits and lower than AVG Limits, the EUT shall be deemed 
+to meet both Peak & AVG Limits and then only Peak Mode was measured, but AVG Mode didn‘t 
+perform. (above 1 GHz) 
+i. For the actual test configuration, please refer to the related Item –EUT Test Photos. 
+ 
+The following table is the setting of the receiver: 
+Spectrum Parameters Setting 
+Start ~ Stop Frequency 9 kHz~150 kHz for RBW 200 Hz 
+Start ~ Stop Frequency 0.15 MHz~30 MHz for RBW 9 kHz 
+Start ~ Stop Frequency 30 MHz~1000 MHz for RBW 100 kHz 
+ 
+Spectrum Parameters Setting 
+Start Frequency 1000 MHz 
+Stop Frequency 10th carrier harmonic 
+RBW / VBW 
+(Emission in restricted band) 
+1 MHz / 3 MHz for PK value 
+1 MHz / 1/T Hz for AVG value 
+ 
+Spectrum Parameters Setting 
+Start ~ Stop Frequency 9 kHz~90 kHz for PK/AVG detector 
+Start ~ Stop Frequency 90 kHz~110 kHz for QP detector 
+Start ~ Stop Frequency 110 kHz~490 kHz for PK/AVG detector 
+Start ~ Stop Frequency 490 kHz~30 MHz for QP detector 
+Start ~ Stop Frequency 30 MHz~1000 MHz for QP detector 
+Start ~ Stop Frequency 1 GHz~26.5 GHz for PK/AVG detector 
+ 
+Report No.: BTL-FCCP-1-2506C291 
+Report Version: R01  
+Page 19 of 79 
+ 
+ 
+5.3 DEVIATION FROM TEST STANDARD 
+No deviation. 
+ 
+5.4 TEST SETUP 
+ 
+9 kHz to 30 MHz 
+3 m
+Receiver
+Absorbers
+Ground Plane
+1 m
+EUT
+0.8 m
+ 
+30 MHz to 1 GHz 
+Amp.
+EUT
+1-4 m
+3 m
+Receiver
+0.8 m
+Absorbers
+Ground Plane
+1 m
+ 
+ 
+Report No.: BTL-FCCP-1-2506C291 
+Report Version: R01  
+Page 20 of 79 
+ 
+ 
+Above 1 GHz 
+Band edge & Harmonic(1 GHz to 18 GHz) 
+Amp.
+EUT
+1-4 m
+3 m
+Receiver
+1.5 m
+Absorbers
+Ground Plane
+1 m
+Absorbers 0.3 m
+ 
+ 
+Harmonic(18 GHz to 26.5 GHz) 
+Amp.
+EUT
+1-4 m
+1 m
+Receiver
+1.5 m
+Absorbers
+Ground Plane
+1 m
+ 
+ 
+Report No.: BTL-FCCP-1-2506C291 
+Report Version: R01  
+Page 21 of 79 
+ 
+ 
+5.5 EUT OPERATING CONDITIONS 
+The EUT was programmed to be in continuously transmitting mode. 
+ 
+5.6 TEST RESULT - 9 kHz TO 30 MHz 
+  Please refer to the APPENDIX B. 
+ 
+Remark:  
+ (1) Distance extrapolation factor = 40 log (specific distance / test distance) (dB). 
+(2) Limit line = specific limits (dBuV) + distance extrapolation factor. 
+ 
+5.7 TEST RESULT - 30 MHz TO 1000 MHz 
+Please refer to the APPENDIX C. 
+ 
+5.8 TEST RESULT - ABOVE 1000 MHz 
+Please refer to the APPENDIX D. 
+ 
+Remark:  
+(1) No limit: This is fundamental signal, the judgment is not applicable.  
+For fundamental signal judgment was referred to Peak output test. 
+Report No.: BTL-FCCP-1-2506C291 
+Report Version: R01  
+Page 22 of 79 
+ 
+ 
+6. BANDWIDTH 
+ 
+6.1 LIMIT 
+Section Test Item Limit 
+FCC 15.247(a)(2) 
+6 dB Bandwidth >= 500 kHz 
+99% Emission Bandwidth - 
+ 
+6.2 TEST PROCEDURE 
+a. The EUT was directly connected to the spectrum analyzer and antenna output port as show in the block 
+diagram below. 
+b. The following table is the setting of the spectrum analyzer: 
+ 
+   For 6 dB Bandwidth: 
+Spectrum Parameters Setting 
+Span > Measurement Bandwidth 
+RBW 100 kHz 
+VBW 300 kHz 
+Detector Peak 
+Trace Max Hold 
+Sweep Time Auto 
+ 
+For 99% Emission Bandwidth: 
+Spectrum Parameters Setting 
+Span Between 1.5 times and 5.0 times the OBW 
+RBW 30 kHz 
+VBW 100 kHz 
+Detector Peak 
+Trace Max Hold 
+Sweep Time Auto 
+ 
+6.3 DEVIATION FROM STANDARD 
+No deviation. 
+ 
+6.4 TEST SETUP 
+ 
+ 
+6.5 EUT OPERATION CONDITIONS 
+The EUT was programmed to be in continuously transmitting mode. 
+ 
+6.6 TEST RESULTS 
+Please refer to the APPENDIX E. 
+ 
+Report No.: BTL-FCCP-1-2506C291 
+Report Version: R01  
+Page 23 of 79 
+ 
+ 
+7. MAXIMUM OUTPUT POWER 
+ 
+7.1 LIMIT 
+Section Test Item Limit 
+FCC 15.247(b)(3) Maximum Output Power 1.0000 watt or 30.00 dBm 
+ 
+7.2 TEST PROCEDURE 
+a. The EUT was directly connected to the spectrum analyzer and antenna output port as show in the block 
+diagram below. 
+b. The following table is the setting of the spectrum analyzer: 
+ 
+Spectrum Parameters Setting 
+Span ≥ 3×RBW 
+RBW 3 MHz 
+VBW 3 MHz 
+Detector Peak 
+Trace Max Hold 
+Sweep Time Auto 
+ 
+7.3 DEVIATION FROM STANDARD 
+No deviation. 
+ 
+7.4 TEST SETUP 
+ 
+ 
+7.5 EUT OPERATION CONDITIONS 
+The EUT was programmed to be in continuously transmitting mode. 
+ 
+7.6 TEST RESULTS 
+Please refer to the APPENDIX F. 
+Report No.: BTL-FCCP-1-2506C291 
+Report Version: R01  
+Page 24 of 79 
+ 
+ 
+8. CONDUCTED SPURIOUS EMISSION 
+ 
+8.1 LIMIT 
+ 
+In any 100 kHz bandwidth outside the frequency band in which the spread spectrum or digitally modulated 
+intentional radiator is operating, the radio frequency power that is produced by the intentional radiator 
+shall be at least 20 dB below that in the 100 kHz bandwidth within the band that contains the highest level 
+of the desired power, based on either an RF conducted or a radiated measurement, provided the 
+transmitter demonstrates compliance with the peak Output Power limits. If the transmitter complies with 
+the Output Power limits based on the use of RMS averaging over a time interval, as permitted under 
+paragraph (b)(3) of this section, the attenuation required under this paragraph shall be 30 dB instead of 20 
+dB. Attenuation below the general limits specified in Section 15.209(a) is not required.  
+ 
+ 
+8.2 TEST PROCEDURE 
+a. The EUT was directly connected to the spectrum analyzer and antenna output port as show in the block 
+diagram below. 
+b. The following table is the setting of the spectrum analyzer: 
+ 
+For Reference Level: 
+Spectrum Parameters Setting 
+Span ≥ 1.5 times the bandwidth. 
+RBW 100 kHz 
+VBW 300 kHz 
+Detector Peak 
+Trace Max Hold 
+Sweep Time Auto 
+ 
+For Emission Level - Band edge: 
+Spectrum Parameters Setting 
+Start Frequency 2300 MHz 
+Stop Frequency 2690 MHz 
+RBW 100 kHz 
+VBW 300 kHz 
+Detector Peak 
+Trace Max Hold 
+Sweep Time Auto 
+ 
+For Emission Level - Harmonic: 
+Spectrum Parameters Setting 
+Start Frequency 30 MHz 
+Stop Frequency 26.5 GHz 
+RBW 100 kHz 
+VBW 300 kHz 
+Detector Peak 
+Trace Max Hold 
+Sweep Time Auto 
+Report No.: BTL-FCCP-1-2506C291 
+Report Version: R01  
+Page 25 of 79 
+ 
+ 
+8.3 DEVIATION FROM STANDARD 
+No deviation. 
+ 
+8.4 TEST SETUP 
+ 
+ 
+8.5 EUT OPERATION CONDITIONS 
+The EUT was programmed to be in continuously transmitting mode. 
+ 
+8.6 TEST RESULTS 
+Please refer to the APPENDIX G. 
+Report No.: BTL-FCCP-1-2506C291 
+Report Version: R01  
+Page 26 of 79 
+ 
+ 
+9. POWER SPECTRAL DENSITY 
+ 
+9.1 LIMIT 
+Section Test Item Limit 
+FCC 15.247(e)  Power Spectral Density 8 dBm 
+(in any 3 kHz) 
+ 
+9.2 TEST PROCEDURE 
+a. The EUT was directly connected to the spectrum analyzer and antenna output port as show in the block 
+diagram below. 
+b. The following table is the setting of the spectrum analyzer: 
+ 
+Spectrum Parameters Setting 
+Span 1.5 times the DTS bandwidth 
+RBW 3 kHz 
+VBW 10 kHz 
+Detector Peak 
+Trace Max Hold 
+Sweep Time Auto 
+ 
+9.3 DEVIATION FROM STANDARD 
+No deviation. 
+ 
+9.4 TEST SETUP 
+ 
+ 
+9.5 EUT OPERATION CONDITIONS 
+The EUT was programmed to be in continuously transmitting mode. 
+ 
+9.6 TEST RESULTS 
+Please refer to the APPENDIX H. 
+Report No.: BTL-FCCP-1-2506C291 
+Report Version: R01  
+Page 27 of 79 
+ 
+ 
+10. MEASUREMENT INSTRUMENTS LIST 
+ 
+AC Power Line Conducted Emissions 
+Item Kind of Equipment Manufacturer Type No. Serial No. Calibrated until 
+1 EMI TEST 
+RECEIVER R&S ESCI 100382 Dec. 06, 2025 
+2 TWO-LINE 
+V-NETWORK R&S ENV216 102771 Jun. 27, 2026 
+3 Measurement 
+Software Farad EZ-EMC 
+Ver.NB-03A1-01 N/A N/A 
+4 Cable N/A SFT205-NMNM-12
+M-001 12M Apr. 23, 2026 
+5 643 Shield Room ETS 6*4*3 N/A N/A 
+ 
+Radiated Emissions - 9 kHz to 30 MHz 
+Item Kind of Equipment Manufacturer Type No. Serial No. Calibrated until 
+1 Active Loop Antenna Schwarzbeck FMZB 1513-60 00025 Mar. 01, 2026 
+2 Receiver Agilent N9038A MY52130039 Jan. 10, 2026 
+3 Cable RegalWay LMR400-NMNM-6m N/A Apr. 26, 2026 
+4 Cable RegalWay LMR400-NMRANM-3.
+5m N/A Apr. 26, 2026 
+5 966 Chamber room CM 9*6*6 N/A May 09, 2026 
+ 
+Radiated Emissions - 30 MHz to 1 GHz 
+Item Kind of Equipment Manufacturer Type No. Serial No. Calibrated until 
+1 Trilog-Broadband 
+Antenna Schwarzbeck VULB 9168 01462 Dec. 14, 2025 
+2 Attenuator EMC 
+INSTRUMENT EMCI-N-6-06 AT-06009 Dec. 14, 2025 
+3 Preamplifier EMC 
+INSTRUMENT EMC001330 980998 May 17, 2026 
+4 Cable RegalWay LMR400-NMNM-12
+.5m N/A Jun. 04, 2026 
+5 Cable RegalWay LMR400-NMNM-3
+m N/A Jun. 04, 2026 
+6 Cable RegalWay LMR400-NMNM-0.
+5m N/A Jun. 04, 2026 
+7 Receiver Agilent N9038A MY52130039 Jan. 10, 2026 
+8 Positioning Controller MF MF-7802 N/A N/A 
+9 Measurement 
+Software Farad EZ-EMC 
+Ver.NB-03A1-01 N/A N/A 
+10 966 Chamber room CM 9*6*6 N/A May 09, 2026 
+ 
+Report No.: BTL-FCCP-1-2506C291 
+Report Version: R01  
+Page 28 of 79 
+ 
+ 
+Radiated Emissions - 1 GHz - 18 GHz 
+Item Kind of Equipment Manufacturer Type No. Serial No. Calibrated until 
+1 Positioning Controller MF MF-7802 N/A N/A 
+2 Measurement 
+Software Farad EZ-EMC 
+Ver.NB-03A1-01 N/A N/A 
+3 MXA Signal Analyzer KEYSIGHT N9020B MY63430227 Oct. 29, 2025 
+4 Cable EMC 
+INSTRUMENT 
+EMC104-SM-SM-1
+0000 N/A Jun. 12, 2026 
+5 Cable EMC 
+INSTRUMENT 
+EMC104-SM-SM-3
+000 N/A Jun. 12, 2026 
+6 Cable EMC 
+INSTRUMENT 
+EMC104-SM-SM-1
+000 N/A Jun. 12, 2026 
+7 966 Chamber room Tai He 9*6*6
+（NSA&VSWR） N/A May 18, 2026 
+8 Double Ridged Horn 
+Antenna 
+EMC 
+INSTRUMENT DRH18-E 210509A18ES Aug. 28, 2025 
+9 Preamplifier EMC 
+INSTRUMENT EMC118A45SE 981001 May 28, 2026 
+10 Attenuator Talent Microwave TA10A2-S-18 N/A N/A 
+11 Filter COM-MW ZHPF6-M3000-180
+00-174 N/A Oct. 29, 2025 
+ 
+Radiated Emissions - Above 18 GHz 
+Item Kind of Equipment Manufacturer Type No. Serial No. Calibrated until 
+1 EXA Spectrum 
+Analyzer Keysight N9010A MY55150209 Aug. 20, 2025 
+2 Preamplifier EMC 
+INSTRUMENT EMC184045SE 980905 Oct. 29, 2025 
+3 Cable RegalWay RWLP50-2.6A-2.92
+M2.92M-1.1M N/A Jul. 25, 2025 
+4 Cable Tonscend HF160-KMKM-3M N/A Jul. 25, 2025 
+5 Broad-Band Horn 
+Antenna Schwarzbeck BBHA9170 1227 Oct. 20, 2025 
+6 966 Chamber room CM 9*6*6 N/A May 09, 2026 
+7 Positioning Controller MF MF-7802 N/A N/A 
+8 Measurement 
+Software Farad EZ-EMC 
+Ver.NB-03A1-01 N/A N/A 
+ 
+Bandwidth & 
+Power Spectral Density & 
+Conducted Spurious Emission 
+Item Kind of Equipment Manufacturer Type No. Serial No. Calibrated until 
+1 
+FSV Signal & 
+Spectrum  
+Analyzer  
+R&S FSV3044 101682 Oct. 17, 2025 
+2 CTA BTL CTA N/A N/A 
+3 Isolation attenuator Z-Link ASMA-16-18-2W N/A N/A 
+ 
+Report No.: BTL-FCCP-1-2506C291 
+Report Version: R01  
+Page 29 of 79 
+ 
+ 
+Maximum Output Power 
+Item Kind of Equipment Manufacturer Type No. Serial No. Calibrated until 
+1 
+FSV Signal & 
+Spectrum  
+Analyzer  
+R&S FSV3044 101682 Oct. 17, 2025 
+2 CTA BTL CTA N/A N/A 
+3 Isolation attenuator Z-Link ASMA-16-18-2W N/A N/A 
+4 Smart Power Sensor R&S NRP-Z21 102209 Jan. 11, 2026 
+ 
+Remark: “N/A” denotes no model name, serial no. or calibration specified. 
+ All calibration period of equipment list is one year.  
+ 
+Report No.: BTL-FCCP-1-2506C291 
+Report Version: R01  
+Page 30 of 79 
+ 
+ 
+11. EUT TEST PHOTO 
+AC Power Line Conducted Emissions Test Photos 
+ 
+  
+ 
+ 
+  
+ 
+Report No.: BTL-FCCP-1-2506C291 
+Report Version: R01  
+Page 31 of 79 
+ 
+ 
+Radiated Emissions Test Photos 
+9 kHz to 30 MHz 
+ 
+  
+ 
+ 
+  
+ 
+ 
+Report No.: BTL-FCCP-1-2506C291 
+Report Version: R01  
+Page 32 of 79 
+ 
+ 
+Radiated Emissions Test Photos 
+30 MHz to 1000 MHz 
+ 
+  
+ 
+ 
+  
+ 
+Report No.: BTL-FCCP-1-2506C291 
+Report Version: R01  
+Page 33 of 79 
+ 
+ 
+Radiated Emissions Test Photos 
+Band edge & Harmonic(1 GHz to 18 GHz) 
+ 
+  
+ 
+ 
+  
+Report No.: BTL-FCCP-1-2506C291 
+Report Version: R01  
+Page 34 of 79 
+ 
+ 
+Radiated Emissions Test Photos 
+Harmonic(18 GHz to 26.5 GHz) 
+ 
+  
+ 
+ 
+  
+Report No.: BTL-FCCP-1-2506C291 
+Report Version: R01  
+Page 35 of 79 
+ 
+ 
+Conducted Test Photos 
+  
+ 
+ 
+  
+ 
+Report No.: BTL-FCCP-1-2506C291 
+Report Version: R01  
+Page 36 of 79 
+ 
+ 
+APPENDIX A - AC POWER LINE CONDUCTED EMISSIONS 
+ 
+Report No.: BTL-FCCP-1-2506C291 
+Report Version: R01  
+Page 37 of 79 
+ 
+ 
+Test Mode TX Mode Channel 39_2Mbps Phase Line 
+ 
+  
+ 
+ 
+ 
+REMARKS: 
+(1) Measurement Value = Reading Level + Correct Factor. 
+(2) Margin Level = Measurement Value - Limit Value. 
+Report No.: BTL-FCCP-1-2506C291 
+Report Version: R01  
+Page 38 of 79 
+ 
+ 
+Test Mode TX Mode Channel 39_2Mbps Phase Neutral 
+ 
+  
+ 
+ 
+ 
+REMARKS: 
+(1) Measurement Value = Reading Level + Correct Factor. 
+(2) Margin Level = Measurement Value - Limit Value. 
+Report No.: BTL-FCCP-1-2506C291 
+Report Version: R01  
+Page 39 of 79 
+ 
+ 
+APPENDIX B - RADIATED EMISSION - 9 KHZ TO 30 MHZ 
+ 
+Report No.: BTL-FCCP-1-2506C291 
+Report Version: R01  
+Page 40 of 79 
+ 
+ 
+Test Mode TX Mode Channel 39_2Mbps Polarization Ant 0° 
+ 
+  
+ 
+REMARKS: 
+(1) Measurement Value = Reading Level + Correct Factor. 
+(2) Margin Level = Measurement Value - Limit Value. 
+Report No.: BTL-FCCP-1-2506C291 
+Report Version: R01  
+Page 41 of 79 
+ 
+ 
+Test Mode TX Mode Channel 39_2Mbps Polarization Ant 0° 
+ 
+ 
+ 
+ 
+REMARKS: 
+(1) Measurement Value = Reading Level + Correct Factor. 
+(2) Margin Level = Measurement Value - Limit Value. 
+Report No.: BTL-FCCP-1-2506C291 
+Report Version: R01  
+Page 42 of 79 
+ 
+ 
+Test Mode TX Mode Channel 39_2Mbps Polarization Ant 90° 
+ 
+ 
+ 
+ 
+REMARKS: 
+(1) Measurement Value = Reading Level + Correct Factor. 
+(2) Margin Level = Measurement Value - Limit Value. 
+Report No.: BTL-FCCP-1-2506C291 
+Report Version: R01  
+Page 43 of 79 
+ 
+ 
+Test Mode TX Mode Channel 39_2Mbps Polarization Ant 90° 
+ 
+ 
+ 
+ 
+REMARKS: 
+(1) Measurement Value = Reading Level + Correct Factor. 
+(2) Margin Level = Measurement Value - Limit Value. 
+Report No.: BTL-FCCP-1-2506C291 
+Report Version: R01  
+Page 44 of 79 
+ 
+ 
+APPENDIX C - RADIATED EMISSION - 30 MHZ TO 1000 MHZ 
+Report No.: BTL-FCCP-1-2506C291 
+Report Version: R01  
+Page 45 of 79 
+ 
+ 
+Test Mode TX Mode Channel 39_2Mbps Polarization Vertical 
+ 
+  
+ 
+ 
+ 
+REMARKS: 
+(1) Measurement Value = Reading Level + Correct Factor. 
+(2) Margin Level = Measurement Value - Limit Value. 
+Report No.: BTL-FCCP-1-2506C291 
+Report Version: R01  
+Page 46 of 79 
+ 
+ 
+Test Mode TX Mode Channel 39_2Mbps Polarization Horizontal 
+ 
+  
+ 
+ 
+ 
+REMARKS: 
+(1) Measurement Value = Reading Level + Correct Factor. 
+(2) Margin Level = Measurement Value - Limit Value. 
+Report No.: BTL-FCCP-1-2506C291 
+Report Version: R01  
+Page 47 of 79 
+ 
+ 
+APPENDIX D - RADIATED EMISSION - ABOVE 1000 MHZ 
+Report No.: BTL-FCCP-1-2506C291 
+Report Version: R01  
+Page 48 of 79 
+ 
+ 
+Test Mode TX 2402 MHz_CH00_1Mbps Polarization Vertical 
+ 
+ 
+  
+ 
+ 
+ 
+REMARKS: 
+(1) Measurement Value = Reading Level + Correct Factor. 
+(2) Margin Level = Measurement Value - Limit Value. 
+Report No.: BTL-FCCP-1-2506C291 
+Report Version: R01  
+Page 49 of 79 
+ 
+ 
+Test Mode TX 2402 MHz_CH00_1Mbps Polarization Horizontal 
+ 
+ 
+  
+ 
+ 
+ 
+REMARKS: 
+(1) Measurement Value = Reading Level + Correct Factor. 
+(2) Margin Level = Measurement Value - Limit Value. 
+Report No.: BTL-FCCP-1-2506C291 
+Report Version: R01  
+Page 50 of 79 
+ 
+ 
+Test Mode TX 2440 MHz_CH19_1Mbps Polarization Vertical 
+ 
+ 
+  
+ 
+ 
+ 
+REMARKS: 
+(1) Measurement Value = Reading Level + Correct Factor. 
+(2) Margin Level = Measurement Value - Limit Value. 
+Report No.: BTL-FCCP-1-2506C291 
+Report Version: R01  
+Page 51 of 79 
+ 
+ 
+Test Mode TX 2480 MHz_CH39_1Mbps Polarization Vertical 
+ 
+ 
+  
+ 
+ 
+ 
+REMARKS: 
+(1) Measurement Value = Reading Level + Correct Factor. 
+(2) Margin Level = Measurement Value - Limit Value. 
+Report No.: BTL-FCCP-1-2506C291 
+Report Version: R01  
+Page 52 of 79 
+ 
+ 
+Test Mode TX 2480 MHz_CH39_1Mbps Polarization Horizontal 
+ 
+ 
+  
+ 
+ 
+ 
+REMARKS: 
+(1) Measurement Value = Reading Level + Correct Factor. 
+(2) Margin Level = Measurement Value - Limit Value. 
+Report No.: BTL-FCCP-1-2506C291 
+Report Version: R01  
+Page 53 of 79 
+ 
+ 
+Test Mode TX 2402 MHz_CH00_2Mbps Polarization Vertical 
+ 
+ 
+  
+ 
+ 
+ 
+REMARKS: 
+(1) Measurement Value = Reading Level + Correct Factor. 
+(2) Margin Level = Measurement Value - Limit Value. 
+Report No.: BTL-FCCP-1-2506C291 
+Report Version: R01  
+Page 54 of 79 
+ 
+ 
+Test Mode TX 2402 MHz_CH00_2Mbps Polarization Horizontal 
+ 
+ 
+  
+ 
+ 
+ 
+REMARKS: 
+(1) Measurement Value = Reading Level + Correct Factor. 
+(2) Margin Level = Measurement Value - Limit Value. 
+Report No.: BTL-FCCP-1-2506C291 
+Report Version: R01  
+Page 55 of 79 
+ 
+ 
+Test Mode TX 2440 MHz_CH19_2Mbps Polarization Vertical 
+ 
+ 
+  
+ 
+ 
+ 
+REMARKS: 
+(1) Measurement Value = Reading Level + Correct Factor. 
+(2) Margin Level = Measurement Value - Limit Value. 
+Report No.: BTL-FCCP-1-2506C291 
+Report Version: R01  
+Page 56 of 79 
+ 
+ 
+Test Mode TX 2480 MHz_CH39_2Mbps Polarization Vertical 
+ 
+ 
+  
+ 
+ 
+ 
+REMARKS: 
+(1) Measurement Value = Reading Level + Correct Factor. 
+(2) Margin Level = Measurement Value - Limit Value. 
+Report No.: BTL-FCCP-1-2506C291 
+Report Version: R01  
+Page 57 of 79 
+ 
+ 
+Test Mode TX 2480 MHz_CH39_2Mbps Polarization Horizontal 
+ 
+ 
+  
+ 
+ 
+ 
+REMARKS: 
+(1) Measurement Value = Reading Level + Correct Factor. 
+(2) Margin Level = Measurement Value - Limit Value. 
+Report No.: BTL-FCCP-1-2506C291 
+Report Version: R01  
+Page 58 of 79 
+ 
+ 
+Test Mode TX 2402 MHz_CH00_125kbps(S=8) Polarization Vertical 
+ 
+ 
+  
+ 
+ 
+ 
+REMARKS: 
+(1) Measurement Value = Reading Level + Correct Factor. 
+(2) Margin Level = Measurement Value - Limit Value. 
+Report No.: BTL-FCCP-1-2506C291 
+Report Version: R01  
+Page 59 of 79 
+ 
+ 
+Test Mode TX 2402 MHz_CH00_125kbps(S=8) Polarization Horizontal 
+ 
+ 
+  
+ 
+ 
+ 
+REMARKS: 
+(1) Measurement Value = Reading Level + Correct Factor. 
+(2) Margin Level = Measurement Value - Limit Value. 
+Report No.: BTL-FCCP-1-2506C291 
+Report Version: R01  
+Page 60 of 79 
+ 
+ 
+Test Mode TX 2440 MHz_CH19_125kbps(S=8) Polarization Vertical 
+ 
+ 
+  
+ 
+ 
+ 
+REMARKS: 
+(1) Measurement Value = Reading Level + Correct Factor. 
+(2) Margin Level = Measurement Value - Limit Value. 
+Report No.: BTL-FCCP-1-2506C291 
+Report Version: R01  
+Page 61 of 79 
+ 
+ 
+Test Mode TX 2480 MHz_CH39_125kbps(S=8) Polarization Vertical 
+ 
+ 
+  
+ 
+ 
+ 
+REMARKS: 
+(1) Measurement Value = Reading Level + Correct Factor. 
+(2) Margin Level = Measurement Value - Limit Value. 
+Report No.: BTL-FCCP-1-2506C291 
+Report Version: R01  
+Page 62 of 79 
+ 
+ 
+Test Mode TX 2480 MHz_CH39_125kbps(S=8) Polarization Horizontal 
+ 
+ 
+  
+ 
+ 
+ 
+REMARKS: 
+(1) Measurement Value = Reading Level + Correct Factor. 
+(2) Margin Level = Measurement Value - Limit Value. 
+Report No.: BTL-FCCP-1-2506C291 
+Report Version: R01  
+Page 63 of 79 
+ 
+ 
+Test Mode TX 2480 MHz_CH39_2Mbps Polarization Vertical 
+ 
+ 
+  
+ 
+ 
+ 
+REMARKS: 
+(1) Measurement Value = Reading Level + Correct Factor. 
+(2) Margin Level = Measurement Value - Limit Value. 
+Report No.: BTL-FCCP-1-2506C291 
+Report Version: R01  
+Page 64 of 79 
+ 
+ 
+Test Mode TX 2480 MHz_CH39_2Mbps Polarization Horizontal 
+ 
+ 
+  
+ 
+ 
+ 
+REMARKS: 
+(1) Measurement Value = Reading Level + Correct Factor. 
+(2) Margin Level = Measurement Value - Limit Value. 
+ 
+Report No.: BTL-FCCP-1-2506C291 
+Report Version: R01  
+Page 65 of 79 
+ 
+ 
+APPENDIX E - BANDWIDTH 
+Report No.: BTL-FCCP-1-2506C291 
+Report Version: R01  
+Page 66 of 79 
+ 
+ 
+Test Mode TX Mode_1Mbps 
+ 
+ 
+Channel Frequency 
+(MHz) 
+6 dB Bandwidth 
+(MHz) 
+99 % Occupied 
+Bandwidth 
+(MHz) 
+6 dB Bandwidth 
+Min. Limit 
+(MHz) 
+Test Result 
+00 2402 0.696 1.055 0.5 Pass 
+19 2440 0.692 1.057 0.5 Pass 
+39 2480 0.692 1.059 0.5 Pass 
+ 
+ 
+CH00 CH19 CH39 
+ 6 dB Bandwidth  
+ 
+  
+  
+   
+ 99 % Occupied Bandwidth  
+ 
+  
+  
+Report No.: BTL-FCCP-1-2506C291 
+Report Version: R01  
+Page 67 of 79 
+ 
+ 
+Test Mode TX Mode_2Mbps 
+ 
+ 
+Channel Frequency 
+(MHz) 
+6 dB Bandwidth 
+(MHz) 
+99 % Occupied 
+Bandwidth 
+(MHz) 
+6 dB Bandwidth 
+Min. Limit 
+(MHz) 
+Test Result 
+00 2402 1.148 2.044 0.5 Pass 
+19 2440 1.152 2.051 0.5 Pass 
+39 2480 1.148 2.051 0.5 Pass 
+ 
+ 
+CH00 CH19 CH39 
+ 6 dB Bandwidth  
+ 
+  
+  
+   
+ 99 % Occupied Bandwidth  
+ 
+  
+  
+Report No.: BTL-FCCP-1-2506C291 
+Report Version: R01  
+Page 68 of 79 
+ 
+ 
+Test Mode TX Mode_125kbps(S=8) 
+ 
+ 
+Channel Frequency 
+(MHz) 
+6 dB Bandwidth 
+(MHz) 
+99 % Occupied 
+Bandwidth 
+(MHz) 
+6 dB Bandwidth 
+Min. Limit 
+(MHz) 
+Test Result 
+00 2402 0.612 1.084 0.5 Pass 
+19 2440 0.612 1.083 0.5 Pass 
+39 2480 0.612 1.087 0.5 Pass 
+ 
+ 
+CH00 CH19 CH39 
+ 6 dB Bandwidth  
+ 
+  
+  
+   
+ 99 % Occupied Bandwidth  
+ 
+  
+  
+ 
+ 
+ 
+ 
+ 
+Report No.: BTL-FCCP-1-2506C291 
+Report Version: R01  
+Page 69 of 79 
+ 
+ 
+APPENDIX F - MAXIMUM OUTPUT POWER  
+Report No.: BTL-FCCP-1-2506C291 
+Report Version: R01  
+Page 70 of 79 
+ 
+  
+Test Mode TX Mode_1Mbps 
+ 
+ 
+Frequency 
+(MHz) 
+Peak Output 
+Power (dBm) 
+Peak Output 
+Power (W) 
+Max. Limit 
+(dBm) 
+Max. Limit 
+(W) Test Result 
+2402 9.16 0.0082 30.00 1.0000 Pass 
+2440 9.17 0.0083 30.00 1.0000 Pass 
+2480 9.29 0.0085 30.00 1.0000 Pass 
+ 
+Frequency 
+(MHz) 
+Average Output 
+Power (dBm) 
+Average Output 
+Power (W) 
+Max. Limit 
+(dBm) 
+Max. Limit 
+(W) Test Result 
+2402 6.97  0.0050 30.00 1.0000 Pass 
+2440 7.02  0.0050 30.00 1.0000 Pass 
+2480 7.14  0.0052 30.00 1.0000 Pass 
+ 
+    Note: Output power = Measure result + Cable loss  
+ 
+CH00 CH19 CH39 
+ Peak Output Power  
+ 
+  
+  
+ 
+Report No.: BTL-FCCP-1-2506C291 
+Report Version: R01  
+Page 71 of 79 
+ 
+ 
+Test Mode TX Mode_2Mbps 
+ 
+ 
+Frequency 
+(MHz) 
+Peak Output 
+Power (dBm) 
+Peak Output 
+Power (W) 
+Max. Limit 
+(dBm) 
+Max. Limit 
+(W) Test Result 
+2402 9.14 0.0082 30.00 1.0000 Pass 
+2440 9.14 0.0082 30.00 1.0000 Pass 
+2480 9.30 0.0085 30.00 1.0000 Pass 
+ 
+Frequency 
+(MHz) 
+Average Output 
+Power (dBm) 
+Average Output 
+Power (W) 
+Max. Limit 
+(dBm) 
+Max. Limit 
+(W) Test Result 
+2402 4.18 0.0026 30.00 1.0000 Pass 
+2440 4.13 0.0026 30.00 1.0000 Pass 
+2480 4.35 0.0027 30.00 1.0000 Pass 
+ 
+    Note: Output power = Measure result + Cable loss  
+ 
+CH00 CH19 CH39 
+ Peak Output Power  
+ 
+  
+  
+Report No.: BTL-FCCP-1-2506C291 
+Report Version: R01  
+Page 72 of 79 
+ 
+ 
+Test Mode TX Mode_125kbps(S=8) 
+ 
+ 
+Frequency 
+(MHz) 
+Peak Output 
+Power (dBm) 
+Peak Output 
+Power (W) 
+Max. Limit 
+(dBm) 
+Max. Limit 
+(W) Test Result 
+2402 9.12 0.0082 30.00 1.0000 Pass 
+2440 9.15 0.0082 30.00 1.0000 Pass 
+2480 9.29 0.0085 30.00 1.0000 Pass 
+ 
+Frequency 
+(MHz) 
+Average Output 
+Power (dBm) 
+Average Output 
+Power (W) 
+Max. Limit 
+(dBm) 
+Max. Limit 
+(W) Test Result 
+2402 6.14 0.0041 30.00 1.0000 Pass 
+2440 6.19 0.0042 30.00 1.0000 Pass 
+2480 6.36 0.0043 30.00 1.0000 Pass 
+ 
+    Note: Output power = Measure result + Cable loss  
+ 
+CH00 CH19 CH39 
+ Peak Output Power  
+ 
+  
+  
+ 
+ 
+ 
+ 
+ 
+Report No.: BTL-FCCP-1-2506C291 
+Report Version: R01  
+Page 73 of 79 
+ 
+ 
+APPENDIX G - CONDUCTED SPURIOUS EMISSION 
+ 
+Report No.: BTL-FCCP-1-2506C291 
+Report Version: R01  
+Page 74 of 79 
+ 
+ 
+Test Mode TX Mode_1Mbps 
+ 
+ 
+Reference Level-CH00  Reference Level-CH19  Reference Level-CH39  
+ 
+  
+  
+ 
+ 
+Bandedge-CH00   Bandedge-CH39 
+ 
+ 
+ 
+ 
+ 
+Harmonic-CH00  Harmonic-CH19  Harmonic-CH39  
+ 
+  
+  
+Report No.: BTL-FCCP-1-2506C291 
+Report Version: R01  
+Page 75 of 79 
+ 
+ 
+Test Mode TX Mode_2Mbps 
+ 
+ 
+Reference Level-CH00  Reference Level-CH19  Reference Level-CH39  
+ 
+  
+  
+ 
+ 
+Bandedge-CH00   Bandedge-CH39 
+ 
+ 
+ 
+ 
+ 
+Harmonic-CH00  Harmonic-CH19  Harmonic-CH39  
+ 
+  
+  
