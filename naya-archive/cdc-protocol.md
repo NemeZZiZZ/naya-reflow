@@ -131,3 +131,51 @@ Probe positions: KK2E (was LShift), KK2F (was LShift), KK30 (was Z). L1/L2 untou
   READ-ALL → 30/1004 → READ-ALL → fe/100a, but our writer works with handshake → 30/1004 → READ-ALL.
   Full factory restore done programmatically: 4× `left set` (1e→CapsLock, 2e/2f→LShift, 30→Z),
   all 3 layers byte-identical to factory baseline dump. NEVER replay commit bytes across sessions.
+
+## AUX recon (2026-09-15, live via `cdc-client.py left/right aux`)
+All read-only. 30/10xx are LEFT-only (right answers fa/be/de/fe, NOT 30/1001).
+Full frames: `naya-archive/aux-left.txt`, `aux-right.txt`.
+
+| Cmd | Left response | Right response | Guess |
+|---|---|---|---|
+| fa/1001 | 43B dev-info | 31B dev-info (shorter) | device descriptor (HwID?) — raw hex in aux files |
+| be/1002 | `c93c71c654bd` | `d4bb98e83fb6` | BLE/slot addr (SWAPPED between halves) |
+| be/1008 | `d4bb98e83fb6` | (not queried) | other addr |
+| be/100f | `00 02 1d` both halves | same | battery? level=0x1d=29%? TBD |
+| be/100c | 250B BLE status | (not queried) | pairs/slots (MACs visible inside) |
+| de/1001 | `00 01 20 30` | `00 01 11 01` | module presence, static per half |
+| de/1008 | `00 20 00 00 02 03 03 3a` | n/a (left-only) | module info, static |
+| de/100b | 4B live, varies | 4B live, varies | live module status |
+| fe/1002 | `00 00 03 29 00 38` both | same | FW version encoding? TBD |
+| fe/1006 | 3B live, varies | 3B live, varies | live status word |
+| fe/100b | `00 905f0100 e0930400 30750000` | (not queried) | **commit-token source: fe/100a params echo this payload verbatim** |
+| 30/1009 | 41B: `00 00 8005 ...` + 16B hash `85cce556...8fdf` | n/a | profile header/checksum (`_verifyProfile`)? |
+| 30/100b | per-layer table (below) | n/a | per-key COLOR table (`_remapReadColorData`)? |
+| 30/100d | 136×4B LED map (below) | n/a | LED MAP |
+
+### 30/100d LED MAP (decoded fully, `dumps/left-ledmap-*.json`)
+- Multipart (MORE/LAYER header like keymap), 544B/layer = **136 × [KK, 0x26, 0x00, 0x64]**.
+- KK = 0x00..0x87 sequential. Suffix constant: 0x26=38 (?), 0x00, 0x64=100 (brightness?).
+- IDENTICAL across L0/L1/L2 → layer-independent. 136 LEDs ≫ 74 keys (matrix + underglow?).
+- Client: `left ledmap [layer|all]`.
+
+### 30/100b per-layer table (dumps/left-100b-*.json, semantics TBD)
+- Same [part,layer] params + multipart. L0=L2=120B = 40×3B `[KK,00,00]`, KK 00..27 (zeros).
+- L1=265B mixed shapes: 4B `[KK,01,01,C]`, 11B `[KK,0f,08,X u32,COLOR u32]`
+  (COLOR ffffffff or small int), 3B `[KK,07,00]`, 7B `[KK,01,04,HID,00,07,COLOR]`,
+  tail 3B `[KK,00,00]` ×9 (KK 1f..27). Only L1 has content.
+- Hypothesis: per-key colors (L0/L2 = defaults). 7B entries carry own HID codes
+  (29,2b,4b,4e,50,4f) differing from keymap L1 → NOT a keymap echo. Resolve empirically
+  (set key color in NayaFlow → diff 100b).
+- Client: `left dump100b`. NOTE: no 100b WRITE observed yet (stock flash used only 30/1004).
+
+### Commit-token correction (supersedes stale-replay theory in part)
+- fe/100b payload == fe/100a params, byte-identical **across sessions/reboots/factory-restore**
+  (`905f0100 e0930400 30750000` in capture3 AND today). So the token is STABLE, not a
+  changing revision — the earlier wedge was likely the off-protocol (2,0) read or
+  commit-without-preceding-write, NOT token staleness. Still: NEVER replay commit bytes;
+  if a commit is ever needed, re-read fe/100b first. Writes persist without commit.
+
+### Parser fixes (cdc-client.py parse_layer)
+- Added T=0x78 3B-empty records (`[KK,78,00]` fillers) and Vs 11B detection
+  (third byte 0x08 → 11B). Keymap L1 now parses 156 keys / full 636B.

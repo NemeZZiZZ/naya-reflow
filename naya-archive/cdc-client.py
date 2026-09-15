@@ -175,6 +175,20 @@ class Session:
             assert part < 8, "runaway parts"
         return blob
 
+    def read_multipart(self, c1: int, layer: int) -> bytes:
+        """Generic 30/10cx per-layer dump (same MORE/LAYER header as keymap)."""
+        blob = b""
+        part = 0
+        while True:
+            f = self.cmd(0x30, 0x10, c1, bytes([part, layer]))
+            pay = f[6:-2]
+            blob += pay[4:]
+            if pay[2] == 0:
+                break
+            part += 1
+            assert part < 8, "runaway parts"
+        return blob
+
     def write_key(self, record: bytes, layer: int = 0) -> bytes:
         """30/1004 per-key write. record = full key record incl. KK as first byte
         (7B for T01/T05, 11B for vendor actions, 24B macros T03)."""
@@ -214,24 +228,57 @@ class Session:
         return self.cmd(0xFE, 0x10, 0x0A,
                         bytes.fromhex("00905f0100e093040030750000"))
 
+    def aux_sweep(self) -> None:
+        """Read-only recon: every known query command, responses printed as hex.
+        Command sets mirror what stock NayaCore sends per half (from
+        cdc-capture1.log) — nothing here writes. 30/10xx are LEFT-only."""
+        def q(name, t, c0, c1, params=b"\x00"):
+            try:
+                show(name, self.cmd(t, c0, c1, params))
+            except IOError as e:
+                print(f"{name}: NO REPLY ({e})")
+        left = self.dst == DST_LEFT
+        if left:
+            q("30/1001 handshake ", 0x30, 0x10, 0x01, b"\x00\x00")
+            q("30/1009 p0 L0     ", 0x30, 0x10, 0x09, b"\x00\x00")
+            for layer in range(3):
+                q(f"30/100b p0 L{layer}     ",
+                  0x30, 0x10, 0x0B, bytes([0, layer]))
+            for layer in range(3):
+                q(f"30/100d LEDMAP p0 L{layer}",
+                  0x30, 0x10, 0x0D, bytes([0, layer]))
+            q("de/1008 module?   ", 0xDE, 0x10, 0x08, b"\x00")
+            q("fe/100b modfw?    ", 0xFE, 0x10, 0x0B, b"\x00")
+            q("be/1008 ble-addr? ", 0xBE, 0x10, 0x08, b"\x00")
+            q("be/100c ble-status", 0xBE, 0x10, 0x0C, b"\x00")
+        q("fa/1001 dev-info  ", 0xFA, 0x10, 0x01, b"\x00")
+        q("be/1002 ble-addr? ", 0xBE, 0x10, 0x02, b"\x00")
+        q("be/100f battery?  ", 0xBE, 0x10, 0x0F, b"\x00")
+        q("de/1001 module?   ", 0xDE, 0x10, 0x01, b"\x00")
+        q("de/100b module-live", 0xDE, 0x10, 0x0B, b"\x00")
+        q("fe/1002 fw?       ", 0xFE, 0x10, 0x02, b"\x00")
+        q("fe/1006 live-stat ", 0xFE, 0x10, 0x06, b"\x00")
+
     def close(self) -> None:
         self.s.close()
 
 
 def parse_layer(blob: bytes) -> dict:
-    """KK -> (offset, record bytes). Records: T01/T05=7B, T03=24B, else [KK,A,LEN]+LEN."""
+    """KK -> (offset, record bytes). Records: T01/T05=7B, T03=24B,
+    Vs vendor [KK,A,08,X u32,Y u32]=11B, short [KK,T,LEN]+LEN for
+    T in {00,02,07,0e,78}."""
     known = {0x01: 7, 0x03: 24, 0x05: 7}
     out, i = {}, 0
     while i < len(blob):
         kk, t = blob[i], blob[i + 1]
         ln = known.get(t)
         if ln is None:
-            if i + 2 > len(blob):
+            if i + 2 < len(blob) and blob[i + 2] == 0x08:
+                ln = 11  # vendor Vs record
+            elif t in (0x07, 0x0e, 0x02, 0x00, 0x78):
+                ln = blob[i + 2] + 3
+            else:
                 break
-            ln = blob[i + 2] if t in (0x07, 0x0e, 0x02, 0x00) else None
-            if ln is None:
-                break
-            ln += 3
         out[kk] = (i, blob[i:i + ln])
         i += ln
     return out
@@ -260,6 +307,59 @@ if __name__ == "__main__":
         fn = f"naya-archive/dumps/{side}-{label}-{stamp}.json"
         json.dump(layers, open(fn, "w"))
         print("saved", fn)
+    elif len(sys.argv) >= 3 and sys.argv[2] == "aux":
+        ses = Session(port, dst)
+        try:
+            ses.aux_sweep()
+        finally:
+            ses.close()
+    elif len(sys.argv) >= 3 and sys.argv[2] == "ledmap":
+        # usage: left ledmap [layer|all] — full multipart 30/100d dump(s) to dumps/
+        import datetime
+        ses = Session(port, dst)
+        try:
+            ses.handshake()
+            want = range(3) if len(sys.argv) < 4 or sys.argv[3] == "all" else [int(sys.argv[3])]
+            out = {}
+            for layer in want:
+                blob = ses.read_multipart(0x0D, layer)
+                out[str(layer)] = blob.hex()
+                print(f"ledmap L{layer}: {len(blob)} bytes")
+            stamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+            fn = f"naya-archive/dumps/left-ledmap-{stamp}.json"
+            json.dump(out, open(fn, "w"))
+            print("saved", fn)
+        finally:
+            ses.close()
+    elif len(sys.argv) >= 3 and sys.argv[2] == "dump100b":
+        # usage: left dump100b — full multipart 30/100b per-layer dumps to dumps/
+        import datetime
+        ses = Session(port, dst)
+        try:
+            ses.handshake()
+            out = {}
+            for layer in range(3):
+                blob = ses.read_multipart(0x0B, layer)
+                out[str(layer)] = blob.hex()
+                print(f"100b L{layer}: {len(blob)} bytes")
+            stamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+            fn = f"naya-archive/dumps/left-100b-{stamp}.json"
+            json.dump(out, open(fn, "w"))
+            print("saved", fn)
+        finally:
+            ses.close()
+    elif len(sys.argv) >= 5 and sys.argv[2] == "raw":
+        # usage: left raw <TYPE-hex> <C0C1-hex> [params-hex]
+        t = int(sys.argv[3], 16)
+        c = int(sys.argv[4], 16)
+        params = bytes.fromhex(sys.argv[5]) if len(sys.argv) >= 6 else b""
+        ses = Session(port, dst)
+        try:
+            if dst == DST_LEFT and t == 0x30:
+                ses.handshake()
+            show(f"raw {t:02x}/{c:04x}", ses.cmd(t, (c >> 8) & 0xFF, c & 0xFF, params))
+        finally:
+            ses.close()
     elif len(sys.argv) >= 5 and sys.argv[2] == "set":
         # usage: left set <KK-hex> <hid:HH|cons:HH|vend:AXXY|raw:hex> [commit]
         # default = stock ritual WITHOUT commit (RAM-only test); add 'commit' to persist.
