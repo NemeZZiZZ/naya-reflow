@@ -2,6 +2,7 @@
 // __DATA,__interpose + RAW SYSCALL passthrough (no dlsym, no libc I/O in hooks).
 #include <fcntl.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
 #include <unistd.h>
@@ -18,11 +19,20 @@
 
 static _Thread_local int in_hook = 0;
 
+/* gate: only log inside NayaCore (the dylib will also load into
+   Electron UI/helpers when injected via app launch env) */
+static int active = 0;
+
 __attribute__((constructor)) static void on_load(void) {
+    const char *pn = getprogname();
+    if (pn && strstr(pn, "NayaCore")) active = 1;
     int fd = syscall(SYS_open, "/tmp/interposer-loaded",
-                     O_WRONLY | O_CREAT | O_TRUNC, 0644);
+                     O_WRONLY | O_CREAT | O_APPEND, 0644);
     if (fd != -1) {
-        syscall(SYS_write, fd, "interposer loaded\n", 18);
+        char m[160];
+        int ml = snprintf(m, sizeof(m), "loaded in %s active=%d\n",
+                          pn ? pn : "?", active);
+        syscall(SYS_write, fd, m, ml);
         syscall(SYS_close, fd);
     }
 }
@@ -71,7 +81,7 @@ static void log_rw(const char *dir, int fd, const void *buf, long len) {
 
 static int do_open(const char *path, int flags, int mode) {
     int fd = syscall(SYS_open, path, flags, mode);
-    if (fd != -1 && path && strstr(path, "usbmodem") && !in_hook) {
+    if (active && fd != -1 && path && strstr(path, "usbmodem") && !in_hook) {
         in_hook = 1;
         int lfd = log_fd();
         if (lfd != -1) {
@@ -105,28 +115,28 @@ extern long write$NOCANCEL(int fd, const void *buf, unsigned long n);
 
 long my_read(int fd, void *buf, unsigned long n) {
     long r = syscall(SYS_read, fd, buf, n);
-    if (r > 0 && fd_is_usbmodem(fd)) log_rw("READ ", fd, buf, r);
+    if (active && r > 0 && fd_is_usbmodem(fd)) log_rw("READ ", fd, buf, r);
     return r;
 }
 DYLD_INTERPOSE(my_read, read);
 
 long my_read_NOCANCEL(int fd, void *buf, unsigned long n) {
     long r = syscall(SYS_read, fd, buf, n);
-    if (r > 0 && fd_is_usbmodem(fd)) log_rw("READ ", fd, buf, r);
+    if (active && r > 0 && fd_is_usbmodem(fd)) log_rw("READ ", fd, buf, r);
     return r;
 }
 DYLD_INTERPOSE(my_read_NOCANCEL, read$NOCANCEL);
 
 long my_write(int fd, const void *buf, unsigned long n) {
     long r = syscall(SYS_write, fd, buf, n);
-    if (r > 0 && fd_is_usbmodem(fd)) log_rw("WRITE", fd, buf, r);
+    if (active && r > 0 && fd_is_usbmodem(fd)) log_rw("WRITE", fd, buf, r);
     return r;
 }
 DYLD_INTERPOSE(my_write, write);
 
 long my_write_NOCANCEL(int fd, const void *buf, unsigned long n) {
     long r = syscall(SYS_write, fd, buf, n);
-    if (r > 0 && fd_is_usbmodem(fd)) log_rw("WRITE", fd, buf, r);
+    if (active && r > 0 && fd_is_usbmodem(fd)) log_rw("WRITE", fd, buf, r);
     return r;
 }
 DYLD_INTERPOSE(my_write_NOCANCEL, write$NOCANCEL);

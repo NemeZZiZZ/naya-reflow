@@ -111,3 +111,23 @@ Vs record: [KK, A, 08, X u32LE, Y u32LE]. Full action ID = (A<<16)|(X<<8)|Y.
 | LED_SWIRL | 0x09 | 13 | 2 | 0x090D02 |
 A proven action-intrinsic (BT_DEVICE_1 → A=00 on both KK2E and KK30). (A,X) = category: (0,3)=BT, (15,3)=mouse, (9,13)=LED; Y = index.
 Probe positions: KK2E (was LShift), KK2F (was LShift), KK30 (was Z). L1/L2 untouched by remap flash.
+
+## WRITE path (captured 2026-09-15, cdc-capture3.log — cloned app + interposer in stock core)
+- Remap flash = **per-key** `30/1004` writes + `fe/100a` commits. NO whole-layer blob.
+- `30/1004` frame (T01 example, len=19): `AA 00 50 id 30 0B 10 04 [00 00 KK + 7B record] CRC 04`.
+  Observed: `...00 1f 01 04 39 00 07 00` (KK=1f → CapsLock 0x39),
+  `...00 1e 01 04 73 00 07 00` (KK=1e → F24 0x73). Params = [00, 00, KK] + key record
+  (00 = layer 0 assumed; vendor-action records presumably 11B → len=23).
+- `fe/100a` (len=23): `AA 00 50 id fe 0F 10 0A [00 90 5f 01 00 e0 93 04 00 30 75 00 00] CRC 04`
+  — identical all 3×, sent after each key write + once final → commit/apply command.
+  Order in session (device-write idx): #73 key(1f) → #98 commit → #136 key(1e) → #161 commit → #232 commit.
+- Idle traffic = 11-byte shorts (`...de/1001, de/1008, de/100b, fe/1006, be/100c` polls).
+- Note: interposer also matches lockfile paths (`/private/tmp/LCK..cu.usbmodem*`) — tighten gate to `/dev/cu.usbmodem` later.
+- Writer recipe: open port (DTR/RTS as Qt) → 30/1001 handshake → 30/1004 per key → fe/100a commit → verify via 30/1003 readback.
+- CORRECTION (2026-09-15, proven live): **fe/100a commit is UNNECESSARY and DANGEROUS to replay**.
+  `30/1004` alone applies instantly to RAM *and persists across power reboot* (Q-test: KK30→Q typed Q,
+  still Q after switch-reboot). Replaying sniffed fe/100a bytes wedged the device state machine
+  (chaotic reads) — recovered by power reboot, no NVS damage. Stock ritual per key is
+  READ-ALL → 30/1004 → READ-ALL → fe/100a, but our writer works with handshake → 30/1004 → READ-ALL.
+  Full factory restore done programmatically: 4× `left set` (1e→CapsLock, 2e/2f→LShift, 30→Z),
+  all 3 layers byte-identical to factory baseline dump. NEVER replay commit bytes across sessions.
