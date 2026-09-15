@@ -1,14 +1,15 @@
-# NayaFlow-releases (archival mirror)
+# naya-reflow — firmware backup
 
-Company **Naya went bankrupt** — this fork preserves what can still be downloaded
+Company **Naya went bankrupt** — this repo preserves what can still be downloaded
 from the original `NayaTech/NayaFlow-releases` before it disappears.
 GitHub forks do **not** copy Release assets, so installers are re-uploaded as
-releases here, and extracted firmware images are versioned in [`fw/`](fw/).
+[releases](../../releases) here, and extracted firmware images are versioned in
+[`backup/firmware/`](.).
 
-## Extracted keyboard/module firmware (`fw/`)
+## Extracted keyboard/module firmware
 
 MCUboot images carved from the NayaCore binaries bundled in each NayaFlow release
-(see [`extract_fw.py`](extract_fw.py), validated byte-identical across x64/arm64
+(see [`extract_fw.py`](../../toolkit/extract_fw.py), validated byte-identical across x64/arm64
 host builds). All images: MCUboot header (`ih_ver` is a placeholder `1.2.3`),
 **encrypted** body, TLV auth area (RSA-2048 per original RE), `0xFF` pad trimmed.
 
