@@ -437,8 +437,7 @@ export class NayaSession {
     return f.payload;
   }
 
-  async readLedmap(layer: number): Promise<Uint8Array> {
-    // 30/100d LED MAP: same [part,layer] params + multipart shape as the
+  async readLedmap(layer: number): Promise<Uint8Array> {    // 30/100d LED MAP: same [part,layer] params + multipart shape as the
     // keymap (payload = [MORE, LAYER, DATA...]). 544B/layer =
     // 136 x [KK, Hue_lo, Hue_hi, Sat], KK 0x00..0x87. Per-layer container.
     const parts: Uint8Array[] = [];
@@ -464,6 +463,38 @@ export class NayaSession {
       0x0e,
       new Uint8Array([0, 0, kk, h & 0xff, (h >> 8) & 0xff, s]),
     );
+    return f.payload;
+  }
+
+  async readModuleConfig(layer: number): Promise<Uint8Array> {
+    // 30/100b MODULE CONFIG DATA: same [part,layer] multipart shape.
+    // 40 slots/layer, records [SLOT, FAMILY, LEN, payload].
+    const parts: Uint8Array[] = [];
+    let part = 0;
+    for (;;) {
+      const f = await this.cmd(0x30, 0x10, 0x0b, new Uint8Array([part, layer]));
+      parts.push(f.payload.slice(2));
+      if (f.payload[0] === 0) break;
+      if (++part >= 8) throw new Error('runaway parts');
+    }
+    return concat(parts);
+  }
+
+  async getTimeouts(): Promise<Uint8Array> {
+    // fe/100b GET ACTIVITY TIMEOUTS → payload 13B = status 00 + 3 x u32LE ms
+    // (idle / sleep / deep). Params: single 00.
+    const f = await this.cmd(0xfe, 0x10, 0x0b, new Uint8Array([0]));
+    return f.payload;
+  }
+
+  async setTimeouts(payload13: Uint8Array | number[]): Promise<Uint8Array> {
+    // fe/100a SET ACTIVITY TIMEOUTS: params = the same 13B layout
+    // (status byte 00 + 3 x u32LE ms). Proven by the NayaFlow settings flow.
+    // NOTE: replaying captured fe/100a bytes as a "commit" wedged the state
+    // machine — but sending it with fresh user values is the stock path.
+    const p = payload13 instanceof Uint8Array ? payload13 : Uint8Array.from(payload13);
+    if (p.length !== 13) throw new Error('timeouts payload must be 13 bytes');
+    const f = await this.cmd(0xfe, 0x10, 0x0a, p);
     return f.payload;
   }
 
@@ -629,6 +660,34 @@ export function parseLedmap(blob: Uint8Array | number[]): {
 }
 
 // Approximate on-screen swatch (device has no Value channel; assume full).
+export function timeoutsMs(p: Uint8Array): {
+  idleMs: number;
+  sleepMs: number;
+  deepMs: number;
+} | null {
+  // fe/100b payload: 00 + 3 x u32LE ms (factory: 90000 / 300000 / 30000).
+  if (p.length < 13 || p[0] !== 0) return null;
+  const dv = new DataView(p.buffer, p.byteOffset, p.byteLength);
+  return {
+    idleMs: dv.getUint32(1, true),
+    sleepMs: dv.getUint32(5, true),
+    deepMs: dv.getUint32(9, true),
+  };
+}
+
+export function timeoutsPayload(
+  idleMs: number,
+  sleepMs: number,
+  deepMs: number,
+): Uint8Array {
+  const u = new Uint8Array(13);
+  const dv = new DataView(u.buffer);
+  dv.setUint32(1, idleMs >>> 0, true);
+  dv.setUint32(5, sleepMs >>> 0, true);
+  dv.setUint32(9, deepMs >>> 0, true);
+  return u;
+}
+
 export function ledCss(h: number, s: number): string {
   return `hsl(${h % 360} ${Math.min(100, s)}% 50%)`;
 }

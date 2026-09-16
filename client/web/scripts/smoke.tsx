@@ -12,6 +12,9 @@ import {
 import * as fs from 'fs';
 import * as path from 'path';
 import { keyIconName } from '../src/lib/key-icon-map';
+import { ACTIONS, buildRecord, matchAction } from '../src/lib/actions';
+import { Draft } from '../src/lib/draft';
+import { timeoutsMs, timeoutsPayload } from '../src/lib/naya';
 import Keyboard from '../src/components/Keyboard';
 
 let n = 0;
@@ -271,5 +274,53 @@ for (const d of ['Backspace', 'BT Device 3', 'Naya key (factory)', 'special 43 0
   eq(nm !== null && diskFiles.has(nm + '.svg') ? 'ok' : 'bad', 'ok', 'mapped file exists: ' + d);
 }
 console.log('done-icons', n, 'checks');
+
+// 14. actions.ts catalog + builders
+eq(ACTIONS.length > 90 ? 'ok' : 'bad: ' + ACTIONS.length, 'ok', 'catalog size');
+const recQ = buildRecord(0x30, ACTIONS.find((a) => a.id === 'hid:20')!.body());
+eq(toHex(recQ), '30 01 04 14 00 07 00', 'build hid Q');
+const recBt = buildRecord(0x2e, ACTIONS.find((a) => a.id === 'bt:1')!.body());
+eq(toHex(recBt), '2e 00 08 03 00 00 00 01 00 00 00', 'build BT1 (matches probe3)');
+eq(matchAction(recBt)?.id, 'bt:1', 'matchAction BT1');
+eq(matchAction(recQ)?.id, 'hid:20', 'matchAction Q');
+eq(matchAction(new Uint8Array([0x30, 0x05, 0x04, 1, 0, 0, 0]))?.id, 'special:1', 'match MO');
+eq(matchAction(new Uint8Array([0x30, 0x05, 0x04, 2, 0, 0, 0]))?.id, 'naya', 'match Naya');
+eq(matchAction(new Uint8Array([0x30, 0x78, 0x00]))?.id, 'empty', 'match empty');
+eq(matchAction(new Uint8Array([0x30, 0x03, 0x15, 1, 2, 3])), undefined, 'no match T03');
+
+// 15. draft.ts queue logic
+const d1 = new Draft();
+d1.add({ kind: 'key', layer: 0, kk: 0x30, record: recQ, label: 'Q' });
+d1.add({ kind: 'key', layer: 0, kk: 0x30, record: buildRecord(0x30, ACTIONS.find((a) => a.id === 'hid:21')!.body()), label: 'W' });
+eq(d1.ops.length, 1, 'latest op wins same kk');
+d1.add({ kind: 'led', layer: 0, kk: 0x30, h: 180, s: 100 });
+eq(d1.ops.length, 2, 'key+led coexist');
+d1.add({ kind: 'led', layer: 1, kk: 0x30, h: 300, s: 70 });
+eq(d1.ops.length, 3, 'per-layer led ops');
+// reconcile: device already has W at L0 KK30 and cyan at L0 KK30
+const dropped = d1.reconcile(
+  [[{ kk: 0x30, t: 1, rec: buildRecord(0x30, ACTIONS.find((a) => a.id === 'hid:21')!.body()), offset: 0 }], [], []],
+  [[{ kk: 0x30, h: 180, s: 100, offset: 0 }], [], []],
+);
+eq(dropped, 2, 'reconcile drops satisfied');
+eq(d1.ops.length === 1 && d1.ops[0].kind === 'led' && d1.ops[0].layer === 1 ? 'ok' : 'bad', 'ok', 'reconcile keeps unsatisfied');
+d1.clear();
+eq(d1.size, 0, 'clear');
+const d2 = new Draft();
+d2.add({ kind: 'key', layer: 0, kk: 0x1e, record: recQ, label: 'Q' });
+d2.add({ kind: 'led', layer: 0, kk: 0x1e, h: 38, s: 100 });
+const st = d2.stats();
+eq(st.ops === 2 && st.frames === 2 && st.bytes === 10 + 2 + 7 + 16 ? 'ok' : 'bad', 'ok', 'stats frames/bytes');
+
+// 16. timeouts codec
+const factoryTo = new Uint8Array(13);
+{
+  const dv = new DataView(factoryTo.buffer);
+  dv.setUint32(1, 90000, true); dv.setUint32(5, 300000, true); dv.setUint32(9, 30000, true);
+}
+eq(JSON.stringify(timeoutsMs(factoryTo)), JSON.stringify({ idleMs: 90000, sleepMs: 300000, deepMs: 30000 }), 'timeoutsMs factory');
+const rt = timeoutsPayload(6000000, 6000000, 30000);
+eq(rt.length === 13 && timeoutsMs(rt)!.idleMs === 6000000 ? 'ok' : 'bad', 'ok', 'timeouts roundtrip');
+eq(timeoutsMs(new Uint8Array([1, 2, 3])), null, 'timeoutsMs rejects short');
 }
 void main();
