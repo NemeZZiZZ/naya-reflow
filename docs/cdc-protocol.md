@@ -112,6 +112,29 @@ Vs record: [KK, A, 08, X u32LE, Y u32LE]. Full action ID = (A<<16)|(X<<8)|Y.
 A proven action-intrinsic (BT_DEVICE_1 → A=00 on both KK2E and KK30). (A,X) = category: (0,3)=BT, (15,3)=mouse, (9,13)=LED; Y = index.
 Probe positions: KK2E (was LShift), KK2F (was LShift), KK30 (was Z). L1/L2 untouched by remap flash.
 
+## T10 27-byte multi-behavior records — T03 experiment (KK30=Z, 2026-09-17)
+
+A key with Tap/Hold/DoubleTap/Tap&Hold becomes a PAIR of T=0x10 records
+(27B = `[KK,10,18]` + 24B payload), proven by device dump + NayaCore log
+(`tap:/hold:/double_tap:/tap_hold:` + `wire:`/`shadow:` lines, byte-identical):
+
+Format: `[KK, 10, 18, c8,00, 03, 01,01,00, c8,00, A_HID,00,07,00, 00×4, B_HID,00,07,00, 00×4]`
+- `c8 00` ×2 = tapping-term 200ms u16LE (hold threshold + double-tap window).
+- `03`, `01 01 00` = constants (both records identical; meaning TBD).
+- A/B = two behaviors as bare `[HID,00,07,00]` triples (HID + page 0x0007, no MODMASK).
+- Primary @real KK: A=hold, B=tap. Shadow @KK82: A=tap_hold, B=double_tap.
+- Example: KK30 primary `...1c 00 07 00...1d 00 07 00...` (hold Y / tap Z);
+  shadow@82 `...1a 00 07 00...1b 00 07 00...` (tap_hold W / double X).
+- Tail index triplet `4b 00 00` → `4b 02 00` when the pair exists (V = T10-record
+  count on layer? single sample; `4c/4d=01` baseline constant in all dumps).
+- Shadow slot KK82 = T07 filler in factory; addressing rule for 2nd+ multi-key
+  unproven (needs a two-multi-key experiment: new shadow at 0x83? 4b→04?).
+- Old `T03` name was a misnomer (T=0x03 24B records are macros, never observed
+  on wire; DB `macros` table has 1 BASIC macro, never flashed in logs).
+- DB side: `key_bindings.behavior` ∈ {press, hold, double_tap, tap_hold} per
+  `(key_id)`; stock flashes all four; our writer must emit the pair + fix 4b.
+- Byte math closes: L0 772 → 816 = +20 (KK30 7→27B) + 24 (KK82 3→27B).
+
 ## T05 7-byte special records — family 04 decoded (LH4/RH4, 2026-09-16)
 Format: `[KK, 05, 04, ID, 00, 00, 00]` (T=05, 7B; describe shows `special <hex>`).
 | ID | Meaning | Factory positions |

@@ -47,8 +47,11 @@ dumps with per-key `tap: (ACTION)` + `wire: <hex>` pairs, 8 full dumps).
 
 ## Still missing (needs user hands or further RE)
 
-1. **T03 24B multi-behavior** (Tap/Hold/DoubleTap/Tap+Hold): 0 `hold:` lines in all
-   logs → needs user NayaFlow Hold-assignment experiment + our dump.
+1. **T03 multi-behavior — SOLVED 2026-09-17** (see `cdc-protocol.md` "T10 27-byte"
+   section): T=0x10 pair (primary@KK: hold+tap, shadow@KK82: tap_hold+double_tap),
+   tail triplet 4b = pair count. Open sub-questions: shadow-slot allocation for a
+   2nd multi-key, `03`/`01 01 00` constants, MODMASK-less behavior triples
+   (Shifted hold values untested).
 2. MODMASK bit table (single Shift sample; assume HID boot-modifier bits).
 3. Module-config WRITE wire code (30/100c unconfirmed; logs carry no frame codes).
 4. Per-layer LED ANIMATION setting protocol (Solid/Breathe/Swirl/Spectrum names
