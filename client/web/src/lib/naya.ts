@@ -303,6 +303,14 @@ export class NayaSession {
     let reader;
     let writer;
     try {
+      // A second concurrent connect() on the same port object (auto-connect
+      // racing a manual click, hot-plug + mount loop) would die here with a
+      // raw TypeError. Fail fast with an actionable message instead.
+      if (readable.locked) {
+        throw new Error(
+          'port readable is locked — another session holds this port',
+        );
+      }
       reader = readable.getReader();
       writer = writable.getWriter();
     } catch (e) {
@@ -368,16 +376,32 @@ export class NayaSession {
     await sleep(300);
   }
 
+  // Per-session promise mutex: concurrent callers (1s presence tick, 30s
+  // sweep, dumpAll, manual ops) share one port. Without serialization their
+  // request/response pairs interleave and both roundtrips eat each other's
+  // frames until the deadline ("sync lost"). Every cmd() runs atomically.
+  private tail: Promise<void> = Promise.resolve();
+
   async cmd(type: number, c0: number, c1: number, params: Uint8Array): Promise<Frame> {
-    this.fr.clear();
-    await this.fr.drain(150, 600);
-    return roundtrip(
-      this.writeFn,
-      this.fr,
-      buildFrame(this.dst, type, c0, c1, params),
-      6,
-      this.onFrame,
-    );
+    const prev = this.tail;
+    let release!: () => void;
+    this.tail = new Promise<void>((res) => {
+      release = res;
+    });
+    await prev;
+    try {
+      this.fr.clear();
+      await this.fr.drain(150, 600);
+      return await roundtrip(
+        this.writeFn,
+        this.fr,
+        buildFrame(this.dst, type, c0, c1, params),
+        6,
+        this.onFrame,
+      );
+    } finally {
+      release();
+    }
   }
 
   async handshake(): Promise<Frame> {

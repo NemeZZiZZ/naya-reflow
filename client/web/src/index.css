@@ -58,43 +58,90 @@ body {
 }
 
 /* Transcribed NayaFlow keyboard look: fixed-pixel keycaps, dark stage */
-  #kbwrap { overflow: hidden; background: #0a0b0d; border-radius: 8px; padding: 18px 10px 10px; }
-#kbwrap svg { display: block; }
-#kbwrap .kb-key:hover { filter: brightness(1.5); }
-/* Keycap legend: absolute-centered label + black halo so white legends
-   stay readable on light LED fills (Tailwind can't express this
-   multi-shadow cleanly, hence one semantic class) */
-.kb-legend {
-  position: absolute;
-  transform: translate(-50%, -50%);
-  font-size: 14px;
-  line-height: 1;
-  text-align: center;
-  pointer-events: none;
-  white-space: pre-line;
-  text-shadow:
-    2px 0 0 #000,-2px 0 0 #000,0 2px 0 #000,0 -2px 0 #000,
-    2px 2px 0 #000,-2px -2px 0 #000,2px -2px 0 #000,-2px 2px 0 #000,
-    1px 0 0 #000,-1px 0 0 #000,0 1px 0 #000,0 -1px 0 #000;
+#kbwrap {
+  overflow: hidden;
+  background: #0a0b0d;
+  border-radius: 8px;
+  padding: 18px 10px 10px;
+}
+#kbwrap svg {
+  display: block;
+}
+#kbwrap .kb-key:hover {
+  filter: brightness(1.5);
+}
+/* Inlined keycap action glyphs: 40x40 viewBox, currentColor shapes, fit box */
+#kbwrap .kb-icon {
+  display: inline-flex;
+  width: 32px;
+  height: 32px;
+  vertical-align: middle;
+}
+#kbwrap .kb-icon svg {
+  width: 100%;
+  height: 100%;
 }
 
 /* Minimal enter animations (no extra deps) */
-@keyframes overlay-show { from { opacity: 0; } to { opacity: 1; } }
+@keyframes overlay-show {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
 @keyframes dialog-show {
-  from { opacity: 0; transform: translate(-50%, -48%) scale(0.98); }
-  to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  from {
+    opacity: 0;
+    transform: translate(-50%, -48%) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
 }
 /* popover: opacity ONLY — Radix Popper positions via inline transform,
    any transform animation here would override it and flash the panel
    in the corner for the animation duration */
-@keyframes popover-show { from { opacity: 0; } to { opacity: 1; } }
-@keyframes tooltip-show { from { opacity: 0; } to { opacity: 1; } }
-@keyframes sheet-show {
-  from { opacity: 0.4; transform: translateX(2rem); }
-  to { opacity: 1; transform: translateX(0); }
+@keyframes popover-show {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
-.animate-overlay-show { animation: overlay-show 150ms ease-out; }
-.animate-dialog-show { animation: dialog-show 150ms ease-out; }
-.animate-popover-show { animation: popover-show 120ms ease-out; }
-.animate-tooltip-show { animation: tooltip-show 120ms ease-out; }
-.animate-sheet-show { animation: sheet-show 180ms ease-out; }
+@keyframes tooltip-show {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes sheet-show {
+  from {
+    opacity: 0.4;
+    transform: translateX(2rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+.animate-overlay-show {
+  animation: overlay-show 150ms ease-out;
+}
+.animate-dialog-show {
+  animation: dialog-show 150ms ease-out;
+}
+.animate-popover-show {
+  animation: popover-show 120ms ease-out;
+}
+.animate-tooltip-show {
+  animation: tooltip-show 120ms ease-out;
+}
+.animate-sheet-show {
+  animation: sheet-show 180ms ease-out;
+}

@@ -4,10 +4,13 @@
 // legend anchors (top/left per shape) stay inline. Controlled component:
 // legends/fills come from props (paint after layer / LED dumps),
 // selection lives in the parent.
-import type { SVGProps } from 'react';
-import { describeRecord, ledCss } from '../lib/naya';
-import { POS_KEY, POS_SHAPE, SHAPES } from '../lib/kb-data';
-import type { KeyShape } from '../lib/kb-data';
+import type { SVGProps } from "react";
+import { describeRecord, ledCss } from "../lib/naya";
+import { keyIconName } from "../lib/key-icon-map";
+import { KEY_ICONS } from "../lib/key-icons";
+import { POS_KEY, POS_SHAPE, SHAPES } from "../lib/kb-data";
+import type { KeyShape } from "../lib/kb-data";
+import { cn } from "../lib/utils";
 
 export interface LedVal {
   h: number;
@@ -18,8 +21,18 @@ function attrName(k: string): string {
   return k.replace(/-([a-z])/g, (_, c: string) => c.toUpperCase());
 }
 
-function ShapeSvg({ name, fill, stroke }: { name: string; fill: string; stroke: string }) {
-  const sh: KeyShape = SHAPES[name] ?? SHAPES['Ve'];
+function ShapeSvg({
+  name,
+  fill,
+  stroke,
+  className,
+}: {
+  name: string;
+  fill?: string;
+  stroke?: string;
+  className?: string;
+}) {
+  const sh: KeyShape = SHAPES[name] ?? SHAPES["Ve"];
   return (
     <svg
       width={Number(sh.w)}
@@ -27,20 +40,21 @@ function ShapeSvg({ name, fill, stroke }: { name: string; fill: string; stroke: 
       viewBox={sh.vb}
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
+      className={className}
     >
       {sh.inners.map((el, i) => {
         const props: Record<string, string> = {};
         for (const [k, v] of el.attrs)
           props[attrName(k)] = v
-            .split('{F}')
+            .split("{F}")
             .join(fill)
-            .split('{S}')
+            .split("{S}")
             .join(stroke)
-            .split('{O}')
-            .join('1');
-        if (el.tag === 'circle')
+            .split("{O}")
+            .join("1");
+        if (el.tag === "circle")
           return <circle key={i} {...(props as SVGProps<SVGCircleElement>)} />;
-        if (el.tag === 'rect')
+        if (el.tag === "rect")
           return <rect key={i} {...(props as SVGProps<SVGRectElement>)} />;
         return <path key={i} {...(props as SVGProps<SVGPathElement>)} />;
       })}
@@ -50,23 +64,27 @@ function ShapeSvg({ name, fill, stroke }: { name: string; fill: string; stroke: 
 
 function shortLabel(rec: Uint8Array): string {
   const d = describeRecord(rec);
-  if (d.startsWith('empty') || d.startsWith('index block') || d.startsWith('unknown'))
-    return '';
-  if (d === 'Naya key (factory)') return 'Naya';
-  if (d.startsWith('macro')) return 'Macro';
-  let m = d.match(/^BT Device (\d+)$/);
-  if (m) return 'BT' + m[1];
-  m = d.match(/^Mouse (Left|Right|Middle)$/);
-  if (m) return 'M-' + m[1][0];
-  if (d.startsWith('Mouse button')) return 'M?';
-  m = d.match(/^LED effect #(\d+)$/);
-  if (m) return 'FX' + m[1];
-  if (d.startsWith('LED')) return 'LED';
   if (
-    d.startsWith('vendor') ||
-    d.startsWith('special') ||
-    d.startsWith('Consumer') ||
-    d.startsWith('usage page')
+    d.startsWith("empty") ||
+    d.startsWith("index block") ||
+    d.startsWith("unknown")
+  )
+    return "";
+  if (d === "Naya key (factory)") return "Naya";
+  if (d.startsWith("macro")) return "Macro";
+  let m = d.match(/^BT Device (\d+)$/);
+  if (m) return "BT" + m[1];
+  m = d.match(/^Mouse (Left|Right|Middle)$/);
+  if (m) return "M-" + m[1][0];
+  if (d.startsWith("Mouse button")) return "M?";
+  m = d.match(/^LED effect #(\d+)$/);
+  if (m) return "FX" + m[1];
+  if (d.startsWith("LED")) return "LED";
+  if (
+    d.startsWith("vendor") ||
+    d.startsWith("special") ||
+    d.startsWith("Consumer") ||
+    d.startsWith("usage page")
   )
     return d.slice(0, 8);
   return d.length > 10 ? d.slice(0, 10) : d;
@@ -83,28 +101,49 @@ interface KeyProps {
 
 function Key({ pos, rec, led, ledMode, selected, onSelect }: KeyProps) {
   const kk = pos; // positionId == KK index (proven: 0=Esc/LA1, 0x30=Z/LC4 …)
-  const sh: KeyShape = SHAPES[POS_SHAPE[pos]] ?? SHAPES['Ve'];
-  const label = rec ? shortLabel(rec) : (POS_KEY[String(pos)] ?? '');
+  const label = rec ? shortLabel(rec) : (POS_KEY[String(pos)] ?? "");
+  // action glyph for non-standard keys (currentColor => follows legend color);
+  // null -> text legend fallback (letters, digits, Shift, Menu, F-keys …)
+  const iconName = rec ? keyIconName(describeRecord(rec)) : null;
+  const icon = iconName ? KEY_ICONS[iconName] : undefined;
   const fill = selected
-    ? '#ffffff'
+    ? "#ffffff"
     : ledMode && led
       ? ledCss(led.h, led.s)
-      : 'transparent';
+      : "transparent";
   return (
     <div
       className="kb-key"
       data-pos={pos}
-      title={`pos ${pos} = ${POS_KEY[String(pos)] ?? '?'} KK 0x${kk.toString(16)}${rec ? ' — ' + describeRecord(rec) : ''}`}
+      title={`pos ${pos} = ${POS_KEY[String(pos)] ?? "?"} KK 0x${kk.toString(16)}${rec ? " — " + describeRecord(rec) : ""}`}
       onClick={() => onSelect(pos, kk)}
     >
       <div className="relative">
-        <ShapeSvg name={POS_SHAPE[pos]} fill={fill} stroke="#E5E1E6" />
-        <div
-          className={`kb-legend ${selected ? 'text-[#111]' : 'text-[#E5E1E6]'}`}
-          style={{ top: sh.lt, left: sh.ll }}
+        <ShapeSvg
+          name={POS_SHAPE[pos]}
+          fill={fill}
+          stroke="#E5E1E6"
+          className="stroke-gray-100"
+        />
+        <span
+          className={cn(
+            "absolute text-sm left-1/2 top-1/2 -translate-1/2 font-medium whitespace-nowrap",
+            {
+              "text-gray-900": selected,
+              "text-gray-100 text-shadow-[-1px_-1px_0_rgba(0,0,0,.5),1px_-1px_0_rgba(0,0,0,.5),-1px_1px_0_rgba(0,0,0,.5),1px_1px_0_rgba(0,0,0,.5)]":
+                !selected,
+            },
+          )}
         >
-          {label}
-        </div>
+          {icon ? (
+            <span
+              className="kb-icon"
+              dangerouslySetInnerHTML={{ __html: icon }}
+            />
+          ) : (
+            label
+          )}
+        </span>
       </div>
     </div>
   );
@@ -148,17 +187,19 @@ export default function Keyboard({
 
   const halfLeft = (
     <div className="flex pr-[0.3rem] h-full justify-self-end">
-      {col('mt-[1.5rem] mr-[0.5rem]', [0, 16, 30, 46, 62])}
-      {col('mr-[0.6rem] mt-[1rem]', [1, 17, 31, 47, 63])}
-      {col('mt-[0.5rem] mr-[0.5rem]', [2, 18, 32, 48, 64])}
-      {col('mr-[0.5rem] mt-[0.2rem]', [3, 19, 33, 49, 65])}
-      <div className="flex flex-col gap-[0.1rem] flex-nowrap mr-[0.5rem] w-11">
+      {col("mt-[1.5rem] mr-[0.5rem]", [0, 16, 30, 46, 62])}
+      {col("mr-[0.6rem] mt-[1rem]", [1, 17, 31, 47, 63])}
+      {col("mt-[0.5rem] mr-[0.5rem]", [2, 18, 32, 48, 64])}
+      {col("mr-[0.5rem] mt-[0.2rem]", [3, 19, 33, 49, 65])}
+      <div className="flex flex-col gap-[0.1rem] flex-nowrap mr-2 w-11">
         {[4, 20, 34].map(K)}
-        <div className="flex flex-row-reverse pt-[0.1rem] pl-[2.6rem]">{K(50)}</div>
-        <div className="pt-[0.1rem] self-center ml-[4rem]">{K(66)}</div>
+        <div className="flex flex-row-reverse pt-[0.1rem] pl-[2.6rem]">
+          {K(50)}
+        </div>
+        <div className="pt-[0.1rem] self-center ml-16">{K(66)}</div>
       </div>
-      {col('mr-[0.5rem]', [5, 21, 35, 51])}
-      <div className="flex flex-col gap-[0.1rem] flex-nowrap w-11 mr-[0.5rem] mt-[0.15rem]">
+      {col("mr-[0.5rem]", [5, 21, 35, 51])}
+      <div className="flex flex-col gap-[0.1rem] flex-nowrap w-11 mr-2 mt-[0.15rem]">
         {[6, 22].map(K)}
         <div className="relative flex flex-row right-[0.2rem]">{K(36)}</div>
         {K(52)}
@@ -171,22 +212,24 @@ export default function Keyboard({
 
   const halfRight = (
     <div className="flex h-full justify-self-start">
-      {col('mt-[0.3rem]', [8])}
-      <div className="flex flex-col gap-[0.1rem] w-11 flex-nowrap ml-[0.5rem] mt-[0.15rem]">
+      {col("mt-[0.3rem]", [8])}
+      <div className="flex flex-col gap-[0.1rem] w-11 flex-nowrap ml-2 mt-[0.15rem]">
         {[9, 23].map(K)}
         <div className="flex flex-row-reverse pl-[2.6rem]">{K(39)}</div>
         {K(55)}
       </div>
-      {col('ml-[0.5rem]', [10, 24, 40, 56])}
-      <div className="flex flex-col gap-[0.1rem] w-11 flex-nowrap ml-[0.5rem]">
+      {col("ml-[0.5rem]", [10, 24, 40, 56])}
+      <div className="flex flex-col gap-[0.1rem] w-11 flex-nowrap ml-2">
         {[11, 25, 41].map(K)}
-        <div className="flex flex-row-reverse pt-[0.1rem] pl-[2.6rem]">{K(57)}</div>
-        <div className="pt-[0.1rem] self-center mr-[4rem]">{K(69)}</div>
+        <div className="flex flex-row-reverse pt-[0.1rem] pl-[2.6rem]">
+          {K(57)}
+        </div>
+        <div className="pt-[0.1rem] self-center mr-16">{K(69)}</div>
       </div>
-      {col('ml-[0.5rem] mt-[0.2rem]', [12, 26, 42, 58, 70])}
-      {col('ml-[0.5rem] mt-[0.5rem]', [13, 27, 43, 59, 71])}
-      {col('ml-[0.6rem] mt-[1rem]', [14, 28, 44, 60, 72])}
-      {col('ml-[0.5rem] mt-[1.5rem]', [15, 29, 45, 61, 73])}
+      {col("ml-[0.5rem] mt-[0.2rem]", [12, 26, 42, 58, 70])}
+      {col("ml-[0.5rem] mt-[0.5rem]", [13, 27, 43, 59, 71])}
+      {col("ml-[0.6rem] mt-[1rem]", [14, 28, 44, 60, 72])}
+      {col("ml-[0.5rem] mt-[1.5rem]", [15, 29, 45, 61, 73])}
     </div>
   );
 
@@ -210,8 +253,8 @@ export default function Keyboard({
   return (
     <div
       className={
-        `grid w-full min-w-[940px] h-60 grid-cols-[1fr_14rem_1fr] ` +
-        (disabled ? 'opacity-50 saturate-50 cursor-default' : 'cursor-pointer')
+        `grid w-full min-w-235 grid-cols-[1fr_14rem_1fr] ` +
+        (disabled ? "opacity-50 saturate-50 cursor-default" : "cursor-pointer")
       }
     >
       {halfLeft}

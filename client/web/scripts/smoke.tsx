@@ -2,13 +2,16 @@ import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import {
   buildFrame, toHex, verifyFrame, parseLayer, parseLedmap,
-  describeRecord, ledCss, fwVersionText, NayaSession,
+  describeRecord, ledCss, fwVersionText, NayaSession, FrameReader,
   modPresence, modFwText, modRailMv, modPct, batteryMv, batteryPctRough,
   sideFromUsbInfo, hsToHex, hexToHs,
 } from '../src/lib/naya';
 import {
   POS_KEY, POS_SHAPE, SHAPES,
 } from '../src/lib/kb-data';
+import * as fs from 'fs';
+import * as path from 'path';
+import { keyIconName } from '../src/lib/key-icon-map';
 import Keyboard from '../src/components/Keyboard';
 
 let n = 0;
@@ -108,6 +111,52 @@ function mockReader() {
   };
 }
 const mockWriter = { async write(_b: Uint8Array) {}, releaseLock() {} };
+// Duplex fake serial port: answers every request frame after delayMs with a
+// CRC-valid response echoing TYPE/C0/C1. Logs wire events for atomicity checks.
+function duplexFake(delayMs: number) {
+  const events: string[] = [];
+  let queue: Uint8Array[] = [];
+  let waiter: (() => void) | null = null;
+  let cancelled = false;
+  const tag = (f: Uint8Array) => f[4].toString(16) + '/' + f[6].toString(16) + f[7].toString(16);
+  const enqueue = (c: Uint8Array) => {
+    if (cancelled) return;
+    queue.push(c);
+    if (waiter) { const w = waiter; waiter = null; w(); }
+  };
+  const reader = {
+    async read(): Promise<{ value?: Uint8Array; done?: boolean }> {
+      for (;;) {
+        if (cancelled) return { value: undefined, done: true };
+        const c = queue.shift();
+        if (c) return { value: c, done: false };
+        await new Promise<void>((res) => { waiter = res; });
+      }
+    },
+    async cancel() {
+      cancelled = true;
+      if (waiter) { const w = waiter; waiter = null; w(); }
+    },
+    releaseLock() {},
+  };
+  const writer = {
+    async write(b: Uint8Array) {
+      const bytes = Uint8Array.from(b);
+      const rq = verifyFrame(bytes); // throws on malformed request
+      events.push('W' + tag(bytes));
+      const resp = buildFrame(0x50, rq.type, rq.c0, rq.c1, new Uint8Array([0x00]));
+      verifyFrame(resp);
+      setTimeout(() => { events.push('R' + tag(resp)); enqueue(resp); }, delayMs);
+    },
+    releaseLock() {},
+  };
+  const port = {
+    readable: { locked: false, getReader: () => reader },
+    writable: { getWriter: () => writer },
+    async open() {}, async setSignals() {}, async close() {},
+  };
+  return { port, events };
+}
 let openCalls = 0;
 const livePort = {
   readable: { getReader: () => mockReader() }, // non-null = already open
@@ -131,12 +180,93 @@ let threw = false;
 try {
   await NayaSession.connect(deadPort as unknown as SerialPort, 0x50, null);
 } catch { threw = true; }
-eq(threw ? 'ok' : 'bad', 'ok', 'dead port rethrows');
+  eq(threw ? 'ok' : 'bad', 'ok', 'dead port rethrows');
+  // 45. locked readable (two concurrent connects racing on one port):
+  // must throw a clean actionable Error, never a raw TypeError.
+  const lockedPort = {
+    readable: { locked: true, getReader: () => { throw new TypeError('already locked'); } },
+    writable: { getWriter: () => mockWriter },
+    async open() {}, async setSignals() {}, async close() {},
+  };
+  let lockedMsg = '';
+  try {
+    await NayaSession.connect(lockedPort as unknown as SerialPort, 0x50, null);
+  } catch (e) { lockedMsg = (e as Error).message; }
+  eq(lockedMsg.includes('locked') && !(lockedMsg.includes('ReadableStream')) ? 'ok' : 'bad', 'ok', 'locked reader clean error');
+  // 46. concurrent cmds stay atomic (mutex regression: the 1s presence tick
+  // vs dumpAll interleaving used to eat responses -> "sync lost waiting cmd").
+  const fx = duplexFake(30);
+  const fReader = fx.port.readable.getReader();
+  const fWriter = fx.port.writable.getWriter();
+  const fFr = new FrameReader(fReader as unknown as ReadableStreamDefaultReader<Uint8Array>);
+  const fSes = new NayaSession(
+    fx.port as unknown as SerialPort, 0x50, fFr,
+    fWriter as unknown as WritableStreamDefaultWriter<Uint8Array>,
+    fReader as unknown as ReadableStreamDefaultReader<Uint8Array>,
+    async (b) => { await fWriter.write(b); }, null,
+  );
+  const [ra, rb] = await Promise.all([
+    fSes.cmd(0x30, 0x10, 0x01, new Uint8Array([0, 0])),
+    fSes.cmd(0xde, 0x10, 0x01, new Uint8Array([0])),
+  ]);
+  eq(ra.type === 0x30 && ra.c1 === 0x01 ? 'ok' : 'bad', 'ok', 'mutex cmdA matched');
+  eq(rb.type === 0xde && rb.c1 === 0x01 ? 'ok' : 'bad', 'ok', 'mutex cmdB matched');
+  let atomic = true;
+  const openCmds = new Set<string>();
+  for (const e of fx.events) {
+    const k = e.slice(1);
+    if (e[0] === 'W') { if (openCmds.size > 0) atomic = false; openCmds.add(k); }
+    else openCmds.delete(k);
+  }
+  eq(atomic && openCmds.size === 0 ? 'ok' : 'bad', 'ok', 'mutex wire atomicity');
+  await fSes.close();
 // 14-17. USB PID side hint (no wire needed)
 eq(sideFromUsbInfo({ usbVendorId: 0x37d1, usbProductId: 100 }), 'left', 'pid100=left');
 eq(sideFromUsbInfo({ usbVendorId: 0x37d1, usbProductId: 200 }), 'right', 'pid200=right');
 eq(sideFromUsbInfo({ usbVendorId: 0x37d1, usbProductId: 999 }), null, 'unknown pid=null');
 eq(sideFromUsbInfo({ usbVendorId: 0x1234, usbProductId: 100 }), null, 'foreign vid=null');
 console.log('done', n, 'checks');
+// 49+. keycap icon mapping (pure) + extracted asset integrity (fs)
+const iconCases: Array<[string, string | null]> = [
+  ['Backspace', 'BACKSPACE'], ['Caps Lock', 'CAPSLOCK'], ['Space', 'SPACE'],
+  ['Enter', 'RETURN'], ['Tab', 'TAB'], ['Esc', 'ESC'], ['Delete', 'DELETE'],
+  ['LCtrl', 'LCTRL'], ['RGUI', 'RGUI'], ['LAlt', 'LALT'], ['↑', 'UP'],
+  ['Page Down', 'PG_DN'], ['Num Lock', 'KP_NUMLOCK'],
+  ['Play/Pause', 'C_PLAY_PAUSE'], ['Mute', 'C_MUTE'],
+  ['Volume −', 'C_VOL_DOWN'], ['Next Track', 'C_NEXT'],
+  ['Prev Track', 'C_PREVIOUS'], ['Mouse Left', 'MOUSE_LEFT'],
+  ['Mouse Right', 'MOUSE_RIGHT'], ['BT Device 1', 'BT_DEVICE_1'],
+  ['BT Device 5', 'BT_DEVICE_5'], ['Naya key (factory)', 'NAYA'],
+  ['A', null], ['LShift', null], ['RShift', null], ['Menu', null],
+  ['F13', null], ['Mouse Middle', null], ['Stop', null], ['Power', null],
+  ['LED effect #2', null], ['empty / filler', null],
+];
+for (const [d, want] of iconCases)
+  eq(keyIconName(d), want, 'icon ' + JSON.stringify(d));
+const iconDir = path.join(
+  process.env.SMOKE_ROOT ?? process.cwd(),
+  'src', 'assets', 'key-icons',
+);
+const diskFiles = new Set(fs.readdirSync(iconDir).filter((f) => f.endsWith('.svg')));
+eq(diskFiles.size, 52, '52 icon files on disk');
+const tsSrc = fs.readFileSync(path.join(
+  process.env.SMOKE_ROOT ?? process.cwd(),
+  'src', 'lib', 'key-icons.ts',
+), 'utf8');
+const imported = new Set([...tsSrc.matchAll(/key-icons\/([A-Z0-9_]+)\.svg\?raw/g)].map((m) => m[1] + '.svg'));
+eq(imported.size, 52, '52 ?raw imports');
+eq([...imported].every((f) => diskFiles.has(f)) && [...diskFiles].every((f) => imported.has(f)) ? 'ok' : 'bad', 'ok', 'imports match disk');
+let iconOk = true;
+for (const f of diskFiles) {
+  const s = fs.readFileSync(path.join(iconDir, f), 'utf8');
+  if (!s.trimStart().startsWith('<svg') || !s.includes('viewBox="0 0 40 40"') ||
+      /#fff|#FFF|#ffffff/i.test(s) || !s.includes('currentColor')) { iconOk = false; break; }
+}
+eq(iconOk ? 'ok' : 'bad', 'ok', 'icons 40x40 + currentColor, no #fff');
+for (const d of ['Backspace', 'BT Device 3', 'Naya key (factory)']) {
+  const nm = keyIconName(d);
+  eq(nm !== null && diskFiles.has(nm + '.svg') ? 'ok' : 'bad', 'ok', 'mapped file exists: ' + d);
+}
+console.log('done-icons', n, 'checks');
 }
 void main();
