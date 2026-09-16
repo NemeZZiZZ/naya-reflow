@@ -22,11 +22,9 @@ import { Toaster, toast } from "sonner";
 import HalfPill from "./components/HalfPill";
 import type { HalfInfo } from "./components/HalfPill";
 import Keyboard from "./components/Keyboard";
-import KeyEditDialog from "./components/KeyEditDialog";
+import ActionPalette from "./components/ActionPalette";
 import FlashDialog from "./components/FlashDialog";
 import SettingsDialog from "./components/SettingsDialog";
-import LedToolbar from "./components/LedToolbar";
-import type { LedTool } from "./components/LedToolbar";
 import { Badge } from "./components/ui/badge";
 import { Button } from "./components/ui/button";
 import { Checkbox } from "./components/ui/checkbox";
@@ -46,6 +44,8 @@ import { TooltipProvider } from "./components/ui/tooltip";
 import { HexColorPicker } from "react-colorful";
 import { POS_KEY } from "./lib/kb-data";
 import { Draft, opSummary } from "./lib/draft";
+import { buildRecord } from "./lib/actions";
+import type { ActionDef } from "./lib/actions";
 import {
   DST_LEFT,
   DST_RIGHT,
@@ -85,6 +85,18 @@ interface LogEntry {
 }
 
 const hex2 = (n: number) => "0x" + n.toString(16).padStart(2, "0");
+
+const LED_PRESETS: { name: string; h: number; s: number }[] = [
+  { name: "Amber (factory)", h: 38, s: 100 },
+  { name: "Red", h: 0, s: 100 },
+  { name: "Orange", h: 30, s: 100 },
+  { name: "Yellow", h: 60, s: 100 },
+  { name: "Green", h: 120, s: 100 },
+  { name: "Cyan", h: 180, s: 100 },
+  { name: "Blue", h: 240, s: 100 },
+  { name: "Magenta", h: 300, s: 70 },
+  { name: "White", h: 0, s: 0 },
+];
 
 const LOG_CLS: Record<string, string> = {
   tx: "text-[#7ee2a8]",
@@ -370,20 +382,18 @@ export default function App() {
   });
   const [ledDumpStat, setLedDumpStat] = useState("");
   const [ledMode, setLedMode] = useState(true);
-  const [selected, setSelected] = useState(-1);
-  const [selInfo, setSelInfo] = useState("");
+  // Editor view + multi-selection (Shift+click on keyboard, checkboxes in table)
+  const [view, setView] = useState<"kb" | "table">("kb");
+  const [sel, setSel] = useState<number[]>([]);
+  const [pickedAction, setPickedAction] = useState<ActionDef | null>(null);
+  const [panelColor, setPanelColor] = useState({ h: 180, s: 100 });
+  const [panelPickerOpen, setPanelPickerOpen] = useState(false);
   // Edit queue (draft): all key/color changes accumulate here until Flash.
   const draftRef = useRef(new Draft());
   const [draftVer, setDraftVer] = useState(0); // bump to re-render on draft change
   const bumpDraft = () => setDraftVer((v) => v + 1);
-  const [keyEdit, setKeyEdit] = useState<{ layer: number; kk: number } | null>(
-    null,
-  );
   const [flashOpen, setFlashOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const [ledTool, setLedTool] = useState<LedTool>("brush");
-  const [brushColor, setBrushColor] = useState({ h: 180, s: 100 });
-  const [pickerOpen, setPickerOpen] = useState(false);
   const [flashing, setFlashing] = useState(false);
 
   // Keyboard preview = device state + pending ops overlaid.
@@ -752,8 +762,7 @@ export default function App() {
   function clearLeftData() {
     setKeysByLayer([[], [], []]);
     setLedsByLayer([[], [], []]);
-    setSelected(-1);
-    setSelInfo("");
+    setSel([]);
     setDumpStat("");
     setLedDumpStat("");
   }
@@ -1007,49 +1016,114 @@ export default function App() {
     log("inf", "export: ledmap JSON saved");
   }
 
-  function queueLed(kk: number, h: number, s: number) {
-    draftRef.current.add({ kind: "led", layer, kk, h, s });
-    bumpDraft();
-    log(
-      "inf",
-      `queued LED: ${POS_KEY[String(kk)] ?? "KK " + hex2(kk)} L${layer} → H${h}/S${s}`,
+  // Multi-select: plain click replaces, Shift+click toggles. Clicking only
+  // selects — assigning happens in the panel below (action + color).
+  function onSelect(_pos: number, kk: number, additive: boolean) {
+    setSel((prev) => {
+      if (!additive) return [kk];
+      return prev.includes(kk)
+        ? prev.filter((k) => k !== kk)
+        : [...prev, kk];
+    });
+  }
+
+  function toggleKk(kk: number) {
+    setSel((prev) =>
+      prev.includes(kk) ? prev.filter((k) => k !== kk) : [...prev, kk],
     );
   }
 
-  function onSelect(pos: number, kk: number) {
-    const hx = kk.toString(16).padStart(2, "0");
-    setSelected(pos);
-    setSelInfo(
-      `selected pos ${pos} (${POS_KEY[String(pos)] ?? "?"}) = KK 0x${hx}`,
+  function toggleAllRowKks() {
+    const all = mergedRows.map((r) => r.kk);
+    setSel((prev) =>
+      all.length > 0 && all.every((kk) => prev.includes(kk))
+        ? prev.filter((kk) => !all.includes(kk))
+        : [...new Set([...prev, ...all])],
     );
-    if (!leftOn) return;
-    if (ledMode) {
-      // LED tools: brush paints, fill queues the whole layer, pipette picks.
-      if (ledTool === "pipette") {
-        const cur = ledmap.get(kk);
-        if (cur) {
-          setBrushColor({ h: cur.h, s: cur.s });
-          log("inf", `pipette: H${cur.h}/S${cur.s} from ${POS_KEY[String(kk)] ?? hx}`);
-        }
-      } else if (ledTool === "fill") {
-        for (const r of ledsByLayer[layer] ?? [])
-          draftRef.current.add({
-            kind: "led",
-            layer,
-            kk: r.kk,
-            h: brushColor.h,
-            s: brushColor.s,
-          });
-        bumpDraft();
-        log(
-          "inf",
-          `queued fill: ${ledsByLayer[layer]?.length ?? 0} LEDs L${layer} → H${brushColor.h}/S${brushColor.s}`,
-        );
-      } else queueLed(kk, brushColor.h, brushColor.s);
-      return;
-    }
-    setKeyEdit({ layer, kk });
   }
+
+  // Queue the picked action for every selected key. Same-length guard per
+  // key (the device ignores 7B↔11B changes) — mismatches are skipped.
+  function queueActionForSelection() {
+    if (!pickedAction) return;
+    let queued = 0;
+    let skipped = 0;
+    for (const kk of sel) {
+      const rec = buildRecord(kk, pickedAction.body());
+      const cur = (keysByLayer[layer] ?? []).find((r) => r.kk === kk);
+      if (!cur || cur.rec.length !== rec.length) {
+        skipped++;
+        continue;
+      }
+      draftRef.current.add({
+        kind: "key",
+        layer,
+        kk,
+        record: rec,
+        label: pickedAction.label,
+      });
+      queued++;
+    }
+    bumpDraft();
+    log(
+      "inf",
+      `queued action '${pickedAction.label}' for ${queued} key(s)` +
+        (skipped > 0 ? `, ${skipped} skipped (length change — device ignores)` : ""),
+    );
+  }
+
+  // Queue the panel color for every selected key (KK 0x00–0x87 only).
+  function queueColorForSelection() {
+    let queued = 0;
+    let skipped = 0;
+    for (const kk of sel) {
+      if (kk < 0 || kk > 0x87) {
+        skipped++;
+        continue;
+      }
+      draftRef.current.add({
+        kind: "led",
+        layer,
+        kk,
+        h: panelColor.h,
+        s: panelColor.s,
+      });
+      queued++;
+    }
+    bumpDraft();
+    log(
+      "inf",
+      `queued color H${panelColor.h}/S${panelColor.s} for ${queued} key(s)` +
+        (skipped > 0 ? `, ${skipped} skipped` : ""),
+    );
+  }
+
+  function fillLayerWithColor() {
+    const recs = ledsByLayer[layer] ?? [];
+    for (const r of recs)
+      draftRef.current.add({
+        kind: "led",
+        layer,
+        kk: r.kk,
+        h: panelColor.h,
+        s: panelColor.s,
+      });
+    bumpDraft();
+    log(
+      "inf",
+      `queued fill: ${recs.length} LEDs L${layer} → H${panelColor.h}/S${panelColor.s}`,
+    );
+  }
+
+  const selText =
+    sel.length === 0
+      ? ""
+      : `${sel.length} selected: ` +
+        sel
+          .slice(0, 8)
+          .map((kk) => POS_KEY[String(kk)] ?? hex2(kk))
+          .join(", ") +
+        (sel.length > 8 ? ` +${sel.length - 8} more` : "");
 
   const leftOn = halves.left.connected;
   const rightOn = halves.right.connected;
@@ -1178,12 +1252,39 @@ export default function App() {
             </CardContent>
           </Card>
 
+          {view === "kb" && (
           <Card className="mb-3">
-            <CardHeader>
-              <CardTitle>Keyboard</CardTitle>
-              <Badge variant="default">NayaFlow look</Badge>
+            <CardHeader className="flex-wrap">
+              <Tabs
+                value={view}
+                onValueChange={(v) => setView(v as "kb" | "table")}
+              >
+                <TabsList>
+                  <TabsTrigger value="kb">Keyboard</TabsTrigger>
+                  <TabsTrigger value="table">Layout</TabsTrigger>
+                </TabsList>
+              </Tabs>
+              <Tabs
+                value={String(layer)}
+                onValueChange={(v) => setLayer(parseInt(v, 10))}
+              >
+                <TabsList>
+                  <TabsTrigger value="0">Layer 0</TabsTrigger>
+                  <TabsTrigger value="1">Layer 1</TabsTrigger>
+                  <TabsTrigger value="2">Layer 2</TabsTrigger>
+                </TabsList>
+              </Tabs>
+              <Button
+                variant="secondary"
+                size="sm"
+                title="Re-read all layers + LED maps from the LEFT half"
+                onClick={() => void dump()}
+                disabled={!leftOn}
+              >
+                <RefreshCw /> Refresh
+              </Button>
               <span className="font-mono text-xs text-muted-foreground">
-                {selInfo}
+                {selText}
               </span>
 
               <Label className="ml-auto">
@@ -1197,34 +1298,6 @@ export default function App() {
               </Label>
             </CardHeader>
             <CardContent>
-              {ledMode && (
-                <div className="mb-3">
-                  <LedToolbar
-                    tool={ledTool}
-                    onTool={setLedTool}
-                    color={brushColor}
-                    onColor={setBrushColor}
-                    disabled={!leftOn}
-                  />
-                  <button
-                    className="mt-1.5 text-xs text-muted-foreground underline hover:text-foreground"
-                    onClick={() => setPickerOpen((v) => !v)}
-                  >
-                    {pickerOpen ? "Hide custom color picker" : "Custom color…"}
-                  </button>
-                  {pickerOpen && (
-                    <HexColorPicker
-                      className="mt-2"
-                      style={{ width: 160, height: 120 }}
-                      color={hsToHex(brushColor.h, brushColor.s)}
-                      onChange={(hex) => {
-                        const hs = hexToHs(hex);
-                        if (hs) setBrushColor({ h: hs.h, s: hs.s });
-                      }}
-                    />
-                  )}
-                </div>
-              )}
               <div
                 className="overflow-hidden rounded-sm bg-background p-4"
                 ref={kbBoxRef}
@@ -1241,7 +1314,7 @@ export default function App() {
                     keymap={keymap}
                     ledmap={ledmap}
                     ledMode={ledMode}
-                    selected={selected}
+                    sel={new Set(sel)}
                     onSelect={onSelect}
                     disabled={!leftOn}
                     dirty={dirtyKks}
@@ -1250,30 +1323,41 @@ export default function App() {
               </div>
               <p className="mt-2 text-xs text-muted-foreground">
                 {leftOn
-                  ? ledMode
-                    ? "LED mode: brush paints clicked keys, fill queues the layer, pipette picks a key's color. Changes queue up — nothing writes until Flash."
-                    : "Click a key to assign an action. Changes queue up — nothing writes until Flash."
+                  ? "Click a key to select it, Shift+click for multi-select. Assign an action and/or a color in the panel below — changes queue up, nothing writes until Flash."
                   : "Connect the LEFT half — legends and colors load automatically."}
               </p>
             </CardContent>
           </Card>
+          )}
 
+          {view === "table" && (
           <Card className="mb-3">
-            <CardHeader>
-              <CardTitle>Layout</CardTitle>
+            <CardHeader className="flex-wrap">
+              <Tabs
+                value={view}
+                onValueChange={(v) => setView(v as "kb" | "table")}
+              >
+                <TabsList>
+                  <TabsTrigger value="kb">Keyboard</TabsTrigger>
+                  <TabsTrigger value="table">Layout</TabsTrigger>
+                </TabsList>
+              </Tabs>
+              <Tabs
+                value={String(layer)}
+                onValueChange={(v) => setLayer(parseInt(v, 10))}
+              >
+                <TabsList>
+                  <TabsTrigger value="0">Layer 0</TabsTrigger>
+                  <TabsTrigger value="1">Layer 1</TabsTrigger>
+                  <TabsTrigger value="2">Layer 2</TabsTrigger>
+                </TabsList>
+              </Tabs>
+              <span className="font-mono text-xs text-muted-foreground">
+                {selText}
+              </span>
             </CardHeader>
             <CardContent>
               <div className="mb-2 flex flex-wrap items-center gap-2">
-                <Tabs
-                  value={String(layer)}
-                  onValueChange={(v) => setLayer(parseInt(v, 10))}
-                >
-                  <TabsList>
-                    <TabsTrigger value="0">Layer 0</TabsTrigger>
-                    <TabsTrigger value="1">Layer 1</TabsTrigger>
-                    <TabsTrigger value="2">Layer 2</TabsTrigger>
-                  </TabsList>
-                </Tabs>
                 <Button
                   variant="secondary"
                   onClick={() => void dump()}
@@ -1318,6 +1402,16 @@ export default function App() {
                 <table className="w-full text-[13px]">
                   <thead className="sticky top-0 bg-card">
                     <tr>
+                      <th className={TH}>
+                        <Checkbox
+                          checked={
+                            mergedRows.length > 0 &&
+                            mergedRows.every((r) => sel.includes(r.kk))
+                          }
+                          onCheckedChange={() => toggleAllRowKks()}
+                          title="Select all rows"
+                        />
+                      </th>
                       {showRaw && <th className={TH}>KK</th>}
                       <th className={TH}>Key</th>
                       {showRaw && <th className={TH}>T</th>}
@@ -1339,6 +1433,12 @@ export default function App() {
                             meaning.startsWith("empty") ? "text-[#666]" : ""
                           }
                         >
+                          <td className="px-2 py-1 border-b border-border">
+                            <Checkbox
+                              checked={sel.includes(kk)}
+                              onCheckedChange={() => toggleKk(kk)}
+                            />
+                          </td>
                           {showRaw && (
                             <td className="font-mono px-2 py-1 border-b border-border">
                               {hex2(kk)}
@@ -1396,6 +1496,129 @@ export default function App() {
               </div>
             </CardContent>
           </Card>
+          )}
+
+          {sel.length > 0 && (
+            <Card className="mb-3">
+              <CardHeader className="flex-wrap">
+                <CardTitle>
+                  Selected ({sel.length}) — Layer {layer}
+                </CardTitle>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="ml-auto"
+                  onClick={() => setSel([])}
+                >
+                  <X /> Clear selection
+                </Button>
+              </CardHeader>
+              <CardContent className="grid gap-4 md:grid-cols-2">
+                <div>
+                  <div className="mb-2 text-sm font-medium">Assign action</div>
+                  <div className="mb-2 flex flex-wrap gap-1">
+                    {sel.map((kk) => (
+                      <span
+                        key={kk}
+                        className="inline-flex items-center gap-1 rounded-full bg-accent px-2 py-0.5 font-mono text-xs"
+                      >
+                        {POS_KEY[String(kk)] ?? hex2(kk)}
+                        <button
+                          className="text-muted-foreground hover:text-foreground"
+                          onClick={() => toggleKk(kk)}
+                          title="Remove from selection"
+                        >
+                          <X className="size-3" />
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                  <ActionPalette
+                    onPick={setPickedAction}
+                    pickedId={pickedAction?.id ?? null}
+                  />
+                  <div className="mt-2 flex flex-wrap items-center gap-2">
+                    <Button
+                      disabled={!pickedAction}
+                      onClick={queueActionForSelection}
+                    >
+                      Queue action for {sel.length} key(s)
+                    </Button>
+                    {pickedAction && (
+                      <span className="text-sm text-muted-foreground">
+                        → {pickedAction.label}
+                      </span>
+                    )}
+                  </div>
+                  <p className="mt-1.5 text-xs text-muted-foreground">
+                    Queues into the draft — nothing writes until Flash. Keys
+                    whose record length would change are skipped (the device
+                    ignores 7B↔11B changes).
+                  </p>
+                </div>
+                <div>
+                  <div className="mb-2 text-sm font-medium">Set color</div>
+                  <div className="mb-2 flex flex-wrap items-center gap-1.5">
+                    {LED_PRESETS.map((p) => (
+                      <button
+                        key={p.name}
+                        title={`${p.name} (H${p.h} S${p.s})`}
+                        className={
+                          "size-7 rounded-full border border-border " +
+                          (panelColor.h === p.h && panelColor.s === p.s
+                            ? "ring-2 ring-primary"
+                            : "")
+                        }
+                        style={{ background: hsToHex(p.h, p.s) }}
+                        onClick={() =>
+                          setPanelColor({ h: p.h, s: p.s })
+                        }
+                      />
+                    ))}
+                    <button
+                      className="text-xs text-muted-foreground underline hover:text-foreground"
+                      onClick={() => setPanelPickerOpen((v) => !v)}
+                    >
+                      {panelPickerOpen ? "Hide picker" : "Custom…"}
+                    </button>
+                  </div>
+                  {panelPickerOpen && (
+                    <HexColorPicker
+                      className="mb-2"
+                      style={{ width: 160, height: 120 }}
+                      color={hsToHex(panelColor.h, panelColor.s)}
+                      onChange={(hex) => {
+                        const hs = hexToHs(hex);
+                        if (hs) setPanelColor({ h: hs.h, s: hs.s });
+                      }}
+                    />
+                  )}
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span
+                      className="inline-block h-6 w-6 rounded border border-border"
+                      style={{
+                        background: hsToHex(panelColor.h, panelColor.s),
+                      }}
+                    />
+                    <span className="font-mono text-xs">
+                      H{panelColor.h} S{panelColor.s}
+                    </span>
+                    <Button onClick={queueColorForSelection}>
+                      Queue color for {sel.length} key(s)
+                    </Button>
+                    <Button variant="outline" onClick={fillLayerWithColor}>
+                      Fill layer
+                    </Button>
+                  </div>
+                  <p className="mt-1.5 text-xs text-muted-foreground">
+                    Factory amber ≈ H38/S100. Fill layer queues the color for
+                    all {ledsByLayer[layer]?.length ?? 0} LEDs of Layer{" "}
+                    {layer}.
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           <p className="text-xs text-muted-foreground">
             Scope: dual-half connect, keymap + LED editing via a queued draft
@@ -1485,21 +1708,6 @@ export default function App() {
           </SheetContent>
         </Sheet>
 
-        <KeyEditDialog
-          open={keyEdit !== null}
-          onOpenChange={(o) => !o && setKeyEdit(null)}
-          layer={keyEdit?.layer ?? 0}
-          kk={keyEdit?.kk ?? 0}
-          current={
-            keyEdit
-              ? (keysByLayer[keyEdit.layer] ?? []).find(
-                  (r) => r.kk === keyEdit.kk,
-                )
-              : undefined
-          }
-          draft={draftRef.current}
-          onQueued={bumpDraft}
-        />
         <FlashDialog
           open={flashOpen}
           onOpenChange={setFlashOpen}

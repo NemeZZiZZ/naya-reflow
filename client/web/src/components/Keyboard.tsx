@@ -97,7 +97,7 @@ interface KeyProps {
   ledMode: boolean;
   selected: boolean;
   dirty?: boolean;
-  onSelect: (pos: number, kk: number) => void;
+  onSelect: (pos: number, kk: number, additive: boolean) => void;
 }
 
 function Key({ pos, rec, led, ledMode, selected, dirty, onSelect }: KeyProps) {
@@ -117,7 +117,7 @@ function Key({ pos, rec, led, ledMode, selected, dirty, onSelect }: KeyProps) {
       className="kb-key"
       data-pos={pos}
       title={`pos ${pos} = ${POS_KEY[String(pos)] ?? "?"} KK 0x${kk.toString(16)}${rec ? " — " + describeRecord(rec) : ""}`}
-      onClick={() => onSelect(pos, kk)}
+      onClick={(e) => onSelect(pos, kk, e.shiftKey)}
     >
       <div className="relative">
         <ShapeSvg name={POS_SHAPE[pos]} fill={fill} stroke="#E5E1E6" />
@@ -147,8 +147,9 @@ interface KeyboardProps {
   keymap: Map<number, Uint8Array>;
   ledmap: Map<number, LedVal>;
   ledMode: boolean;
-  selected: number;
-  onSelect: (pos: number, kk: number) => void;
+  /** selected KKs (multi-select with Shift+click) */
+  sel: Set<number>;
+  onSelect: (pos: number, kk: number, additive: boolean) => void;
   /** disconnected: ignore clicks, render semi-transparent */
   disabled?: boolean;
   /** KKs with queued (not yet flashed) changes — get a dot marker */
@@ -159,12 +160,14 @@ export default function Keyboard({
   keymap,
   ledmap,
   ledMode,
-  selected,
+  sel,
   onSelect,
   disabled = false,
   dirty,
 }: KeyboardProps) {
-  const pick = disabled ? () => {} : onSelect;
+  const pick = (pos: number, kk: number, additive: boolean) => {
+    if (!disabled) onSelect(pos, kk, additive);
+  };
   const K = (pos: number) => (
     <Key
       key={pos}
@@ -172,7 +175,7 @@ export default function Keyboard({
       rec={keymap.get(pos)}
       led={ledmap.get(pos)}
       ledMode={ledMode}
-      selected={selected === pos}
+      selected={sel.has(pos)}
       dirty={dirty?.has(pos) ?? false}
       onSelect={pick}
     />
@@ -246,10 +249,13 @@ export default function Keyboard({
 
   return (
     <div
-      className={cn("grid w-full min-w-235 grid-cols-[1fr_14rem_1fr] gap-1", {
-        "opacity-50 saturate-50 cursor-default": disabled,
-        "cursor-pointer": !disabled,
-      })}
+      className={cn(
+        "grid w-full min-w-235 grid-cols-[1fr_14rem_1fr] gap-1 select-none",
+        {
+          "opacity-50 saturate-50 cursor-default": disabled,
+          "cursor-pointer": !disabled,
+        },
+      )}
     >
       {halfLeft}
       {middle}

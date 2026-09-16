@@ -70,7 +70,7 @@ eq(missing.length === 0 ? 'ok' : 'missing ' + missing.join(','), 'ok', 'all shap
 eq(SHAPES['Ve'].w === '44' && SHAPES['Ltt'].w === '112' ? 'ok' : 'bad', 'ok', 'shape sizes');
 // 9. Keyboard static render smoke
 const html = renderToStaticMarkup(
-  createElement(Keyboard, { keymap: new Map(), ledmap: new Map(), ledMode: true, selected: -1, onSelect: () => {} }),
+  createElement(Keyboard, { keymap: new Map(), ledmap: new Map(), ledMode: true, sel: new Set([0]), onSelect: () => {} }),
 );
 const keys = (html.match(/data-pos="/g) || []).length;
 eq(String(keys), '74', 'render 74 keys');
@@ -90,7 +90,7 @@ eq(String(batteryMv(Uint8Array.from([0, 0x0f, 0xf1]))), '4081', 'batteryMv');
 eq(String(batteryPctRough(4081)), '85', 'batteryPctRough');
 // 11. disabled render: clicks ignored (no onSelect wire) + dimmed
 const dhtml = renderToStaticMarkup(
-  createElement(Keyboard, { keymap: new Map(), ledmap: new Map(), ledMode: true, selected: -1, onSelect: () => {}, disabled: true }),
+  createElement(Keyboard, { keymap: new Map(), ledmap: new Map(), ledMode: true, sel: new Set(), onSelect: () => {}, disabled: true }),
 );
 eq(dhtml.includes('opacity-50') ? 'ok' : 'bad', 'ok', 'disabled dimmed');
 // 12. already-open port reuse (double-open regression: InvalidStateError
