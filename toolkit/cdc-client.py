@@ -223,6 +223,23 @@ class Session:
             except IOError as e:
                 print("phase 4: commit reply:", e)
 
+    def write_led(self, kk: int, h: int, s: int) -> bytes:
+        """30/100e per-key LED write. params = [00, 00, KK, H_lo, H_hi, S]."""
+        return self.cmd(0x30, 0x10, 0x0E,
+                        bytes([0x00, 0x00, kk, h & 0xFF, (h >> 8) & 0xFF, s]))
+
+    def write_led_stock(self, kk: int, h: int, s: int) -> None:
+        """Stock color-flash ritual: handshake -> READ-ALL -> 30/100e -> READ-ALL.
+        NO commit (color flash in cdc-capture4.log used one fe/100a whose bytes
+        differ per session — proven unnecessary for key writes, trying without)."""
+        self.handshake()
+        print("phase 1: READ-ALL"); self.read_all_stock()
+        try:
+            show("phase 2: 30/100e color write", self.write_led(kk, h, s))
+        except IOError as e:
+            print("phase 2: write reply:", e)
+        print("phase 3: READ-ALL"); self.read_all_stock()
+
     def commit(self) -> bytes:
         """fe/100a apply/commit (params captured verbatim from stock flash)."""
         return self.cmd(0xFE, 0x10, 0x0A,
@@ -304,7 +321,7 @@ if __name__ == "__main__":
         label = sys.argv[3] if len(sys.argv) >= 4 else "snap"
         side = "left" if dst == DST_LEFT else "right"
         stamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
-        fn = f"research/dumps/{side}-{label}-{stamp}.json"
+        fn = f"naya-archive/dumps/{side}-{label}-{stamp}.json"
         json.dump(layers, open(fn, "w"))
         print("saved", fn)
     elif len(sys.argv) >= 3 and sys.argv[2] == "aux":
@@ -326,7 +343,7 @@ if __name__ == "__main__":
                 out[str(layer)] = blob.hex()
                 print(f"ledmap L{layer}: {len(blob)} bytes")
             stamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
-            fn = f"research/dumps/left-ledmap-{stamp}.json"
+            fn = f"naya-archive/dumps/left-ledmap-{stamp}.json"
             json.dump(out, open(fn, "w"))
             print("saved", fn)
         finally:
@@ -343,7 +360,7 @@ if __name__ == "__main__":
                 out[str(layer)] = blob.hex()
                 print(f"100b L{layer}: {len(blob)} bytes")
             stamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
-            fn = f"research/dumps/left-100b-{stamp}.json"
+            fn = f"naya-archive/dumps/left-100b-{stamp}.json"
             json.dump(out, open(fn, "w"))
             print("saved", fn)
         finally:
@@ -382,6 +399,15 @@ if __name__ == "__main__":
         try:
             ses.write_key_stock(rec, commit=(len(sys.argv) >= 6 and sys.argv[5] == "commit"))
             print("done — verify behaviorally (press the key) or via NayaFlow readback.")
+        finally:
+            ses.close()
+    elif len(sys.argv) >= 6 and sys.argv[2] == "ledset":
+        # usage: left ledset <KK-hex> <H-dec 0..511> <S-dec 0..255>
+        kk, h, s = int(sys.argv[3], 16), int(sys.argv[4]), int(sys.argv[5])
+        ses = Session(port, dst)
+        try:
+            ses.write_led_stock(kk, h, s)
+            print("done — verify visually, then via `left ledmap`.")
         finally:
             ses.close()
     else:

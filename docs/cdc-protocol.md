@@ -44,7 +44,7 @@ Full NayaCore serial-side source map (from embedded paths):
 `Naya_SerialPort/{Naya_SerialWorker, Naya_SerialWorkerBroker, NayaDevice/Naya_Device, Naya_DeviceManager{,_Operation,_Enqueue,_FWUpdate,_ModuleFwUpdate,_Pairing,_ClearAllData,_ClearBLEDevices,_TestSPIFlash}, MCUBootWorker/{, _CreateLeft{,_Modules},_CreateRight}, ProtocolCDCWorker/{ProtocolCDCWorker, Utility/{Command/Naya_Serial_Command, Message/ProtocolCDCMessage, MessageQueue/ProtocolCDCMessageQueue, Process/Naya_Serial_Process}, Message_Worker/{Integration_Worker/{ProtocolCDCIntegrationWorker,_handleMessage,_handleKeyscanEvent,sl_newIntegrationInboundMessage}, Process_Worker/{ProtocolCDCProcessWorker{,_Handle,_ProcessCommands,_SignalsSlots}, System/{constructSystemCommands,handleSysResponse}, BLE/{constructBLECommands,handleBLEResponses}, Firmware/{constructFirmwareCommands,handleFWResponses}, Flash/{constructSPIFlashCommands,handleSPIFlashResponses}, LED/{constructLEDCommands,handleLEDCommands}, META/metaCommands, Module/{constructModuleCommands,handleModuleResponses}, Remap/{constructRemapCommands,handleRemapResponses,interpretRemapData,_verifyProfile}, SysPower/{constructPowerCommands,handlePowerResponse}}}}}`.
 
 ## Next steps
-1. ~~Capture CDC traffic~~ — passive sniffer ready: `toolkit/cdc-sniff.py` (pyserial, dumps all usbmodem ports w/ timestamps). Needs: quit NayaFlow + plug halves via USB.
+1. ~~Capture CDC traffic~~ — passive sniffer ready: `naya-archive/cdc-sniff.py` (pyserial, dumps all usbmodem ports w/ timestamps). Needs: quit NayaFlow + plug halves via USB.
 2. Implement minimal Python CDC client: `VERSION`, `HwID`, `BATTERY`, `READ LAYERS`.
 3. Identify USB MCU (no chip names in strings; candidates via HW rev + image analysis or V13 photos).
 
@@ -78,7 +78,7 @@ Full NayaCore serial-side source map (from embedded paths):
 - **Pairing**: responses arrive in request order per port (left 82 req / 81 resp — R00 `fe/1002` reply was lost on the pre-reopen fd; right S00 is one mega-blob: Qt coalesced 17 early responses into a single 262B read).
 - Response header byte3 = **remaining-parts counter** for multi-part reads (30/1003: 02,01,00…), payload byte0 = more-flag (01 = more parts, 00 = last), byte1 = layer echo.
 - **Keymap record** (30/1003, per key, 7 bytes): `KK 01 04 CC 00 07 00` — KK = key index, CC = HID usage, `00 07 00` = usage page 0x0007. Layer0 starts Esc(0x29) Grave(0x35) 1(0x1E) 2(0x1F)… = top row. Empty slots: `KK 00 00`; other types: `03 15 …` (16B, consumer/macro?), `05 04 …`, tail filler `78 00`. 74 keys/layer (matches NayaCore '3 слоёв × 74 клавиши').
-- Minimal client: `toolkit/cdc-client.py` (pyserial, 115200 placeholder — CDC ignores baud; sets DTR/RTS like Qt). **First live probe got no reply** (empty read, DTR/RTS on/off) — halves likely asleep or not in USB output mode; NayaCore was not running, ports free. Retry after waking the keyboard.
+- Minimal client: `naya-archive/cdc-client.py` (pyserial, 115200 placeholder — CDC ignores baud; sets DTR/RTS like Qt). **First live probe got no reply** (empty read, DTR/RTS on/off) — halves likely asleep or not in USB output mode; NayaCore was not running, ports free. Retry after waking the keyboard.
 - Baud rate: no baud strings in NayaCore; CDC-ACM ignores it electrically.
 
 ### Open
@@ -134,7 +134,7 @@ Probe positions: KK2E (was LShift), KK2F (was LShift), KK30 (was Z). L1/L2 untou
 
 ## AUX recon (2026-09-15, live via `cdc-client.py left/right aux`)
 All read-only. 30/10xx are LEFT-only (right answers fa/be/de/fe, NOT 30/1001).
-Full frames: `research/dumps/aux-left.txt`, `aux-right.txt`.
+Full frames: `naya-archive/aux-left.txt`, `aux-right.txt`.
 
 | Cmd | Left response | Right response | Guess |
 |---|---|---|---|
@@ -178,6 +178,17 @@ Full frames: `research/dumps/aux-left.txt`, `aux-right.txt`.
   white H0/S0, magenta H300/S100, cyan H180/S100, purple H266/S70, teal H171/S100.
   Factory default `(26,00,64)` = H38/S100 warm amber, same scheme. B2 = hue high bit.
   OPEN: color WRITE command (stock flash writes it somehow — capture via interposer).
+- **CLOSED 2026-09-16: color write = `30/100e`** (cdc-capture4.log, clone+interposer).
+  Req (16B): `AA 00 50 id 30 08 10 0e [00,00,KK,H_lo,H_hi,S] CRC 04`;
+  resp ACK payload `00 00` (same as key-write). Shape mirrors `30/1004`
+  (prefix [00,00] + record; here 4B LED record). Ritual per changed key:
+  READ-ALL → 100e → READ-ALL → single final fe/100a commit. No commit needed
+  for persist (same as keys — proven: client `ledset` without commit persists;
+  W→cyan→amber roundtrip, single-entry diffs both ways, readback-verified).
+- Client: `left ledset KK H S` (independent color writer, proven end-to-end).
+- Writer constraint discovered: same-length record writes apply; length-changing
+  (7B↔11B key records) appear ignored — probe3 Vs at 2e/2f survived a restore
+  attempt. Keymap L0 = factory + F24@1e (stock) + probe3 Vs (2e BT_DEV1, 2f MOUSE_R).
 - Client: `left ledmap [layer|all]`.
 
 ### 30/100b per-layer table (dumps/left-100b-*.json, semantics TBD)
