@@ -246,14 +246,31 @@ class Session:
                         bytes.fromhex("00905f0100e093040030750000"))
 
     def aux_sweep(self) -> None:
-        """Read-only recon: every known query command, responses printed as hex.
+        """Read-only recon: every known query command, responses printed as hex
+        + decoded where a decoder exists (decoders mirror client/web naya.ts).
         Command sets mirror what stock NayaCore sends per half (from
         cdc-capture1.log) — nothing here writes. 30/10xx are LEFT-only."""
-        def q(name, t, c0, c1, params=b"\x00"):
+        presence = {"present": False}
+
+        def q(name, t, c0, c1, params=b"\x00", dec=None):
             try:
-                show(name, self.cmd(t, c0, c1, params))
+                f = self.cmd(t, c0, c1, params)
             except IOError as e:
                 print(f"{name}: NO REPLY ({e})")
+                return None
+            line = f"{name}: {f.hex(' ')}"
+            if dec is not None:
+                try:
+                    line += f"  ->  {dec(payload_of(f))}"
+                except Exception as e:
+                    line += f"  ->  decode error ({e})"
+            print(line)
+            return f
+
+        def fmt_base_bat(p):
+            mv = battery_mv(p)
+            return f"{mv} mV (~{battery_pct_rough(mv)}%)" if mv is not None else None
+
         left = self.dst == DST_LEFT
         if left:
             q("30/1001 handshake ", 0x30, 0x10, 0x01, b"\x00\x00")
@@ -264,17 +281,22 @@ class Session:
             for layer in range(3):
                 q(f"30/100d LEDMAP p0 L{layer}",
                   0x30, 0x10, 0x0D, bytes([0, layer]))
-            q("de/1008 module?   ", 0xDE, 0x10, 0x08, b"\x00")
+            q("de/1008 module-fw ", 0xDE, 0x10, 0x08, b"\x00", mod_fw_text)
             q("fe/100b modfw?    ", 0xFE, 0x10, 0x0B, b"\x00")
             q("be/1008 ble-addr? ", 0xBE, 0x10, 0x08, b"\x00")
             q("be/100c ble-status", 0xBE, 0x10, 0x0C, b"\x00")
         q("fa/1001 dev-info  ", 0xFA, 0x10, 0x01, b"\x00")
         q("be/1002 ble-addr? ", 0xBE, 0x10, 0x02, b"\x00")
-        q("be/100f battery?  ", 0xBE, 0x10, 0x0F, b"\x00")
-        q("de/1001 module?   ", 0xDE, 0x10, 0x01, b"\x00")
-        q("de/100b module-live", 0xDE, 0x10, 0x0B, b"\x00")
-        q("fe/1002 fw?       ", 0xFE, 0x10, 0x02, b"\x00")
-        q("fe/1006 live-stat ", 0xFE, 0x10, 0x06, b"\x00")
+        q("be/100f ble-fw    ", 0xBE, 0x10, 0x0F, b"\x00", ble_fw_text)
+        f = q("de/1001 module?   ", 0xDE, 0x10, 0x01, b"\x00", mod_presence)
+        if f is not None:
+            presence.update(mod_presence(payload_of(f)) or {})
+        f = q("de/100b module-live", 0xDE, 0x10, 0x0B, b"\x00", mod_rail_mv)
+        if f is not None and presence.get("present"):
+            mv = mod_rail_mv(payload_of(f))
+            print(f"  module rail {mv} mV (~{mod_pct(mv)}% host-computed)")
+        q("fe/1002 fw?       ", 0xFE, 0x10, 0x02, b"\x00", fw_version_text)
+        q("fe/1006 base-bat  ", 0xFE, 0x10, 0x06, b"\x00", fmt_base_bat)
 
     def close(self) -> None:
         self.s.close()
@@ -301,12 +323,120 @@ def parse_layer(blob: bytes) -> dict:
     return out
 
 
+def payload_of(frame: bytes) -> bytes:
+    """Response payload after C0C1 (mirrors the `p` input of naya.ts decoders).
+    Full frame: AA SRC DST ID TYPE LEN C0 C1 PAY... XOR 04."""
+    return frame[8:-2]
+
+
+def _round_js(x: float) -> int:
+    """JS Math.round (half up). Python round() is banker's — vectors must match."""
+    return int(x + 0.5)
+
+
+# Status-payload decoders below mirror client/web/src/lib/naya.ts — keep in sync.
+STOCK_FW_SIG = "00 00 03 29 00"  # stock base 0.3.41.0
+
+
+def fw_version_text(p: bytes) -> str:
+    h = p.hex(" ")
+    v = f"v{p[1]}.{p[2]}.{p[3]}.{p[4]}  [{h}]" if len(p) >= 5 else h
+    return v + ("  <- stock base signature" if h == STOCK_FW_SIG else "")
+
+
+def battery_mv(p: bytes):
+    """fe/1006 payload -> base rail mV (big-endian p[1..2])."""
+    return (p[1] << 8) | p[2] if len(p) >= 3 else None
+
+
+def battery_pct_rough(mv):
+    # teardown calibration: 3709mV->45%, 3910->67%, 4222->100%
+    if mv is None:
+        return None
+    return max(0, min(100, _round_js(45 + (mv - 3709) * 0.1072)))
+
+
+def mod_presence(p):
+    """de/1001 -> {'present','type','half_bit'} or None.
+    TYPE Touch=0x10, Track=0x20, bit0=half. Presence bit proven live."""
+    if len(p) < 3:
+        return None
+    present = p[1] != 0
+    t = p[2] & 0xFE
+    return {
+        "present": present,
+        "type": "Touch" if t == 0x10 else "Track" if t == 0x20 else ("unknown" if present else "none"),
+        "half_bit": p[2] & 0x01,
+    }
+
+
+def mod_fw_text(p: bytes):
+    """de/1008 (left-only) VER bytes -> 'v0.2.3.3'. None when dock empty."""
+    if len(p) < 7 or p[1] == 0:
+        return None
+    return f"v{p[3]}.{p[4]}.{p[5]}.{p[6]}"
+
+
+def mod_rail_mv(p: bytes):
+    """de/100b -> module-rail mV (big-endian p[1..2]).
+    Meaningful ONLY when de/1001 reports present (empty-dock reads garbage)."""
+    return (p[1] << 8) | p[2] if len(p) >= 4 else None
+
+
+def mod_pct(mv):
+    """Module % is host-computed from rail voltage, NOT reported by device.
+    Calibration: 3709mV->45%, 4222mV->100%."""
+    if mv is None:
+        return None
+    return max(0, min(100, _round_js((mv - 3709) * 55 / 513 + 45)))
+
+
+def ble_fw_text(p: bytes):
+    """be/100f = GET BLE FW VERSION (NOT battery): 00 02 1d = v0.2.29."""
+    if len(p) < 3:
+        return None
+    return f"v{p[0]}.{p[1]}.{p[2]}"
+
+
 def show(name: str, frame: bytes) -> None:
     print(f"{name}: {frame.hex(' ')}")
 
 
 if __name__ == "__main__":
     import json
+    if len(sys.argv) >= 2 and sys.argv[1] == "selftest":
+        # hardware-free decoder parity tests (mirror client/web smoke vectors)
+        cases = [
+            ("fw stock", fw_version_text(bytes.fromhex("00 00 03 29 00")),
+             "v0.3.41.0  [00 00 03 29 00]  <- stock base signature"),
+            ("fw short", fw_version_text(bytes.fromhex("00 01")), "00 01"),
+            ("bat mv", battery_mv(bytes.fromhex("00 0F F1")), 4081),
+            ("bat pct", battery_pct_rough(4081), 85),
+            ("bat pct none", battery_pct_rough(None), None),
+            ("presence touch-L", mod_presence(bytes.fromhex("00 01 10")),
+             {"present": True, "type": "Touch", "half_bit": 0}),
+            ("presence track-R", mod_presence(bytes.fromhex("00 01 21")),
+             {"present": True, "type": "Track", "half_bit": 1}),
+            ("presence absent", mod_presence(bytes.fromhex("00 00 F0")),
+             {"present": False, "type": "none", "half_bit": 0}),
+            ("presence short", mod_presence(b"\x00\x01"), None),
+            ("mod fw", mod_fw_text(bytes.fromhex("00 10 00 00 02 03 03")), "v0.2.3.3"),
+            ("mod fw empty", mod_fw_text(bytes(7)), None),
+            ("rail mv", mod_rail_mv(bytes.fromhex("00 0F 50 00")), 3920),
+            ("mod pct 45", mod_pct(3709), 45),
+            ("mod pct 67", mod_pct(3910), 67),
+            ("mod pct 100", mod_pct(4222), 100),
+            ("mod pct none", mod_pct(None), None),
+            ("ble fw", ble_fw_text(bytes.fromhex("00 02 1D")), "v0.2.29"),
+            ("payload_of", payload_of(bytes.fromhex("AA 50 00 00 FE 07 10 02 00 00 03 29 00 DE 04")),
+             bytes.fromhex("00 00 03 29 00")),
+        ]
+        bad = 0
+        for name, actual, expected in cases:
+            ok = actual == expected
+            bad += not ok
+            print(("PASS " if ok else "FAIL ") + f"{name}: {actual!r}")
+        sys.exit(1 if bad else 0)
     port, dst = (LEFT, DST_LEFT) if len(sys.argv) < 2 or sys.argv[1] == "left" else (RIGHT, DST_RIGHT)
     if len(sys.argv) >= 3 and sys.argv[2] == "dump":
         import datetime
@@ -413,7 +543,9 @@ if __name__ == "__main__":
     else:
         show("fa/1001 device-info ", transact(port, dst, 0xFA, 0x10, 0x01, b"\x00"))
         show("be/1006 ble-name    ", transact(port, dst, 0xBE, 0x10, 0x06, b"\x00"))
-        show("be/100f battery?    ", transact(port, dst, 0xBE, 0x10, 0x0F, b"\x00"))
+        f = transact(port, dst, 0xBE, 0x10, 0x0F, b"\x00")
+        show("be/100f ble-fw      ", f)
+        print("  ->", ble_fw_text(payload_of(f)))
         ses = Session(port, dst)
         try:
             ses.handshake()

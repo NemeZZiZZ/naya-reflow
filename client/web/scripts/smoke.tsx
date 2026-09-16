@@ -78,7 +78,7 @@ eq(mp !== null && mp.present && mp.type === 'Touch' ? 'ok' : 'bad', 'ok', 'modPr
 const mp2 = modPresence(Uint8Array.from([0, 1, 0x21, 0x63]));
 eq(mp2 !== null && mp2.present && mp2.type === 'Track' ? 'ok' : 'bad', 'ok', 'modPresence Track-R');
 eq(modPresence(Uint8Array.from([0, 0, 0xf0, 0]))?.present === false ? 'ok' : 'bad', 'ok', 'modPresence absent');
-eq(modFwText(Uint8Array.from([0, 0x10, 0, 0, 2, 3, 3])), 'v2.3.3', 'modFwText');
+  eq(modFwText(Uint8Array.from([0, 0x10, 0, 0, 2, 3, 3])), 'v0.2.3.3', 'modFwText');
 eq(modFwText(Uint8Array.from([0, 0, 0, 0, 0, 0, 0])), null, 'modFwText empty');
 eq(String(modRailMv(Uint8Array.from([0, 0x0f, 0x50, 0]))), '3920', 'modRailMv');
 eq(String(modPct(3709)), '45', 'modPct lo');

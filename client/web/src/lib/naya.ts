@@ -723,7 +723,7 @@ export function modPresence(p: Uint8Array): ModPresence | null {
 // the module FW version (02 03 03 = 0.2.3.3). Zeroed when dock empty.
 export function modFwText(p: Uint8Array): string | null {
   if (p.length < 7 || p[1] === 0) return null;
-  return `v${p[4]}.${p[5]}.${p[6]}`;
+  return `v${p[3]}.${p[4]}.${p[5]}.${p[6]}`;
 }
 
 // de/100b payload = [00, HI, LO, 00]: module-rail voltage, mV, big-endian.
