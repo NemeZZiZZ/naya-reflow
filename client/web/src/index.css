@@ -61,6 +61,22 @@ body {
   #kbwrap { overflow: hidden; background: #0a0b0d; border-radius: 8px; padding: 18px 10px 10px; }
 #kbwrap svg { display: block; }
 #kbwrap .kb-key:hover { filter: brightness(1.5); }
+/* Keycap legend: absolute-centered label + black halo so white legends
+   stay readable on light LED fills (Tailwind can't express this
+   multi-shadow cleanly, hence one semantic class) */
+.kb-legend {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  font-size: 14px;
+  line-height: 1;
+  text-align: center;
+  pointer-events: none;
+  white-space: pre-line;
+  text-shadow:
+    2px 0 0 #000,-2px 0 0 #000,0 2px 0 #000,0 -2px 0 #000,
+    2px 2px 0 #000,-2px -2px 0 #000,2px -2px 0 #000,-2px 2px 0 #000,
+    1px 0 0 #000,-1px 0 0 #000,0 1px 0 #000,0 -1px 0 #000;
+}
 
 /* Minimal enter animations (no extra deps) */
 @keyframes overlay-show { from { opacity: 0; } to { opacity: 1; } }

@@ -1,8 +1,10 @@
 // Keyboard view — faithful NayaFlow look (transcribed from app.asar renderer:
 // EY board grid, Zdt position map, f6/jtt shape selector, Xtt keycap outlines).
-// Port of naya-web/kb-view.js. Controlled component: legends/fills come from
-// props (paint after layer / LED dumps), selection lives in the parent.
-import type { CSSProperties, SVGProps } from 'react';
+// Styled with Tailwind utilities (2.75rem cols = w-11); only data-driven
+// legend anchors (top/left per shape) stay inline. Controlled component:
+// legends/fills come from props (paint after layer / LED dumps),
+// selection lives in the parent.
+import type { SVGProps } from 'react';
 import { describeRecord, ledCss } from '../lib/naya';
 import { POS_KEY, POS_SHAPE, SHAPES } from '../lib/kb-data';
 import type { KeyShape } from '../lib/kb-data';
@@ -25,7 +27,6 @@ function ShapeSvg({ name, fill, stroke }: { name: string; fill: string; stroke: 
       viewBox={sh.vb}
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
-      style={{ display: 'block' }}
     >
       {sh.inners.map((el, i) => {
         const props: Record<string, string> = {};
@@ -96,26 +97,11 @@ function Key({ pos, rec, led, ledMode, selected, onSelect }: KeyProps) {
       title={`pos ${pos} = ${POS_KEY[String(pos)] ?? '?'} KK 0x${kk.toString(16)}${rec ? ' — ' + describeRecord(rec) : ''}`}
       onClick={() => onSelect(pos, kk)}
     >
-      <div style={{ position: 'relative' }}>
+      <div className="relative">
         <ShapeSvg name={POS_SHAPE[pos]} fill={fill} stroke="#E5E1E6" />
         <div
-          style={{
-            position: 'absolute',
-            transform: 'translate(-50%,-50%)',
-            top: sh.lt,
-            left: sh.ll,
-            color: selected ? '#111' : '#E5E1E6',
-            fontSize: 14,
-            lineHeight: 1,
-            textAlign: 'center',
-            pointerEvents: 'none',
-            whiteSpace: 'pre-line',
-            // black halo: white legends stay readable on light LED fills
-            textShadow:
-              '2px 0 0 #000,-2px 0 0 #000,0 2px 0 #000,0 -2px 0 #000,' +
-              '2px 2px 0 #000,-2px -2px 0 #000,2px -2px 0 #000,-2px 2px 0 #000,' +
-              '1px 0 0 #000,-1px 0 0 #000,0 1px 0 #000,0 -1px 0 #000',
-          }}
+          className={`kb-legend ${selected ? 'text-[#111]' : 'text-[#E5E1E6]'}`}
+          style={{ top: sh.lt, left: sh.ll }}
         >
           {label}
         </div>
@@ -154,130 +140,79 @@ export default function Keyboard({
       onSelect={pick}
     />
   );
-  const col = (extra: CSSProperties, keys: number[]) => (
-    <div
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '0.1rem',
-        width: '2.75rem',
-        flexWrap: 'nowrap',
-        ...extra,
-      }}
-    >
+  const col = (extra: string, keys: number[]) => (
+    <div className={`flex flex-col gap-[0.1rem] w-11 flex-nowrap ${extra}`}>
       {keys.map(K)}
     </div>
   );
 
   const halfLeft = (
-    <div style={{ display: 'flex', paddingRight: '0.3rem', height: '100%', justifySelf: 'end' }}>
-      {col({ marginTop: '1.5rem', marginRight: '0.5rem' }, [0, 16, 30, 46, 62])}
-      {col({ marginRight: '0.6rem', marginTop: '1rem' }, [1, 17, 31, 47, 63])}
-      {col({ marginTop: '0.5rem', marginRight: '0.5rem' }, [2, 18, 32, 48, 64])}
-      {col({ marginRight: '0.5rem', marginTop: '0.2rem' }, [3, 19, 33, 49, 65])}
-      <div
-        style={{
-          display: 'flex', flexDirection: 'column', gap: '0.1rem',
-          flexWrap: 'nowrap', marginRight: '0.5rem', width: '2.75rem',
-        }}
-      >
+    <div className="flex pr-[0.3rem] h-full justify-self-end">
+      {col('mt-[1.5rem] mr-[0.5rem]', [0, 16, 30, 46, 62])}
+      {col('mr-[0.6rem] mt-[1rem]', [1, 17, 31, 47, 63])}
+      {col('mt-[0.5rem] mr-[0.5rem]', [2, 18, 32, 48, 64])}
+      {col('mr-[0.5rem] mt-[0.2rem]', [3, 19, 33, 49, 65])}
+      <div className="flex flex-col gap-[0.1rem] flex-nowrap mr-[0.5rem] w-11">
         {[4, 20, 34].map(K)}
-        <div style={{ display: 'flex', flexDirection: 'row-reverse', paddingTop: '0.1rem', paddingLeft: '2.6rem' }}>{K(50)}</div>
-        <div style={{ paddingTop: '0.1rem', alignSelf: 'center', marginLeft: '4rem' }}>{K(66)}</div>
+        <div className="flex flex-row-reverse pt-[0.1rem] pl-[2.6rem]">{K(50)}</div>
+        <div className="pt-[0.1rem] self-center ml-[4rem]">{K(66)}</div>
       </div>
-      {col({ marginRight: '0.5rem' }, [5, 21, 35, 51])}
-      <div
-        style={{
-          display: 'flex', flexDirection: 'column', gap: '0.1rem',
-          flexWrap: 'nowrap', width: '2.75rem', marginRight: '0.5rem', marginTop: '0.15rem',
-        }}
-      >
+      {col('mr-[0.5rem]', [5, 21, 35, 51])}
+      <div className="flex flex-col gap-[0.1rem] flex-nowrap w-11 mr-[0.5rem] mt-[0.15rem]">
         {[6, 22].map(K)}
-        <div style={{ position: 'relative', display: 'flex', flexDirection: 'row', right: '0.2rem' }}>{K(36)}</div>
+        <div className="relative flex flex-row right-[0.2rem]">{K(36)}</div>
         {K(52)}
       </div>
-      <div
-        style={{
-          display: 'flex', flexDirection: 'column', gap: '0.1rem',
-          flexWrap: 'nowrap', width: '2.75rem', marginTop: '0.3rem',
-        }}
-      >
+      <div className="flex flex-col gap-[0.1rem] flex-nowrap w-11 mt-[0.3rem]">
         {K(7)}
       </div>
     </div>
   );
 
   const halfRight = (
-    <div style={{ display: 'flex', height: '100%', justifySelf: 'start' }}>
-      {col({ marginTop: '0.3rem' }, [8])}
-      <div
-        style={{
-          display: 'flex', flexDirection: 'column', gap: '0.1rem', width: '2.75rem',
-          flexWrap: 'nowrap', marginLeft: '0.5rem', marginTop: '0.15rem',
-        }}
-      >
+    <div className="flex h-full justify-self-start">
+      {col('mt-[0.3rem]', [8])}
+      <div className="flex flex-col gap-[0.1rem] w-11 flex-nowrap ml-[0.5rem] mt-[0.15rem]">
         {[9, 23].map(K)}
-        <div style={{ display: 'flex', flexDirection: 'row-reverse', paddingLeft: '2.6rem' }}>{K(39)}</div>
+        <div className="flex flex-row-reverse pl-[2.6rem]">{K(39)}</div>
         {K(55)}
       </div>
-      {col({ marginLeft: '0.5rem' }, [10, 24, 40, 56])}
-      <div
-        style={{
-          display: 'flex', flexDirection: 'column', gap: '0.1rem', width: '2.75rem',
-          flexWrap: 'nowrap', marginLeft: '0.5rem',
-        }}
-      >
+      {col('ml-[0.5rem]', [10, 24, 40, 56])}
+      <div className="flex flex-col gap-[0.1rem] w-11 flex-nowrap ml-[0.5rem]">
         {[11, 25, 41].map(K)}
-        <div style={{ display: 'flex', flexDirection: 'row-reverse', paddingTop: '0.1rem', paddingLeft: '2.6rem' }}>{K(57)}</div>
-        <div style={{ paddingTop: '0.1rem', alignSelf: 'center', marginRight: '4rem' }}>{K(69)}</div>
+        <div className="flex flex-row-reverse pt-[0.1rem] pl-[2.6rem]">{K(57)}</div>
+        <div className="pt-[0.1rem] self-center mr-[4rem]">{K(69)}</div>
       </div>
-      {col({ marginLeft: '0.5rem', marginTop: '0.2rem' }, [12, 26, 42, 58, 70])}
-      {col({ marginLeft: '0.5rem', marginTop: '0.5rem' }, [13, 27, 43, 59, 71])}
-      {col({ marginLeft: '0.6rem', marginTop: '1rem' }, [14, 28, 44, 60, 72])}
-      {col({ marginLeft: '0.5rem', marginTop: '1.5rem' }, [15, 29, 45, 61, 73])}
+      {col('ml-[0.5rem] mt-[0.2rem]', [12, 26, 42, 58, 70])}
+      {col('ml-[0.5rem] mt-[0.5rem]', [13, 27, 43, 59, 71])}
+      {col('ml-[0.6rem] mt-[1rem]', [14, 28, 44, 60, 72])}
+      {col('ml-[0.5rem] mt-[1.5rem]', [15, 29, 45, 61, 73])}
     </div>
   );
 
   const dock = (
-    <div
-      style={{
-        width: 44, height: 44, borderRadius: 10,
-        border: '2px solid #555', background: '#222',
-      }}
-    />
+    <div className="h-11 w-11 rounded-[10px] border-2 border-[#555] bg-[#222]" />
   );
 
   const middle = (
-    <div
-      style={{
-        display: 'flex', flexDirection: 'column', gap: '1rem',
-        justifyContent: 'space-between', paddingBottom: '1rem',
-        alignItems: 'center', height: '100%',
-      }}
-    >
-      <div
-        style={{
-          display: 'flex', justifyContent: 'center', gap: '3.3rem',
-          height: '100%', alignItems: 'start', paddingTop: '1rem',
-        }}
-      >
+    <div className="flex flex-col gap-4 justify-between pb-4 items-center h-full">
+      <div className="flex justify-center gap-[3.3rem] h-full items-start pt-4">
         {dock}
         {dock}
       </div>
       <div>
-        <div style={{ display: 'flex', gap: '0.25rem' }}>{[37, 53, 67].map(K)}</div>
-        <div style={{ display: 'flex', gap: '0.25rem', marginTop: '0.25rem' }}>{[68, 54, 38].map(K)}</div>
+        <div className="flex gap-1">{[37, 53, 67].map(K)}</div>
+        <div className="flex gap-1 mt-1">{[68, 54, 38].map(K)}</div>
       </div>
     </div>
   );
 
   return (
     <div
-      className={disabled ? 'opacity-50 saturate-50' : undefined}
-      style={{
-        display: 'grid', width: '100%', minWidth: 940, height: '15rem',
-        gridTemplateColumns: '1fr 14rem 1fr', cursor: disabled ? 'default' : 'pointer',
-      }}
+      className={
+        `grid w-full min-w-[940px] h-60 grid-cols-[1fr_14rem_1fr] ` +
+        (disabled ? 'opacity-50 saturate-50 cursor-default' : 'cursor-pointer')
+      }
     >
       {halfLeft}
       {middle}

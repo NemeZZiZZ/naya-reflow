@@ -197,6 +197,7 @@ async function readAux(
 export default function App() {
   const sesRef = useRef(new Map<Side, NayaSession>());
   const busyRef = useRef(false);
+  const connRef = useRef({ left: false, right: false }); // per-side connect in flight (parallel init safe)
   const sweepRef = useRef(false); // full quiet sweep in flight (fast tick yields to it)
   const logId = useRef(0);
   const logRef = useRef<HTMLDivElement | null>(null);
@@ -204,7 +205,22 @@ export default function App() {
   const kbStageRef = useRef<HTMLDivElement | null>(null);
   const [kbScale, setKbScale] = useState(1);
   const [logs, setLogs] = useState<LogEntry[]>([]);
-  const [logOpen, setLogOpen] = useState(false);
+  const [logOpen, setLogOpen] = useState(() => {
+    try {
+      return localStorage.getItem('naya-logopen') === 'on';
+    } catch {
+      return false;
+    }
+  });
+  function toggleLog() {
+    setLogOpen((v) => {
+      const nv = !v;
+      try {
+        localStorage.setItem('naya-logopen', nv ? 'on' : 'off');
+      } catch { /* private mode */ }
+      return nv;
+    });
+  }
   // Log categories: CDC frames are hidden by default, text info + errors shown.
   const [logCats, setLogCats] = useState({ cdc: false, info: true, err: true });
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -234,7 +250,6 @@ export default function App() {
   const [fHID, setFHID] = useState('14');
   const [flashStat, setFlashStat] = useState('');
   const [flashPlan, setFlashPlan] = useState<FlashPlan | null>(null);
-  const [ledLayer, setLedLayer] = useState(0);
   const [ledDumpStat, setLedDumpStat] = useState('');
   const [ledRecs, setLedRecs] = useState<LedRec[]>([]);
   const [lastLed, setLastLed] = useState<{ layer: number; recs: LedRec[] } | null>(null);
@@ -256,6 +271,17 @@ export default function App() {
     () => new Map(ledRecs.map((r) => [r.kk, { h: r.h, s: r.s }])),
     [ledRecs],
   );
+  // Merged table rows: every keymap record in dump order with its LED color
+  // joined by KK, then LED-only rows (KK never present in the keymap dump).
+  const mergedRows = useMemo(() => {
+    const ledByKk = new Map(ledRecs.map((r) => [r.kk, r]));
+    const rows: { kk: number; key: KeyRec | null; led: LedRec | null }[] =
+      keyRecs.map((r) => ({ kk: r.kk, key: r, led: ledByKk.get(r.kk) ?? null }));
+    const keyKks = new Set(keyRecs.map((r) => r.kk));
+    for (const r of ledRecs)
+      if (!keyKks.has(r.kk)) rows.push({ kk: r.kk, key: null, led: r });
+    return rows;
+  }, [keyRecs, ledRecs]);
 
   function setHalf(side: Side, patch: Partial<HalfSnapshot>) {
     setHalves((prev) => ({ ...prev, [side]: { ...prev[side], ...patch } }));
@@ -442,11 +468,11 @@ export default function App() {
   }
 
   async function connectPort(port: SerialPort, hint: Side) {
-    if (busyRef.current) {
-      log('inf', 'busy — connect ignored (double-click guard)');
+    if (connRef.current[hint]) {
+      log('inf', `busy — ${hint} connect already in flight, ignored`);
       return;
     }
-    busyRef.current = true;
+    connRef.current[hint] = true;
     setConnecting((c) => ({ ...c, [hint]: true }));
     let ses: NayaSession | null = null;
     try {
@@ -466,6 +492,13 @@ export default function App() {
       }
       ses.dst = side === 'left' ? DST_LEFT : DST_RIGHT;
       if (side === 'left') await ses.handshake();
+      // Synchronous re-check: no await between check and set ⇒ atomic,
+      // so two parallel same-side candidates can't both claim the slot.
+      if (sesRef.current.has(side)) {
+        await ses.close();
+        log('inf', `refused: ${side} already connected`);
+        return;
+      }
       sesRef.current.set(side, ses);
       const kept = ses;
       ses = null;
@@ -482,7 +515,7 @@ export default function App() {
       }
       log('err', 'connect: ' + ((e as Error).stack ?? (e as Error).message));
     } finally {
-      busyRef.current = false;
+      connRef.current[hint] = false;
       setConnecting((c) => ({ ...c, [hint]: false }));
     }
   }
@@ -577,12 +610,16 @@ export default function App() {
           sideFromUsbInfo(p.getInfo()) === 'right' ? 1 : 0;
         return rank(a) - rank(b);
       });
-      log('inf', `auto-connect: ${ours.length} known port(s)…`);
-      for (const p of ours) {
-        const hint: Side = sideFromUsbInfo(p.getInfo()) ?? 'left';
-        if (sesRef.current.has(hint)) continue;
-        await connectPort(p, hint);
-      }
+      log('inf', `auto-connect: ${ours.length} known port(s), in parallel…`);
+      // Parallel init: halves come up concurrently; layout/keymap/LED
+      // access stays gated on the LEFT session (leftOn) regardless of order.
+      await Promise.allSettled(
+        ours.map((p) => {
+          const hint: Side = sideFromUsbInfo(p.getInfo()) ?? 'left';
+          if (sesRef.current.has(hint)) return Promise.resolve();
+          return connectPort(p, hint);
+        }),
+      );
     })();
     return () => {
       navigator.serial.removeEventListener('connect', onPlug);
@@ -597,9 +634,10 @@ export default function App() {
     const ses = leftSes();
     if (!ses) return;
     busyRef.current = true;
-    log('inf', `dump: start layer ${layer}…`);
+    log('inf', `dump: start layer ${layer} (keymap + LED)…`);
     try {
       setDumpStat('handshake…');
+      setLedDumpStat('handshake…');
       await ses.handshake();
       setDumpStat('reading…');
       const blob = await ses.readLayer(layer);
@@ -608,8 +646,18 @@ export default function App() {
       setKeyRecs(recs);
       setDumpStat(`${total}B blob, ${recs.length} records, parsed ${consumed}/${total}`);
       log('inf', `layer ${layer}: ${total}B, ${recs.length} records`);
+      setLedDumpStat('reading…');
+      const lblob = await ses.readLedmap(layer);
+      const lparsed = parseLedmap(lblob);
+      setLastLed({ layer, recs: lparsed.recs });
+      setLedRecs(lparsed.recs);
+      setLedDumpStat(
+        `${lparsed.total}B blob, ${lparsed.recs.length} LEDs, parsed ${lparsed.consumed}/${lparsed.total}`,
+      );
+      log('inf', `ledmap ${layer}: ${lparsed.total}B, ${lparsed.recs.length} LEDs`);
     } catch (e) {
       setDumpStat('FAILED: ' + (e as Error).message);
+      setLedDumpStat('FAILED: ' + (e as Error).message);
       log('err', 'dump: ' + ((e as Error).stack ?? (e as Error).message));
     } finally {
       busyRef.current = false;
@@ -693,28 +741,6 @@ export default function App() {
     }
   }
 
-  async function ledDump() {
-    const ses = leftSes();
-    if (!ses) return;
-    busyRef.current = true;
-    try {
-      setLedDumpStat('handshake…');
-      await ses.handshake();
-      setLedDumpStat('reading…');
-      const blob = await ses.readLedmap(ledLayer);
-      const { recs, consumed, total } = parseLedmap(blob);
-      setLastLed({ layer: ledLayer, recs });
-      setLedRecs(recs);
-      setLedDumpStat(`${total}B blob, ${recs.length} LEDs, parsed ${consumed}/${total}`);
-      log('inf', `ledmap ${ledLayer}: ${total}B, ${recs.length} LEDs`);
-    } catch (e) {
-      setLedDumpStat('FAILED: ' + (e as Error).message);
-      log('err', 'ledmap: ' + ((e as Error).stack ?? (e as Error).message));
-    } finally {
-      busyRef.current = false;
-    }
-  }
-
   function saveJson(name: string, obj: unknown) {
     const url = URL.createObjectURL(new Blob([JSON.stringify(obj, null, 2)], { type: 'application/json' }));
     const a = document.createElement('a');
@@ -761,7 +787,7 @@ export default function App() {
     if (!ses) return;
     busyRef.current = true;
     try {
-      const layers = all ? [0, 1, 2] : [ledLayer];
+      const layers = all ? [0, 1, 2] : [layer];
       await ses.handshake();
       const out: Record<string, unknown> = {
         tool: 'naya-reflow',
@@ -779,7 +805,7 @@ export default function App() {
         };
         log('inf', `export: ledmap ${L}: ${total}B, ${recs.length} LEDs`);
       }
-      saveJson(all ? 'naya-left-led-all.json' : `naya-left-led-L${ledLayer}.json`, out);
+      saveJson(all ? 'naya-left-led-all.json' : `naya-left-led-L${layer}.json`, out);
       log('inf', 'export: ledmap JSON saved');
     } catch (e) {
       log('err', 'export leds: ' + ((e as Error).stack ?? (e as Error).message));
@@ -794,7 +820,7 @@ export default function App() {
       setLedSetStat('connect the LEFT half first');
       return;
     }
-    if (!lastLed || lastLed.layer !== ledLayer) {
+    if (!lastLed || lastLed.layer !== layer) {
       setLedSetStat('dump this layer first');
       return;
     }
@@ -831,13 +857,13 @@ export default function App() {
         return;
       }
       setLedSetStat('readback…');
-      const blob = await ses.readLedmap(ledLayer);
+      const blob = await ses.readLedmap(layer);
       const parsed = parseLedmap(blob);
       const back = parsed.recs.find((r) => r.kk === plan.kk);
       if (back && back.h === plan.h && back.s === plan.s) {
         setLedSetStat('OK — look at the key');
         log('inf', 'color readback MATCH');
-        setLastLed({ layer: ledLayer, recs: parsed.recs });
+        setLastLed({ layer, recs: parsed.recs });
         setLedRecs(parsed.recs);
       } else {
         setLedSetStat('READBACK MISMATCH — see log');
@@ -916,8 +942,7 @@ export default function App() {
               ) : (
                 <Button
                   size="sm"
-                  disabled={!leftOn}
-                  title={leftOn ? 'Connect the RIGHT half' : 'Connect the LEFT half first'}
+                  title="Connect the RIGHT half (layout/keymap/LED unlock when LEFT is up)"
                   onClick={() => void connectPicked('right')}
                 >
                   <Plug /> Connect R…
@@ -958,7 +983,7 @@ export default function App() {
                 variant={logOpen ? 'default' : 'secondary'}
                 size="sm"
                 title={logOpen ? 'Hide log' : 'Show log'}
-                onClick={() => setLogOpen((v) => !v)}
+                onClick={() => toggleLog()}
               >
                 <Terminal /> Log
               </Button>
@@ -1009,7 +1034,7 @@ export default function App() {
 
           <Card className="mb-3">
             <CardHeader>
-              <CardTitle>Keymap</CardTitle>
+              <CardTitle>Layout</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="mb-2 flex flex-wrap items-center gap-2">
@@ -1024,12 +1049,19 @@ export default function App() {
                   Dump layer
                 </Button>
                 <Button variant="outline" onClick={() => void exportKeys(false)} disabled={!leftOn}>
-                  <Download className="mr-1 h-4 w-4" /> Save layer
+                  <Download className="mr-1 h-4 w-4" /> Save keys
                 </Button>
                 <Button variant="outline" onClick={() => void exportKeys(true)} disabled={!leftOn}>
-                  <Download className="mr-1 h-4 w-4" /> Save all layers
+                  <Download className="mr-1 h-4 w-4" /> Save all keys
+                </Button>
+                <Button variant="outline" onClick={() => void exportLeds(false)} disabled={!leftOn}>
+                  <Download className="mr-1 h-4 w-4" /> Save colors
+                </Button>
+                <Button variant="outline" onClick={() => void exportLeds(true)} disabled={!leftOn}>
+                  <Download className="mr-1 h-4 w-4" /> Save all colors
                 </Button>
                 <span className="font-mono text-xs">{dumpStat}</span>
+                <span className="font-mono text-xs">{ledDumpStat}</span>
               </div>
               <div className="max-h-80 overflow-y-auto rounded-md border border-border">
                 <table className="w-full text-[13px]">
@@ -1039,17 +1071,47 @@ export default function App() {
                       <th className={TH}>T</th>
                       <th className={TH}>Record</th>
                       <th className={TH}>Meaning</th>
+                      <th className={TH}>Hue°</th>
+                      <th className={TH}>Sat</th>
+                      <th className={TH}>Swatch</th>
+                      <th className={TH}>Raw</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {keyRecs.map(({ kk, t, rec }, i) => {
-                      const meaning = describeRecord(rec);
+                    {mergedRows.map(({ kk, key, led }, i) => {
+                      const meaning = key ? describeRecord(key.rec) : '—';
                       return (
-                        <tr key={kk + '-' + i} className={meaning.startsWith('empty') ? 'text-[#666]' : ''}>
+                        <tr
+                          key={kk + '-' + i}
+                          className={meaning.startsWith('empty') ? 'text-[#666]' : ''}
+                        >
                           <td className="font-mono px-2 py-1 border-b border-border">{hex2(kk)}</td>
-                          <td className="font-mono px-2 py-1 border-b border-border">{hex2(t)}</td>
-                          <td className={HEX}>{toHex(rec)}</td>
+                          <td className="font-mono px-2 py-1 border-b border-border">
+                            {key ? hex2(key.t) : '—'}
+                          </td>
+                          <td className={HEX}>{key ? toHex(key.rec) : '—'}</td>
                           <td className={TD}>{meaning}</td>
+                          <td className="font-mono px-2 py-1 border-b border-border">
+                            {led ? led.h : '—'}
+                          </td>
+                          <td className="font-mono px-2 py-1 border-b border-border">
+                            {led ? led.s : '—'}
+                          </td>
+                          <td className={TD}>
+                            {led ? (
+                              <span
+                                className="inline-block h-3.5 w-3.5 rounded"
+                                style={{ background: ledCss(led.h, led.s) }}
+                              />
+                            ) : (
+                              '—'
+                            )}
+                          </td>
+                          <td className={HEX}>
+                            {led
+                              ? toHex(new Uint8Array([kk, led.h & 0xff, (led.h >> 8) & 0xff, led.s]))
+                              : '—'}
+                          </td>
                         </tr>
                       );
                     })}
@@ -1095,7 +1157,7 @@ export default function App() {
 
           <Card className="mb-3">
             <CardHeader>
-              <CardTitle>LED colors</CardTitle>
+              <CardTitle>Set color</CardTitle>
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Badge variant="default">30/100d + 30/100e, no commit</Badge>
@@ -1107,57 +1169,7 @@ export default function App() {
               </Tooltip>
             </CardHeader>
             <CardContent>
-              <div className="mb-2 flex flex-wrap items-center gap-2">
-                <Tabs value={String(ledLayer)} onValueChange={(v) => setLedLayer(parseInt(v, 10))}>
-                  <TabsList>
-                    <TabsTrigger value="0">Layer 0</TabsTrigger>
-                    <TabsTrigger value="1">Layer 1</TabsTrigger>
-                    <TabsTrigger value="2">Layer 2</TabsTrigger>
-                  </TabsList>
-                </Tabs>
-                <Button variant="secondary" onClick={() => void ledDump()} disabled={!leftOn}>
-                  Dump LED map
-                </Button>
-                <Button variant="outline" onClick={() => void exportLeds(false)} disabled={!leftOn}>
-                  <Download className="mr-1 h-4 w-4" /> Save layer
-                </Button>
-                <Button variant="outline" onClick={() => void exportLeds(true)} disabled={!leftOn}>
-                  <Download className="mr-1 h-4 w-4" /> Save all layers
-                </Button>
-                <span className="font-mono text-xs">{ledDumpStat}</span>
-              </div>
-              <div className="max-h-80 overflow-y-auto rounded-md border border-border">
-                <table className="w-full text-[13px]">
-                  <thead className="sticky top-0 bg-card">
-                    <tr>
-                      <th className={TH}>KK</th>
-                      <th className={TH}>Hue°</th>
-                      <th className={TH}>Sat</th>
-                      <th className={TH}>Swatch</th>
-                      <th className={TH}>Raw</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {ledRecs.map(({ kk, h, s }, i) => (
-                      <tr key={kk + '-' + i}>
-                        <td className="font-mono px-2 py-1 border-b border-border">{hex2(kk)}</td>
-                        <td className="font-mono px-2 py-1 border-b border-border">{h}</td>
-                        <td className="font-mono px-2 py-1 border-b border-border">{s}</td>
-                        <td className={TD}>
-                          <span
-                            className="inline-block h-3.5 w-3.5 rounded"
-                            style={{ background: ledCss(h, s) }}
-                          />
-                        </td>
-                        <td className={HEX}>
-                          {toHex(new Uint8Array([kk, h & 0xff, (h >> 8) & 0xff, s]))}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-              <div className="mt-3 flex flex-wrap items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <Label>
                   KK <Input className="w-16" value={cKK} onChange={(e) => setCKK(e.target.value)} />
                 </Label>
@@ -1257,7 +1269,7 @@ export default function App() {
               >
                 <Trash2 /> Clear
               </Button>
-              <Button variant="ghost" size="sm" onClick={() => setLogOpen(false)}>
+              <Button variant="ghost" size="sm" onClick={() => toggleLog()}>
                 <X />
               </Button>
             </div>
@@ -1328,7 +1340,7 @@ export default function App() {
           <DialogContent>
             <DialogTitle>Set KK {colorPlan && hex2(colorPlan.kk)} color?</DialogTitle>
             <DialogDescription>
-              Writes the LED map entry on layer {ledLayer} of the LEFT half. Applies
+              Writes the LED map entry on layer {layer} of the LEFT half. Applies
               instantly, persists across reboot.
             </DialogDescription>
             {colorPlan && (
