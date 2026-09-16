@@ -147,7 +147,8 @@ v1.25.1 release asset in backup/firmware; tables verified against it).
 - **CA, F1**: all-UNKNOWN groups (no known commands; `mov w0,x1` + UNKNOWN tag).
 - **30 0x1001–0x100E** (remap): 1001 READ LAYER LIST (= handshake/inventory),
   1002 WRITE LAYER LIST (never observed on wire), 1003 READ LAYER DATA,
-  1004 WRITE LAYER DATA, 1005–1008 MACRO LIST/DATA read/write (never observed),
+  1004 WRITE LAYER DATA, 1005–1008 MACRO LIST/DATA read/write (live-read
+  2026-09-17: device answers, store empty — host-only feature),
   1009 MODULE CONFIG LIST read, 100A MODULE CONFIG LIST write(?),
   100B MODULE CONFIG DATA (= 30/100b read), 100C WRITE MODULE CONFIG DATA
   (never observed), 100D READ LED MAP, 100E WRITE LED MAP.
@@ -155,6 +156,33 @@ v1.25.1 release asset in backup/firmware; tables verified against it).
   keys) → effectively Shift-only; assume HID boot-modifier bits.
 - T10 constants: `c8 00` ×2 = tapping term 200ms (== profile header);
   `03` and `01 01 00` still unexplained.
+
+## Live verification (2026-09-17, left half, USB, NayaFlow closed)
+
+- **ED colors (all ACK `00` + user-observed)**: 1004 OFF (backlight out),
+  1003 ON (back on), 1009 RED, 100A GREEN, 100B BLUE, 100C WHITE
+  (empty params each; board-wide, instant).
+- **ED 100D EFFECT CYCLE** (empty params, ACK `00`): steps the animation
+  SOLID → BREATHE (slow uniform fade) → SWIRL (color flow) →
+  SPECTRUM (rainbow wave, space→Esc) → SOLID. Exactly the 4-entry
+  asar animation registry; the registry is device-real (host only
+  lacks a caller).
+- **ED 1011 SELECT LEDs EFFECT** (empty params): ACK `00`, no visible
+  effect (needs an effect-id param; encoding TBD).
+- **ED 1014 SET LED LAYER OVERRIDE** (empty / `01` / `02` / `00 01`):
+  ACK `00` every time, no observable change (typing + backlight
+  unchanged). Possibly working invisibly — all 3 layers' LED maps
+  are byte-identical on this board, so a layer switch would show
+  nothing. Decisive test (distinct per-layer colors + override) open.
+- **FF = host-side**: ff/1000 + ff/1003 (00/empty params) → NO-REPLY
+  on the live half (fa/1001 answers fine). FF/1000 WAIT == host
+  META-script WAIT. No device handler.
+- **Macros 30/1005–1006 ANSWER** (2B status `11 01`/`18 00`/`13 00`):
+  device macro store empty; NayaCore logs contain zero macro lines →
+  NayaFlow never syncs macros to the device (dead/host-only feature,
+  same class as naya-type actions).
+- Side effect of this session: board backlight left static WHITE
+  (color experiments overwrote per-key customs).
 
 ## T10 27-byte multi-behavior records — T03 experiment (KK30=Z, 2026-09-17)
 
