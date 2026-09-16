@@ -1046,13 +1046,10 @@ export default function App() {
         const has = (l: number) =>
           prev.some((s) => s.layer === l && s.kk === kk);
         if (layers.every(has)) return prev.filter((s) => s.kk !== kk);
-        const keep = prev.filter(
-          (s) => s.kk !== kk || !layers.includes(s.layer),
-        );
-        return [
-          ...keep,
-          ...layers.filter((l) => !has(l)).map((l) => ({ layer: l, kk })),
-        ];
+        // Complete to all three layers (remove-then-add: present pairs are
+        // re-added, so nothing already selected is ever lost).
+        const keep = prev.filter((s) => s.kk !== kk);
+        return [...keep, ...layers.map((l) => ({ layer: l, kk }))];
       }
       if (!additive) return [{ layer, kk }];
       return prev.some((s) => s.layer === layer && s.kk === kk)
