@@ -6,7 +6,7 @@
 // selection lives in the parent.
 import type { SVGProps } from "react";
 import { describeRecord, ledCss } from "../lib/naya";
-import { keyIconName } from "../lib/key-icon-map";
+import { keyIconName, shortLabel } from "../lib/key-icon-map";
 import { KEY_ICONS } from "../lib/key-icons";
 import { POS_KEY, POS_SHAPE, SHAPES } from "../lib/kb-data";
 import type { KeyShape } from "../lib/kb-data";
@@ -60,35 +60,6 @@ function ShapeSvg({
       })}
     </svg>
   );
-}
-
-function shortLabel(rec: Uint8Array): string {
-  const d = describeRecord(rec);
-  if (
-    d.startsWith("empty") ||
-    d.startsWith("index block") ||
-    d.startsWith("unknown")
-  )
-    return "";
-  if (d === "Hold layer 2") return "Hold 2";
-  if (d === "BT Clear") return "BT CLR";
-  if (d.startsWith("macro")) return "Macro";
-  let m = d.match(/^BT Device (\d+)$/);
-  if (m) return "BT" + m[1];
-  m = d.match(/^Mouse (Left|Right|Middle)$/);
-  if (m) return "M-" + m[1][0];
-  if (d.startsWith("Mouse button")) return "M?";
-  m = d.match(/^LED effect #(\d+)$/);
-  if (m) return "FX" + m[1];
-  if (d.startsWith("LED")) return "LED";
-  if (
-    d.startsWith("vendor") ||
-    d.startsWith("special") ||
-    d.startsWith("Consumer") ||
-    d.startsWith("usage page")
-  )
-    return d.slice(0, 8);
-  return d.length > 10 ? d.slice(0, 10) : d;
 }
 
 interface KeyProps {

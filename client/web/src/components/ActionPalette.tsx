@@ -10,7 +10,7 @@ import {
   type ActionDef,
 } from "../lib/actions";
 import { describeRecord } from "../lib/naya";
-import { keyIconName } from "../lib/key-icon-map";
+import { keyIconName, shortLabel } from "../lib/key-icon-map";
 import { KEY_ICONS } from "../lib/key-icons";
 import { cn } from "../lib/utils";
 import { Button } from "./ui/button";
@@ -78,6 +78,10 @@ export default function ActionPalette({
       <div className="grid grid-cols-[repeat(auto-fill,minmax(44px,1fr))] gap-1 max-h-56 overflow-y-auto pr-1">
         {list.map((a) => {
           const icon = actionIcon(a);
+          // Text fallback matches the keycap legend (short), not the long
+          // catalog label — e.g. LShift instead of Left Shift.
+          const text =
+            shortLabel(buildRecord(0, a.body())) || a.label;
           return (
             <Button
               variant="outline"
@@ -95,7 +99,7 @@ export default function ActionPalette({
                   dangerouslySetInnerHTML={{ __html: icon }}
                 />
               ) : (
-                a.label
+                text
               )}
             </Button>
           );

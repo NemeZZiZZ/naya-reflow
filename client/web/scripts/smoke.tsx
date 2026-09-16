@@ -11,7 +11,7 @@ import {
 } from '../src/lib/kb-data';
 import * as fs from 'fs';
 import * as path from 'path';
-import { keyIconName } from '../src/lib/key-icon-map';
+import { keyIconName, shortLabel } from '../src/lib/key-icon-map';
 import { ACTIONS, buildRecord, matchAction } from '../src/lib/actions';
 import { Draft } from '../src/lib/draft';
 import { timeoutsMs, timeoutsPayload } from '../src/lib/naya';
@@ -286,6 +286,11 @@ for (const a of ACTIONS) {
   }
 }
 eq(paletteOk ? 'ok' : 'bad', 'ok', 'palette icon chain over catalog');
+// palette text fallback = keycap legend: LShift/RShift, not Left/Right Shift.
+const shiftL = ACTIONS.find((a) => a.id === 'hid:225')!;
+const shiftR = ACTIONS.find((a) => a.id === 'hid:229')!;
+eq(shortLabel(buildRecord(0, shiftL.body())), 'LShift', 'palette LShift');
+eq(shortLabel(buildRecord(0, shiftR.body())), 'RShift', 'palette RShift');
 console.log('done-icons', n, 'checks');
 
 // 14. actions.ts catalog + builders

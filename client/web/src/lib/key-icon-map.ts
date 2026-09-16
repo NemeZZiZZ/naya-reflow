@@ -3,6 +3,8 @@
 // src/assets/key-icons/<name>.svg (extracted from NayaFlow renderer
 // dist/renderer/assets/icons/action/, recolored #fff -> currentColor).
 // Returns null when no icon exists -> caller falls back to text legend.
+import { describeRecord } from './naya';
+
 export function keyIconName(d: string): string | null {
   const m = /^BT Device ([1-5])$/.exec(d);
   if (m) return 'BT_DEVICE_' + m[1];
@@ -53,4 +55,35 @@ export function keyIconName(d: string): string | null {
     case 'BT Clear': return 'BT_CLEAR';
     default: return null;
   }
+}
+
+/* Short text legend for a keymap record — the same string the keycap shows
+ * when no icon maps. Used by the keyboard and, as a fallback, the palette. */
+export function shortLabel(rec: Uint8Array): string {
+  const d = describeRecord(rec);
+  if (
+    d.startsWith('empty') ||
+    d.startsWith('index block') ||
+    d.startsWith('unknown')
+  )
+    return '';
+  if (d === 'Hold layer 2') return 'Hold 2';
+  if (d === 'BT Clear') return 'BT CLR';
+  if (d.startsWith('macro')) return 'Macro';
+  let m = d.match(/^BT Device (\d+)$/);
+  if (m) return 'BT' + m[1];
+  m = d.match(/^Mouse (Left|Right|Middle)$/);
+  if (m) return 'M-' + m[1][0];
+  if (d.startsWith('Mouse button')) return 'M?';
+  m = d.match(/^LED effect #(\d+)$/);
+  if (m) return 'FX' + m[1];
+  if (d.startsWith('LED')) return 'LED';
+  if (
+    d.startsWith('vendor') ||
+    d.startsWith('special') ||
+    d.startsWith('Consumer') ||
+    d.startsWith('usage page')
+  )
+    return d.slice(0, 8);
+  return d.length > 10 ? d.slice(0, 10) : d;
 }
