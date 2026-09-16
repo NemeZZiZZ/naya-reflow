@@ -6,6 +6,9 @@
 export function keyIconName(d: string): string | null {
   const m = /^BT Device ([1-5])$/.exec(d);
   if (m) return 'BT_DEVICE_' + m[1];
+  // T05/7B layer actions: [KK,05,04,ID,...] — family 04 id 01 = MO(layer 1)
+  // hold (LH4/RH4 middle thumbs on the factory map)
+  if (/^special [0-9a-f]{2} 05 04 01 00 00 00$/.test(d)) return 'MO_LAYER_1';
   switch (d) {
     // HID main block
     case 'Enter': return 'RETURN';

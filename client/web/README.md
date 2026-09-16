@@ -1,32 +1,45 @@
-# React + TypeScript + Vite
+# Naya Reflow — web client
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+Open-source replacement for the NayaFlow configurator, for the (bankrupt)
+Naya Create split keyboard. Talks to both halves over USB CDC through the
+**WebSerial API** — no drivers, no install, no vendor software.
 
-Currently, two official plugins are available:
+Live build (auto-deployed from `main`): `https://nemezzizz.github.io/naya-reflow`
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Requirements
 
-## React Compiler
+- A **Chromium** browser (Chrome / Edge / Opera). Firefox and Safari do not
+  implement WebSerial.
+- Served over `https` or `localhost` (WebSerial needs a secure context).
+- NayaFlow closed — a serial port opens exclusively.
+- Linux needs a udev rule for the CDC ports; Windows picks `usbser` automatically.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Develop
 
-## Expanding the Oxlint configuration
-
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
-
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+```sh
+npm install
+npm run dev      # http://localhost:5173/
+npm run build    # tsc -b + vite → dist/
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+Protocol regression tests (no hardware needed):
+
+```sh
+./node_modules/.bin/rolldown --config scripts/rolldown.smoke.mjs
+node /tmp/smoke.cjs   # expect: no FAIL lines
+```
+
+## What it does
+
+- Dual-half connect (VID `0x37D1`, PID 100 = left / 200 = right) with
+  auto-connect, hot-plug, and per-side sessions.
+- Full keymap + LED-color read of all 3 layers at once; click a keycap to
+  remap (`30/1004` per-key writes, no commit needed) or recolor (`30/100e`),
+  with readback verify.
+- Battery + docked-module pills (module % is host-computed from rail voltage),
+  device Sheet, keymap/LED JSON export, categorized CDC log.
+- Keycap outlines + legend icons transcribed from the NayaFlow renderer
+  (`src/assets/key-icons/`, `src/lib/kb-data.ts`).
+
+Protocol details live in `../../docs/cdc-protocol.md`; the Python twin of the
+protocol core is `../../toolkit/cdc-client.py` (same decoders, same vectors).

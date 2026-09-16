@@ -112,6 +112,17 @@ Vs record: [KK, A, 08, X u32LE, Y u32LE]. Full action ID = (A<<16)|(X<<8)|Y.
 A proven action-intrinsic (BT_DEVICE_1 → A=00 on both KK2E and KK30). (A,X) = category: (0,3)=BT, (15,3)=mouse, (9,13)=LED; Y = index.
 Probe positions: KK2E (was LShift), KK2F (was LShift), KK30 (was Z). L1/L2 untouched by remap flash.
 
+## T05 7-byte special records — family 04 decoded (LH4/RH4, 2026-09-16)
+Format: `[KK, 05, 04, ID, 00, 00, 00]` (T=05, 7B; describe shows `special <hex>`).
+| ID | Meaning | Factory positions |
+|---|---|---|
+| 01 | Momentary-layer-1 hold (MO(1)) | KK67/68 = LH4/RH4 (middle thumb keys) |
+| 02 | Naya-button action | KK62/73 (0x3E/0x49, bottom-row Naya keys) |
+Evidence: family-04 census over factory L0 (0401→{67,68}, 0402→{62,73}); asar
+`assets/icons/action/` ships `MO_LAYER_$ID` template + `MO_LAYER_0..N` numbered
+set → (04,01) takes `MO_LAYER_1.svg`. Sibling thumbs L0: LH2/RH2 (37/38)=Space,
+LH3/RH3 (53/54)=Enter/Backspace; L1 thumbs all transparent (T0e).
+
 ## WRITE path (captured 2026-09-15, cdc-capture3.log — cloned app + interposer in stock core)
 - Remap flash = **per-key** `30/1004` writes + `fe/100a` commits. NO whole-layer blob.
 - `30/1004` frame (T01 example, len=19): `AA 00 50 id 30 0B 10 04 [00 00 KK + 7B record] CRC 04`.
@@ -141,12 +152,12 @@ Full frames: `naya-archive/aux-left.txt`, `aux-right.txt`.
 | fa/1001 | 43B dev-info | 31B dev-info (shorter) | device descriptor (HwID?) — raw hex in aux files |
 | be/1002 | `c93c71c654bd` | `d4bb98e83fb6` | BLE/slot addr (SWAPPED between halves) |
 | be/1008 | `d4bb98e83fb6` | (not queried) | other addr |
-| be/100f | `00 02 1d` both halves | same | battery? level=0x1d=29%? TBD |
+| be/100f | `00 02 1d` both halves | same | BLE FW version (`00 02 1d` → v0.2.29) — NOT battery (static-RE name + live decode agree) |
 | be/100c | 250B BLE status | (not queried) | pairs/slots (MACs visible inside) |
 | de/1001 | `00 01 20 30` | `00 01 11 01` | module presence, static per half |
-| de/1008 | `00 20 00 00 02 03 03 3a` | n/a (left-only) | module info, static |
+| de/1008 | `00 20 00 00 02 03 03 3a` | n/a (left-only) | module info: payload[1]=TYPE, payload[4..6]=module FW version (`02 03 03` → v0.2.3.3; leading zero is a status byte — decoders must slice p[3..6], the off-by-one bit modFwText once) |
 | de/100b | 4B live, varies | 4B live, varies | live module status |
-| fe/1002 | `00 00 03 29 00 38` both | same | FW version encoding? TBD |
+| fe/1002 | `00 00 03 29 00 38` both | same | base FW version → v0.3.41.0 (see `fw_version_text` in toolkit/cdc-client.py / naya.ts) |
 | fe/1006 | 3B live, varies | 3B live, varies | live status word |
 | fe/100b | `00 905f0100 e0930400 30750000` | (not queried) | **commit-token source: fe/100a params echo this payload verbatim** |
 | 30/1009 | 41B: `00 00 8005 ...` + 16B hash `85cce556...8fdf` | n/a | profile header/checksum (`_verifyProfile`)? |
@@ -267,3 +278,18 @@ Full frames: `naya-archive/aux-left.txt`, `aux-right.txt`.
 - `toolkit/smp-probe*.py` — probe evolution (4=echo proof, 7=burst canary
   failure, 8=calm-lab definitive image-group verdict).
 - `toolkit/boot-trap.py` — node-trap for cold-boot log capture.
+
+## Keycap icon set (web app, extracted 2026-09-16)
+- Source: NayaFlow `app.asar`, `dist/renderer/assets/icons/action/` (860 files =
+  keyboard/action glyphs; `external/` third-party + `internal/ui/tray/logo`
+  excluded as NayaFlow UI chrome). asar formula: `jsize=u32@12, json@16,
+  base=align4(16+jsize)`, offsets relative to base.
+- 53 files in `client/web/src/assets/key-icons/`: uniform `viewBox 0 0 40 40`,
+  shapes only `#fff` → rewritten to `currentColor` at extraction, so icons
+  inherit the legend color (#E5E1E6, #111 when selected).
+- Mapping `describeRecord → filename` in `client/web/src/lib/key-icon-map.ts`
+  (+ `key-icons.ts` `?raw` imports); Keyboard renders `.kb-icon` span, text
+  fallback otherwise. Gaps (text fallback): Shift (no icon in asar at all),
+  F-keys (exist as `F<n>.svg`, unused for now), MENU (missing).
+- `MO_LAYER_1.svg` covers T05 family-04 id-01 (LH4/RH4); regex mapping scoped to
+  `^special [0-9a-f]{2} 05 04 01 00 00 00$` (0402 Naya factory unaffected).

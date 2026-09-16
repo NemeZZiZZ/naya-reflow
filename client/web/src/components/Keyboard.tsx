@@ -119,31 +119,18 @@ function Key({ pos, rec, led, ledMode, selected, onSelect }: KeyProps) {
       onClick={() => onSelect(pos, kk)}
     >
       <div className="relative">
-        <ShapeSvg
-          name={POS_SHAPE[pos]}
-          fill={fill}
-          stroke="#E5E1E6"
-          className="stroke-gray-100"
-        />
+        <ShapeSvg name={POS_SHAPE[pos]} fill={fill} stroke="#E5E1E6" />
         <span
           className={cn(
-            "absolute text-sm left-1/2 top-1/2 -translate-1/2 font-medium whitespace-nowrap",
+            "absolute text-sm left-1/2 top-1/2 -translate-1/2 font-medium whitespace-nowrap [&_svg]:block [&_svg]:size-8",
             {
               "text-gray-900": selected,
               "text-gray-100 text-shadow-[-1px_-1px_0_rgba(0,0,0,.5),1px_-1px_0_rgba(0,0,0,.5),-1px_1px_0_rgba(0,0,0,.5),1px_1px_0_rgba(0,0,0,.5)]":
                 !selected,
             },
           )}
-        >
-          {icon ? (
-            <span
-              className="kb-icon"
-              dangerouslySetInnerHTML={{ __html: icon }}
-            />
-          ) : (
-            label
-          )}
-        </span>
+          dangerouslySetInnerHTML={{ __html: icon ? icon : label }}
+        />
       </div>
     </div>
   );
@@ -180,56 +167,52 @@ export default function Keyboard({
     />
   );
   const col = (extra: string, keys: number[]) => (
-    <div className={`flex flex-col gap-[0.1rem] w-11 flex-nowrap ${extra}`}>
+    <div className={cn("flex flex-col gap-1 w-11 flex-nowrap", extra)}>
       {keys.map(K)}
     </div>
   );
 
   const halfLeft = (
-    <div className="flex pr-[0.3rem] h-full justify-self-end">
-      {col("mt-[1.5rem] mr-[0.5rem]", [0, 16, 30, 46, 62])}
-      {col("mr-[0.6rem] mt-[1rem]", [1, 17, 31, 47, 63])}
-      {col("mt-[0.5rem] mr-[0.5rem]", [2, 18, 32, 48, 64])}
-      {col("mr-[0.5rem] mt-[0.2rem]", [3, 19, 33, 49, 65])}
-      <div className="flex flex-col gap-[0.1rem] flex-nowrap mr-2 w-11">
+    <div className="flex h-full justify-self-end gap-1">
+      {col("mt-[1.5rem]", [0, 16, 30, 46, 62])}
+      {col("mt-[1rem]", [1, 17, 31, 47, 63])}
+      {col("mt-[0.5rem]", [2, 18, 32, 48, 64])}
+      {col("mt-[0.2rem]", [3, 19, 33, 49, 65])}
+      <div className="flex flex-col gap-1 flex-nowrap w-11">
         {[4, 20, 34].map(K)}
-        <div className="flex flex-row-reverse pt-[0.1rem] pl-[2.6rem]">
-          {K(50)}
-        </div>
-        <div className="pt-[0.1rem] self-center ml-16">{K(66)}</div>
+        {K(50)}
+        <span className="-mr-17">{K(66)}</span>
       </div>
-      {col("mr-[0.5rem]", [5, 21, 35, 51])}
-      <div className="flex flex-col gap-[0.1rem] flex-nowrap w-11 mr-2 mt-[0.15rem]">
+      {col("gap-0.75", [5, 21, 35, 51])}
+      <div className="flex flex-col gap-0.5 flex-nowrap w-11 mt-[0.15rem]">
         {[6, 22].map(K)}
-        <div className="relative flex flex-row right-[0.2rem]">{K(36)}</div>
+        <span>{K(36)}</span>
         {K(52)}
       </div>
-      <div className="flex flex-col gap-[0.1rem] flex-nowrap w-11 mt-[0.3rem]">
+      <div className="flex flex-col gap-1 flex-nowrap w-11 mt-[0.3rem]">
         {K(7)}
       </div>
     </div>
   );
 
   const halfRight = (
-    <div className="flex h-full justify-self-start">
+    <div className="flex h-full justify-self-start gap-1">
       {col("mt-[0.3rem]", [8])}
-      <div className="flex flex-col gap-[0.1rem] w-11 flex-nowrap ml-2 mt-[0.15rem]">
+      <div className="flex flex-col gap-0.5 flex-nowrap w-11 mt-[0.15rem]">
         {[9, 23].map(K)}
-        <div className="flex flex-row-reverse pl-[2.6rem]">{K(39)}</div>
+        <span className="-ml-2">{K(39)}</span>
         {K(55)}
       </div>
-      {col("ml-[0.5rem]", [10, 24, 40, 56])}
-      <div className="flex flex-col gap-[0.1rem] w-11 flex-nowrap ml-2">
+      {col("gap-0.75", [10, 24, 40, 56])}
+      <div className="flex flex-col gap-1 flex-nowrap w-11">
         {[11, 25, 41].map(K)}
-        <div className="flex flex-row-reverse pt-[0.1rem] pl-[2.6rem]">
-          {K(57)}
-        </div>
-        <div className="pt-[0.1rem] self-center mr-16">{K(69)}</div>
+        {K(57)}
+        <span className="-ml-17">{K(69)}</span>
       </div>
-      {col("ml-[0.5rem] mt-[0.2rem]", [12, 26, 42, 58, 70])}
-      {col("ml-[0.5rem] mt-[0.5rem]", [13, 27, 43, 59, 71])}
-      {col("ml-[0.6rem] mt-[1rem]", [14, 28, 44, 60, 72])}
-      {col("ml-[0.5rem] mt-[1.5rem]", [15, 29, 45, 61, 73])}
+      {col("mt-[0.2rem]", [12, 26, 42, 58, 70])}
+      {col("mt-[0.5rem]", [13, 27, 43, 59, 71])}
+      {col("mt-[1rem]", [14, 28, 44, 60, 72])}
+      {col("mt-[1.5rem]", [15, 29, 45, 61, 73])}
     </div>
   );
 
@@ -243,19 +226,19 @@ export default function Keyboard({
         {dock}
         {dock}
       </div>
-      <div>
+      <div className="-mx-12 flex items-center justify-between gap-8">
         <div className="flex gap-1">{[37, 53, 67].map(K)}</div>
-        <div className="flex gap-1 mt-1">{[68, 54, 38].map(K)}</div>
+        <div className="flex gap-1">{[68, 54, 38].map(K)}</div>
       </div>
     </div>
   );
 
   return (
     <div
-      className={
-        `grid w-full min-w-235 grid-cols-[1fr_14rem_1fr] ` +
-        (disabled ? "opacity-50 saturate-50 cursor-default" : "cursor-pointer")
-      }
+      className={cn("grid w-full min-w-235 grid-cols-[1fr_14rem_1fr] gap-1", {
+        "opacity-50 saturate-50 cursor-default": disabled,
+        "cursor-pointer": !disabled,
+      })}
     >
       {halfLeft}
       {middle}

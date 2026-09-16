@@ -33,6 +33,13 @@ import {
   DialogFooter,
   DialogTitle,
 } from "./components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+} from "./components/ui/dropdown-menu";
 import { Input } from "./components/ui/input";
 import { Label } from "./components/ui/label";
 import { Separator } from "./components/ui/separator";
@@ -378,7 +385,10 @@ export default function App() {
   // tabs switch the view instantly with no device traffic.
   const [keysByLayer, setKeysByLayer] = useState<KeyRec[][]>([[], [], []]);
   const [ledsByLayer, setLedsByLayer] = useState<LedRec[][]>([[], [], []]);
-  const [blobTotals, setBlobTotals] = useState<{ keys: number[]; leds: number[] }>({
+  const [blobTotals, setBlobTotals] = useState<{
+    keys: number[];
+    leds: number[];
+  }>({
     keys: [0, 0, 0],
     leds: [0, 0, 0],
   });
@@ -398,11 +408,15 @@ export default function App() {
 
   const keymap = useMemo(() => {
     const m = new Map<number, Uint8Array>();
-    for (const r of keysByLayer[layer] ?? []) if (!m.has(r.kk)) m.set(r.kk, r.rec);
+    for (const r of keysByLayer[layer] ?? [])
+      if (!m.has(r.kk)) m.set(r.kk, r.rec);
     return m;
   }, [keysByLayer, layer]);
   const ledmap = useMemo(
-    () => new Map((ledsByLayer[layer] ?? []).map((r) => [r.kk, { h: r.h, s: r.s }])),
+    () =>
+      new Map(
+        (ledsByLayer[layer] ?? []).map((r) => [r.kk, { h: r.h, s: r.s }]),
+      ),
     [ledsByLayer, layer],
   );
   // Merged table rows: every keymap record in dump order with its LED color
@@ -614,13 +628,19 @@ export default function App() {
         keys[L] = recs;
         keyTotals[L] = total;
         nKeys += recs.length;
-        log("inf", `layer ${L}: ${total}B, ${recs.length} records (${consumed}/${total})`);
+        log(
+          "inf",
+          `layer ${L}: ${total}B, ${recs.length} records (${consumed}/${total})`,
+        );
         const lblob = await ses.readLedmap(L);
         const lparsed = parseLedmap(lblob);
         leds[L] = lparsed.recs;
         ledTotals[L] = lparsed.total;
         nLeds += lparsed.recs.length;
-        log("inf", `ledmap ${L}: ${lparsed.total}B, ${lparsed.recs.length} LEDs`);
+        log(
+          "inf",
+          `ledmap ${L}: ${lparsed.total}B, ${lparsed.recs.length} LEDs`,
+        );
       }
       setKeysByLayer(keys);
       setLedsByLayer(leds);
@@ -1207,9 +1227,8 @@ export default function App() {
               <span className="font-mono text-xs text-muted-foreground">
                 {selInfo}
               </span>
-            </CardHeader>
-            <CardContent>
-              <Label className="mb-2">
+
+              <Label className="ml-auto">
                 <input
                   type="checkbox"
                   checked={ledMode}
@@ -1218,9 +1237,15 @@ export default function App() {
                 />
                 LED colors on keys
               </Label>
-              <div id="kbwrap" ref={kbBoxRef}>
+            </CardHeader>
+            <CardContent>
+              <div
+                className="overflow-hidden rounded-sm bg-background p-4"
+                ref={kbBoxRef}
+              >
                 <div
                   ref={kbStageRef}
+                  className="mx-auto max-w-full"
                   style={{
                     width: "fit-content",
                     zoom: kbScale,
@@ -1267,34 +1292,28 @@ export default function App() {
                 >
                   Refresh
                 </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => void exportKeys(false)}
-                  disabled={!leftOn}
-                >
-                  <Download className="mr-1 h-4 w-4" /> Save keys
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => void exportKeys(true)}
-                  disabled={!leftOn}
-                >
-                  <Download className="mr-1 h-4 w-4" /> Save all keys
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => void exportLeds(false)}
-                  disabled={!leftOn}
-                >
-                  <Download className="mr-1 h-4 w-4" /> Save colors
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => void exportLeds(true)}
-                  disabled={!leftOn}
-                >
-                  <Download className="mr-1 h-4 w-4" /> Save all colors
-                </Button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" disabled={!leftOn}>
+                      <Download className="mr-1 h-4 w-4" /> Save
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent>
+                    <DropdownMenuItem onClick={() => void exportKeys(false)} disabled={!leftOn}>
+                      Save keys
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => void exportKeys(true)} disabled={!leftOn}>
+                      Save all keys
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => void exportLeds(false)} disabled={!leftOn}>
+                      Save colors
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => void exportLeds(true)} disabled={!leftOn}>
+                      Save all colors
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
                 <span className="font-mono text-xs">{dumpStat}</span>
                 <span className="font-mono text-xs">{ledDumpStat}</span>
                 <span className="ml-auto flex items-center gap-2">

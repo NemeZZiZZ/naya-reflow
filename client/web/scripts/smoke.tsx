@@ -236,7 +236,10 @@ const iconCases: Array<[string, string | null]> = [
   ['Volume −', 'C_VOL_DOWN'], ['Next Track', 'C_NEXT'],
   ['Prev Track', 'C_PREVIOUS'], ['Mouse Left', 'MOUSE_LEFT'],
   ['Mouse Right', 'MOUSE_RIGHT'], ['BT Device 1', 'BT_DEVICE_1'],
-  ['BT Device 5', 'BT_DEVICE_5'], ['Naya key (factory)', 'NAYA'],
+  ['BT Device 5', 'BT_DEVICE_5'],   ['Naya key (factory)', 'NAYA'],
+  ['special 43 05 04 01 00 00 00', 'MO_LAYER_1'],
+  ['special 44 05 04 01 00 00 00', 'MO_LAYER_1'],
+  ['special 3e 05 04 02 00 00 00', null],
   ['A', null], ['LShift', null], ['RShift', null], ['Menu', null],
   ['F13', null], ['Mouse Middle', null], ['Stop', null], ['Power', null],
   ['LED effect #2', null], ['empty / filler', null],
@@ -248,13 +251,13 @@ const iconDir = path.join(
   'src', 'assets', 'key-icons',
 );
 const diskFiles = new Set(fs.readdirSync(iconDir).filter((f) => f.endsWith('.svg')));
-eq(diskFiles.size, 52, '52 icon files on disk');
+eq(diskFiles.size, 53, '53 icon files on disk');
 const tsSrc = fs.readFileSync(path.join(
   process.env.SMOKE_ROOT ?? process.cwd(),
   'src', 'lib', 'key-icons.ts',
 ), 'utf8');
 const imported = new Set([...tsSrc.matchAll(/key-icons\/([A-Z0-9_]+)\.svg\?raw/g)].map((m) => m[1] + '.svg'));
-eq(imported.size, 52, '52 ?raw imports');
+eq(imported.size, 53, '53 ?raw imports');
 eq([...imported].every((f) => diskFiles.has(f)) && [...diskFiles].every((f) => imported.has(f)) ? 'ok' : 'bad', 'ok', 'imports match disk');
 let iconOk = true;
 for (const f of diskFiles) {
@@ -263,7 +266,7 @@ for (const f of diskFiles) {
       /#fff|#FFF|#ffffff/i.test(s) || !s.includes('currentColor')) { iconOk = false; break; }
 }
 eq(iconOk ? 'ok' : 'bad', 'ok', 'icons 40x40 + currentColor, no #fff');
-for (const d of ['Backspace', 'BT Device 3', 'Naya key (factory)']) {
+for (const d of ['Backspace', 'BT Device 3', 'Naya key (factory)', 'special 43 05 04 01 00 00 00']) {
   const nm = keyIconName(d);
   eq(nm !== null && diskFiles.has(nm + '.svg') ? 'ok' : 'bad', 'ok', 'mapped file exists: ' + d);
 }

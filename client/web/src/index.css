@@ -58,12 +58,6 @@ body {
 }
 
 /* Transcribed NayaFlow keyboard look: fixed-pixel keycaps, dark stage */
-#kbwrap {
-  overflow: hidden;
-  background: #0a0b0d;
-  border-radius: 8px;
-  padding: 18px 10px 10px;
-}
 #kbwrap svg {
   display: block;
 }
