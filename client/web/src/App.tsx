@@ -56,7 +56,7 @@ import { TooltipProvider } from "./components/ui/tooltip";
 import { HexColorPicker } from "react-colorful";
 import { POS_KEY } from "./lib/kb-data";
 import { Draft, opSummary } from "./lib/draft";
-import { buildRecord } from "./lib/actions";
+import { buildRecord, findAction } from "./lib/actions";
 import type { ActionDef } from "./lib/actions";
 import {
   DST_LEFT,
@@ -1628,7 +1628,7 @@ export default function App() {
                   <X /> Clear selection
                 </Button>
               </CardHeader>
-              <CardContent className="grid gap-4 md:grid-cols-3">
+              <CardContent className="grid gap-4 md:grid-cols-[240px_1.5fr_1fr]">
                 <div>
                   <div className="mb-2 text-sm font-medium">
                     Selected keys ({sel.length})
@@ -1649,7 +1649,17 @@ export default function App() {
                   </div>
                 </div>
                 <div>
-                  <div className="mb-2 text-sm font-medium">Assign action</div>
+                  <div className="mb-2 flex items-center justify-between">
+                    <div className="text-sm font-medium">Assign action</div>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setPickedAction(findAction("empty") ?? null)}
+                      title="Pick the empty (unassign) action"
+                    >
+                      Empty
+                    </Button>
+                  </div>
                   <ActionPalette
                     onPick={setPickedAction}
                     pickedId={pickedAction?.id ?? null}
@@ -1779,9 +1789,7 @@ export default function App() {
                   max={511}
                   step={1}
                   value={[dlgColor.h]}
-                  onValueChange={([v]) =>
-                    setDlgColor((c) => ({ ...c, h: v }))
-                  }
+                  onValueChange={([v]) => setDlgColor((c) => ({ ...c, h: v }))}
                   className="flex-1"
                 />
                 <Input
@@ -1808,9 +1816,7 @@ export default function App() {
                   max={100}
                   step={1}
                   value={[dlgColor.s]}
-                  onValueChange={([v]) =>
-                    setDlgColor((c) => ({ ...c, s: v }))
-                  }
+                  onValueChange={([v]) => setDlgColor((c) => ({ ...c, s: v }))}
                   className="flex-1"
                 />
                 <Input
@@ -1842,10 +1848,7 @@ export default function App() {
                 </span>
               </div>
               <DialogFooter>
-                <Button
-                  variant="outline"
-                  onClick={() => setColorDlg(false)}
-                >
+                <Button variant="outline" onClick={() => setColorDlg(false)}>
                   Cancel
                 </Button>
                 <Button onClick={addCustomColor}>Add color</Button>

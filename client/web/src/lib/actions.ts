@@ -111,7 +111,7 @@ export const ACTIONS: ActionDef[] = [
   ...LED.map(([label, y]): ActionDef => ({ id: `led:${y}`, label, category: 'LED', body: () => vendor(0x09, 0x0d, y) })),
   { id: 'special:1', label: 'MO (hold layer, = LH4/RH4)', category: 'Layers', body: () => special(1) },
   { id: 'hold2', label: 'Hold layer 2 (= factory bottom keys)', category: 'Layers', body: () => special(2) },
-  { id: 'empty', label: 'Empty (unassign)', category: 'Advanced', body: () => EMPTY_BODY },
+  { id: 'empty', label: '<empty>', category: 'Advanced', body: () => EMPTY_BODY },
 ];
 
 export const ACTION_CATEGORIES = [

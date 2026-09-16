@@ -22,6 +22,11 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "./ui/accordion";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from "./ui/input-group";
 
 // Palette glyph = the same icon the keycap will show: build the record with
 // a dummy KK=0, describe it, resolve via the shared map. The mapping is
@@ -64,15 +69,17 @@ export default function ActionPalette({
 
   return (
     <div className="flex flex-col gap-2">
-      <div className="relative">
-        <Search className="absolute left-2 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground" />
-        <input
-          className="pl-7 pr-2 py-1 rounded-md text-xs bg-background border border-border w-full outline-none focus:border-ring"
+      <InputGroup className="h-8 text-xs">
+        <InputGroupAddon>
+          <Search />
+        </InputGroupAddon>
+        <InputGroupInput
           placeholder="Search actions…"
           value={q}
           onChange={(e) => setQ(e.target.value)}
+          className="text-xs"
         />
-      </div>
+      </InputGroup>
       {groups.length === 0 && (
         <div className="text-xs text-muted-foreground py-4 text-center">
           No actions match.
@@ -86,12 +93,14 @@ export default function ActionPalette({
       >
         {groups.map((g) => (
           <AccordionItem key={g.cat} value={g.cat}>
-            <AccordionTrigger>
-              {g.cat}
-              <span className="ml-1 font-mono text-xs text-muted-foreground">
-                {g.items.length}
-              </span>
-            </AccordionTrigger>
+            <div className="sticky top-0 bg-card">
+              <AccordionTrigger className="justify-start">
+                {g.cat}
+                <span className="ml-2 mr-auto font-mono text-xs text-muted-foreground">
+                  {g.items.length}
+                </span>
+              </AccordionTrigger>
+            </div>
             <AccordionContent>
               <div className="grid grid-cols-[repeat(auto-fill,minmax(44px,1fr))] gap-1">
                 {g.items.map((a) => {
@@ -101,18 +110,18 @@ export default function ActionPalette({
                   const text = shortLabel(buildRecord(0, a.body())) || a.label;
                   return (
                     <Button
-                      variant="outline"
+                      variant={pickedId === a.id ? "default" : "outline"}
                       key={a.id}
                       title={a.label}
                       className={cn(
-                        "hover:bg-accent truncate aspect-square h-auto text-lg",
-                        pickedId === a.id && "ring-2 ring-primary",
+                        "hover:bg-accent truncate aspect-square h-auto text-sm",
+                        { "text-xl": a.label.length < 4 },
                       )}
                       onClick={() => onPick(a)}
                     >
                       {icon ? (
                         <span
-                          className="[&_svg]:size-6"
+                          className="[&_svg]:size-9"
                           dangerouslySetInnerHTML={{ __html: icon }}
                         />
                       ) : (
