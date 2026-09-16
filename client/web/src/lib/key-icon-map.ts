@@ -49,7 +49,8 @@ export function keyIconName(d: string): string | null {
     case 'Mouse Left': return 'MOUSE_LEFT';
     case 'Mouse Right': return 'MOUSE_RIGHT';
     // vendor actions
-    case 'Naya key (factory)': return 'NAYA';
+    case 'Hold layer 2': return 'HOLD_LAYER_2';
+    case 'BT Clear': return 'BT_CLEAR';
     default: return null;
   }
 }

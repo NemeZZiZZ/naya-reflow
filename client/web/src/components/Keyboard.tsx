@@ -70,7 +70,8 @@ function shortLabel(rec: Uint8Array): string {
     d.startsWith("unknown")
   )
     return "";
-  if (d === "Naya key (factory)") return "Naya";
+  if (d === "Hold layer 2") return "Hold 2";
+  if (d === "BT Clear") return "BT CLR";
   if (d.startsWith("macro")) return "Macro";
   let m = d.match(/^BT Device (\d+)$/);
   if (m) return "BT" + m[1];
@@ -97,7 +98,12 @@ interface KeyProps {
   ledMode: boolean;
   selected: boolean;
   dirty?: boolean;
-  onSelect: (pos: number, kk: number, additive: boolean) => void;
+  onSelect: (
+    pos: number,
+    kk: number,
+    additive: boolean,
+    allLayers: boolean,
+  ) => void;
 }
 
 function Key({ pos, rec, led, ledMode, selected, dirty, onSelect }: KeyProps) {
@@ -117,7 +123,7 @@ function Key({ pos, rec, led, ledMode, selected, dirty, onSelect }: KeyProps) {
       className="kb-key"
       data-pos={pos}
       title={`pos ${pos} = ${POS_KEY[String(pos)] ?? "?"} KK 0x${kk.toString(16)}${rec ? " — " + describeRecord(rec) : ""}`}
-      onClick={(e) => onSelect(pos, kk, e.shiftKey)}
+      onClick={(e) => onSelect(pos, kk, e.shiftKey, e.altKey)}
     >
       <div className="relative">
         <ShapeSvg name={POS_SHAPE[pos]} fill={fill} stroke="#E5E1E6" />
@@ -147,9 +153,14 @@ interface KeyboardProps {
   keymap: Map<number, Uint8Array>;
   ledmap: Map<number, LedVal>;
   ledMode: boolean;
-  /** selected KKs (multi-select with Shift+click) */
+  /** selected KKs of the viewed layer (Shift+click multi, Alt+click all layers) */
   sel: Set<number>;
-  onSelect: (pos: number, kk: number, additive: boolean) => void;
+  onSelect: (
+    pos: number,
+    kk: number,
+    additive: boolean,
+    allLayers: boolean,
+  ) => void;
   /** disconnected: ignore clicks, render semi-transparent */
   disabled?: boolean;
   /** KKs with queued (not yet flashed) changes — get a dot marker */
@@ -165,8 +176,13 @@ export default function Keyboard({
   disabled = false,
   dirty,
 }: KeyboardProps) {
-  const pick = (pos: number, kk: number, additive: boolean) => {
-    if (!disabled) onSelect(pos, kk, additive);
+  const pick = (
+    pos: number,
+    kk: number,
+    additive: boolean,
+    allLayers: boolean,
+  ) => {
+    if (!disabled) onSelect(pos, kk, additive, allLayers);
   };
   const K = (pos: number) => (
     <Key

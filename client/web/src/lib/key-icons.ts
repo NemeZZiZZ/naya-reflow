@@ -46,6 +46,7 @@ import svg_MOUSE_RIGHT from '../assets/key-icons/MOUSE_RIGHT.svg?raw';
 import svg_MOUSE_UP from '../assets/key-icons/MOUSE_UP.svg?raw';
 import svg_MOUSE_DOWN from '../assets/key-icons/MOUSE_DOWN.svg?raw';
 import svg_MO_LAYER_1 from '../assets/key-icons/MO_LAYER_1.svg?raw';
+import svg_HOLD_LAYER_2 from '../assets/key-icons/HOLD_LAYER_2.svg?raw';
 import svg_C_PLAY_PAUSE from '../assets/key-icons/C_PLAY_PAUSE.svg?raw';
 import svg_C_MUTE from '../assets/key-icons/C_MUTE.svg?raw';
 import svg_C_VOL_UP from '../assets/key-icons/C_VOL_UP.svg?raw';
@@ -101,6 +102,7 @@ export const KEY_ICONS: Record<string, string> = {
   MOUSE_UP: svg_MOUSE_UP,
   MOUSE_DOWN: svg_MOUSE_DOWN,
   MO_LAYER_1: svg_MO_LAYER_1,
+  HOLD_LAYER_2: svg_HOLD_LAYER_2,
   C_PLAY_PAUSE: svg_C_PLAY_PAUSE,
   C_MUTE: svg_C_MUTE,
   C_VOL_UP: svg_C_VOL_UP,

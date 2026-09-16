@@ -37,6 +37,7 @@ import {
   DropdownMenuSeparator,
 } from "./components/ui/dropdown-menu";
 import { Label } from "./components/ui/label";
+import { Kbd } from "./components/ui/kbd";
 import { Separator } from "./components/ui/separator";
 import { Sheet, SheetContent, SheetTitle } from "./components/ui/sheet";
 import { Tabs, TabsList, TabsTrigger } from "./components/ui/tabs";
@@ -382,9 +383,12 @@ export default function App() {
   });
   const [ledDumpStat, setLedDumpStat] = useState("");
   const [ledMode, setLedMode] = useState(true);
-  // Editor view + multi-selection (Shift+click on keyboard, checkboxes in table)
+  // Editor view + multi-selection (Shift+click on keyboard, checkboxes in table).
+  // Selection is per (layer, KK) pair: keys can be picked on different
+  // layers at once; Alt+click grabs the key on ALL layers.
+  interface SelKey { layer: number; kk: number }
   const [view, setView] = useState<"kb" | "table">("kb");
-  const [sel, setSel] = useState<number[]>([]);
+  const [sel, setSel] = useState<SelKey[]>([]);
   const [pickedAction, setPickedAction] = useState<ActionDef | null>(null);
   const [panelColor, setPanelColor] = useState({ h: 180, s: 100 });
   const [panelPickerOpen, setPanelPickerOpen] = useState(false);
@@ -468,14 +472,22 @@ export default function App() {
   // Keyboard always renders fully, never scrolls: CSS `zoom` shrinks layout
   // too (unlike transform), so the wrapper auto-heights — no fixed heights.
   // Natural size is constant (fixed-px keycaps, absolutely-positioned
-  // legends), so measure once and rescale on box resizes only.
+  // legends). scrollWidth is measured UNDER the active zoom, so divide it
+  // out — otherwise StrictMode re-runs and view remounts bake a zoomed
+  // baseline in and the keyboard comes back tiny. Re-run on return to the
+  // Keyboard view (the card unmounts in Layout view, killing the observer).
   const kbNaturalW = useRef(1100);
+  const kbScaleRef = useRef(kbScale);
+  kbScaleRef.current = kbScale;
   useEffect(() => {
+    if (view !== "kb") return;
     const box = kbBoxRef.current;
     const stage = kbStageRef.current;
     if (!box || !stage) return;
-    kbNaturalW.current = stage.scrollWidth || 1100;
     const update = () => {
+      const z = kbScaleRef.current || 1;
+      const natural = (stage.scrollWidth || 1100 * z) / z;
+      if (natural > 0) kbNaturalW.current = natural;
       setKbScale(
         Math.max(0.25, Math.min(1, box.clientWidth / kbNaturalW.current)),
       );
@@ -484,7 +496,7 @@ export default function App() {
     const ro = new ResizeObserver(update);
     ro.observe(box);
     return () => ro.disconnect();
-  }, []);
+  }, [view]);
 
   // Quiet aux refresh every 30s: no log frames, skipped while a user op runs.
   // The device sends no module events, so module dock/undock is detected here
@@ -929,7 +941,10 @@ export default function App() {
       }
     } catch (e) {
       toast.error("Flash failed", { description: (e as Error).message });
-      log("err", "flash queue: " + ((e as Error).stack ?? (e as Error).message));
+      log(
+        "err",
+        "flash queue: " + ((e as Error).stack ?? (e as Error).message),
+      );
     } finally {
       busyRef.current = false;
       setFlashing(false);
@@ -1016,48 +1031,82 @@ export default function App() {
     log("inf", "export: ledmap JSON saved");
   }
 
-  // Multi-select: plain click replaces, Shift+click toggles. Clicking only
-  // selects — assigning happens in the panel below (action + color).
-  function onSelect(_pos: number, kk: number, additive: boolean) {
+  // Multi-select: plain click replaces, Shift+click toggles the (layer, KK)
+  // pair, Alt+click toggles the KK on all three layers at once.
+  // Clicking only selects — assigning happens in the panel below.
+  function onSelect(
+    _pos: number,
+    kk: number,
+    additive: boolean,
+    allLayers: boolean,
+  ) {
     setSel((prev) => {
-      if (!additive) return [kk];
-      return prev.includes(kk)
-        ? prev.filter((k) => k !== kk)
-        : [...prev, kk];
+      if (allLayers) {
+        const layers = [0, 1, 2];
+        const has = (l: number) =>
+          prev.some((s) => s.layer === l && s.kk === kk);
+        if (layers.every(has)) return prev.filter((s) => s.kk !== kk);
+        const keep = prev.filter(
+          (s) => s.kk !== kk || !layers.includes(s.layer),
+        );
+        return [
+          ...keep,
+          ...layers.filter((l) => !has(l)).map((l) => ({ layer: l, kk })),
+        ];
+      }
+      if (!additive) return [{ layer, kk }];
+      return prev.some((s) => s.layer === layer && s.kk === kk)
+        ? prev.filter((s) => !(s.layer === layer && s.kk === kk))
+        : [...prev, { layer, kk }];
     });
+  }
+
+  function removePair(l: number, kk: number) {
+    setSel((prev) =>
+      prev.filter((s) => !(s.layer === l && s.kk === kk)),
+    );
   }
 
   function toggleKk(kk: number) {
     setSel((prev) =>
-      prev.includes(kk) ? prev.filter((k) => k !== kk) : [...prev, kk],
+      prev.some((s) => s.layer === layer && s.kk === kk)
+        ? prev.filter((s) => !(s.layer === layer && s.kk === kk))
+        : [...prev, { layer, kk }],
     );
   }
 
   function toggleAllRowKks() {
     const all = mergedRows.map((r) => r.kk);
+    const has = (kk: number) =>
+      sel.some((s) => s.layer === layer && s.kk === kk);
     setSel((prev) =>
-      all.length > 0 && all.every((kk) => prev.includes(kk))
-        ? prev.filter((kk) => !all.includes(kk))
-        : [...new Set([...prev, ...all])],
+      all.length > 0 && all.every(has)
+        ? prev.filter((s) => !(s.layer === layer && all.includes(s.kk)))
+        : [
+            ...prev,
+            ...all
+              .filter((kk) => !has(kk))
+              .map((kk) => ({ layer, kk })),
+          ],
     );
   }
 
   // Queue the picked action for every selected key. Same-length guard per
-  // key (the device ignores 7B↔11B changes) — mismatches are skipped.
+  // key uses that pair's own layer (the device ignores 7B↔11B changes).
   function queueActionForSelection() {
     if (!pickedAction) return;
     let queued = 0;
     let skipped = 0;
-    for (const kk of sel) {
+    for (const { layer: l, kk } of sel) {
       const rec = buildRecord(kk, pickedAction.body());
-      const cur = (keysByLayer[layer] ?? []).find((r) => r.kk === kk);
+      const cur = (keysByLayer[l] ?? []).find((r) => r.kk === kk);
       if (!cur || cur.rec.length !== rec.length) {
         skipped++;
         continue;
       }
       draftRef.current.add({
         kind: "key",
-        layer,
+        layer: l,
         kk,
         record: rec,
         label: pickedAction.label,
@@ -1068,7 +1117,9 @@ export default function App() {
     log(
       "inf",
       `queued action '${pickedAction.label}' for ${queued} key(s)` +
-        (skipped > 0 ? `, ${skipped} skipped (length change — device ignores)` : ""),
+        (skipped > 0
+          ? `, ${skipped} skipped (length change — device ignores)`
+          : ""),
     );
   }
 
@@ -1076,14 +1127,14 @@ export default function App() {
   function queueColorForSelection() {
     let queued = 0;
     let skipped = 0;
-    for (const kk of sel) {
+  for (const { layer: l, kk } of sel) {
       if (kk < 0 || kk > 0x87) {
         skipped++;
         continue;
       }
       draftRef.current.add({
         kind: "led",
-        layer,
+        layer: l,
         kk,
         h: panelColor.h,
         s: panelColor.s,
@@ -1121,9 +1172,15 @@ export default function App() {
       : `${sel.length} selected: ` +
         sel
           .slice(0, 8)
-          .map((kk) => POS_KEY[String(kk)] ?? hex2(kk))
+          .map((s) => `${POS_KEY[String(s.kk)] ?? hex2(s.kk)}·L${s.layer}`)
           .join(", ") +
         (sel.length > 8 ? ` +${sel.length - 8} more` : "");
+
+  // KKs selected on the currently viewed layer (Keyboard highlights these).
+  const selKks = useMemo(
+    () => new Set(sel.filter((s) => s.layer === layer).map((s) => s.kk)),
+    [sel, layer],
+  );
 
   const leftOn = halves.left.connected;
   const rightOn = halves.right.connected;
@@ -1253,257 +1310,273 @@ export default function App() {
           </Card>
 
           {view === "kb" && (
-          <Card className="mb-3">
-            <CardHeader className="flex-wrap">
-              <Tabs
-                value={view}
-                onValueChange={(v) => setView(v as "kb" | "table")}
-              >
-                <TabsList>
-                  <TabsTrigger value="kb">Keyboard</TabsTrigger>
-                  <TabsTrigger value="table">Layout</TabsTrigger>
-                </TabsList>
-              </Tabs>
-              <Tabs
-                value={String(layer)}
-                onValueChange={(v) => setLayer(parseInt(v, 10))}
-              >
-                <TabsList>
-                  <TabsTrigger value="0">Layer 0</TabsTrigger>
-                  <TabsTrigger value="1">Layer 1</TabsTrigger>
-                  <TabsTrigger value="2">Layer 2</TabsTrigger>
-                </TabsList>
-              </Tabs>
-              <Button
-                variant="secondary"
-                size="sm"
-                title="Re-read all layers + LED maps from the LEFT half"
-                onClick={() => void dump()}
-                disabled={!leftOn}
-              >
-                <RefreshCw /> Refresh
-              </Button>
-              <span className="font-mono text-xs text-muted-foreground">
-                {selText}
-              </span>
-
-              <Label className="ml-auto">
-                <input
-                  type="checkbox"
-                  checked={ledMode}
-                  onChange={(e) => setLedMode(e.target.checked)}
-                  className="h-4 w-4 accent-primary"
-                />
-                LED colors on keys
-              </Label>
-            </CardHeader>
-            <CardContent>
-              <div
-                className="overflow-hidden rounded-sm bg-background p-4"
-                ref={kbBoxRef}
-              >
-                <div
-                  ref={kbStageRef}
-                  className="mx-auto max-w-full"
-                  style={{
-                    width: "fit-content",
-                    zoom: kbScale,
-                  }}
+            <Card className="mb-3">
+              <CardHeader className="flex-wrap">
+                <Tabs
+                  value={view}
+                  onValueChange={(v) => setView(v as "kb" | "table")}
                 >
-                  <Keyboard
-                    keymap={keymap}
-                    ledmap={ledmap}
-                    ledMode={ledMode}
-                    sel={new Set(sel)}
-                    onSelect={onSelect}
-                    disabled={!leftOn}
-                    dirty={dirtyKks}
-                  />
-                </div>
-              </div>
-              <p className="mt-2 text-xs text-muted-foreground">
-                {leftOn
-                  ? "Click a key to select it, Shift+click for multi-select. Assign an action and/or a color in the panel below — changes queue up, nothing writes until Flash."
-                  : "Connect the LEFT half — legends and colors load automatically."}
-              </p>
-            </CardContent>
-          </Card>
-          )}
-
-          {view === "table" && (
-          <Card className="mb-3">
-            <CardHeader className="flex-wrap">
-              <Tabs
-                value={view}
-                onValueChange={(v) => setView(v as "kb" | "table")}
-              >
-                <TabsList>
-                  <TabsTrigger value="kb">Keyboard</TabsTrigger>
-                  <TabsTrigger value="table">Layout</TabsTrigger>
-                </TabsList>
-              </Tabs>
-              <Tabs
-                value={String(layer)}
-                onValueChange={(v) => setLayer(parseInt(v, 10))}
-              >
-                <TabsList>
-                  <TabsTrigger value="0">Layer 0</TabsTrigger>
-                  <TabsTrigger value="1">Layer 1</TabsTrigger>
-                  <TabsTrigger value="2">Layer 2</TabsTrigger>
-                </TabsList>
-              </Tabs>
-              <span className="font-mono text-xs text-muted-foreground">
-                {selText}
-              </span>
-            </CardHeader>
-            <CardContent>
-              <div className="mb-2 flex flex-wrap items-center gap-2">
+                  <TabsList>
+                    <TabsTrigger value="kb">Keyboard</TabsTrigger>
+                    <TabsTrigger value="table">Layout</TabsTrigger>
+                  </TabsList>
+                </Tabs>
+                <Tabs
+                  value={String(layer)}
+                  onValueChange={(v) => setLayer(parseInt(v, 10))}
+                >
+                  <TabsList>
+                    <TabsTrigger value="0">Layer 0</TabsTrigger>
+                    <TabsTrigger value="1">Layer 1</TabsTrigger>
+                    <TabsTrigger value="2">Layer 2</TabsTrigger>
+                  </TabsList>
+                </Tabs>
                 <Button
                   variant="secondary"
+                  size="sm"
+                  title="Re-read all layers + LED maps from the LEFT half"
                   onClick={() => void dump()}
                   disabled={!leftOn}
                 >
-                  Refresh
+                  <RefreshCw /> Refresh
                 </Button>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline" disabled={!leftOn}>
-                      <Download className="mr-1 h-4 w-4" /> Save
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent>
-                    <DropdownMenuItem onClick={() => void exportKeys(false)} disabled={!leftOn}>
-                      Save keys
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => void exportKeys(true)} disabled={!leftOn}>
-                      Save all keys
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={() => void exportLeds(false)} disabled={!leftOn}>
-                      Save colors
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => void exportLeds(true)} disabled={!leftOn}>
-                      Save all colors
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-                <span className="font-mono text-xs">{dumpStat}</span>
-                <span className="font-mono text-xs">{ledDumpStat}</span>
-                <span className="ml-auto flex items-center gap-2">
-                  <Checkbox
-                    id="rawvals"
-                    checked={showRaw}
-                    onCheckedChange={(v) => setShowRaw(v === true)}
-                  />
-                  <Label htmlFor="rawvals">Raw values</Label>
+                <span className="font-mono text-xs text-muted-foreground">
+                  {selText}
                 </span>
-              </div>
-              <div className="max-h-80 overflow-y-auto rounded-md border border-border">
-                <table className="w-full text-[13px]">
-                  <thead className="sticky top-0 bg-card">
-                    <tr>
-                      <th className={TH}>
-                        <Checkbox
-                          checked={
-                            mergedRows.length > 0 &&
-                            mergedRows.every((r) => sel.includes(r.kk))
-                          }
-                          onCheckedChange={() => toggleAllRowKks()}
-                          title="Select all rows"
-                        />
-                      </th>
-                      {showRaw && <th className={TH}>KK</th>}
-                      <th className={TH}>Key</th>
-                      {showRaw && <th className={TH}>T</th>}
-                      {showRaw && <th className={TH}>Record</th>}
-                      <th className={TH}>Meaning</th>
-                      <th className={TH}>Hue°</th>
-                      <th className={TH}>Sat</th>
-                      <th className={TH}>Swatch</th>
-                      {showRaw && <th className={TH}>Raw</th>}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {mergedRows.map(({ kk, key, led }, i) => {
-                      const meaning = key ? describeRecord(key.rec) : "—";
-                      return (
-                        <tr
-                          key={kk + "-" + i}
-                          className={
-                            meaning.startsWith("empty") ? "text-[#666]" : ""
-                          }
-                        >
-                          <td className="px-2 py-1 border-b border-border">
-                            <Checkbox
-                              checked={sel.includes(kk)}
-                              onCheckedChange={() => toggleKk(kk)}
-                            />
-                          </td>
-                          {showRaw && (
-                            <td className="font-mono px-2 py-1 border-b border-border">
-                              {hex2(kk)}
-                            </td>
-                          )}
-                          <td className="font-mono px-2 py-1 border-b border-border">
-                            {POS_KEY[String(kk)] ?? "—"}
-                          </td>
-                          {showRaw && (
-                            <td className="font-mono px-2 py-1 border-b border-border">
-                              {key ? hex2(key.t) : "—"}
-                            </td>
-                          )}
-                          {showRaw && (
-                            <td className={HEX}>
-                              {key ? toHex(key.rec) : "—"}
-                            </td>
-                          )}
-                          <td className={TD}>{meaning}</td>
-                          <td className="font-mono px-2 py-1 border-b border-border">
-                            {led ? led.h : "—"}
-                          </td>
-                          <td className="font-mono px-2 py-1 border-b border-border">
-                            {led ? led.s : "—"}
-                          </td>
-                          <td className={TD}>
-                            {led ? (
-                              <span
-                                className="inline-block h-3.5 w-3.5 rounded"
-                                style={{ background: ledCss(led.h, led.s) }}
+
+                <Label className="ml-auto">
+                  <input
+                    type="checkbox"
+                    checked={ledMode}
+                    onChange={(e) => setLedMode(e.target.checked)}
+                    className="h-4 w-4 accent-primary"
+                  />
+                  LED colors on keys
+                </Label>
+              </CardHeader>
+              <CardContent>
+                <div
+                  className="overflow-hidden rounded-sm bg-background p-4 min-h-60"
+                  ref={kbBoxRef}
+                >
+                  <div
+                    ref={kbStageRef}
+                    className="mx-auto max-w-full"
+                    style={{
+                      width: "fit-content",
+                      zoom: kbScale,
+                    }}
+                  >
+                    <Keyboard
+                      keymap={keymap}
+                      ledmap={ledmap}
+                      ledMode={ledMode}
+                      sel={selKks}
+                      onSelect={onSelect}
+                      disabled={!leftOn}
+                      dirty={dirtyKks}
+                    />
+                  </div>
+                </div>
+                <p className="mt-2 text-xs text-muted-foreground">
+                  {leftOn
+                    ? "Click a key to select it, Shift+click for multi-select, Alt+click selects the key on all layers. Assign an action and/or a color in the panel below — changes queue up, nothing writes until Flash."
+                    : "Connect the LEFT half — legends and colors load automatically."}
+                </p>
+              </CardContent>
+            </Card>
+          )}
+
+          {view === "table" && (
+            <Card className="mb-3">
+              <CardHeader className="flex-wrap">
+                <Tabs
+                  value={view}
+                  onValueChange={(v) => setView(v as "kb" | "table")}
+                >
+                  <TabsList>
+                    <TabsTrigger value="kb">Keyboard</TabsTrigger>
+                    <TabsTrigger value="table">Layout</TabsTrigger>
+                  </TabsList>
+                </Tabs>
+                <Tabs
+                  value={String(layer)}
+                  onValueChange={(v) => setLayer(parseInt(v, 10))}
+                >
+                  <TabsList>
+                    <TabsTrigger value="0">Layer 0</TabsTrigger>
+                    <TabsTrigger value="1">Layer 1</TabsTrigger>
+                    <TabsTrigger value="2">Layer 2</TabsTrigger>
+                  </TabsList>
+                </Tabs>
+                <span className="font-mono text-xs text-muted-foreground">
+                  {selText}
+                </span>
+              </CardHeader>
+              <CardContent>
+                <div className="mb-2 flex flex-wrap items-center gap-2">
+                  <Button
+                    variant="secondary"
+                    onClick={() => void dump()}
+                    disabled={!leftOn}
+                  >
+                    Refresh
+                  </Button>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline" disabled={!leftOn}>
+                        <Download className="mr-1 h-4 w-4" /> Save
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent>
+                      <DropdownMenuItem
+                        onClick={() => void exportKeys(false)}
+                        disabled={!leftOn}
+                      >
+                        Save keys
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => void exportKeys(true)}
+                        disabled={!leftOn}
+                      >
+                        Save all keys
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        onClick={() => void exportLeds(false)}
+                        disabled={!leftOn}
+                      >
+                        Save colors
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => void exportLeds(true)}
+                        disabled={!leftOn}
+                      >
+                        Save all colors
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                  <span className="font-mono text-xs">{dumpStat}</span>
+                  <span className="font-mono text-xs">{ledDumpStat}</span>
+                  <span className="ml-auto flex items-center gap-2">
+                    <Checkbox
+                      id="rawvals"
+                      checked={showRaw}
+                      onCheckedChange={(v) => setShowRaw(v === true)}
+                    />
+                    <Label htmlFor="rawvals">Raw values</Label>
+                  </span>
+                </div>
+                <div className="max-h-80 overflow-y-auto rounded-md border border-border">
+                  <table className="w-full text-[13px]">
+                    <thead className="sticky top-0 bg-card">
+                      <tr>
+                        <th className={TH}>
+                          <Checkbox
+                            checked={
+                              mergedRows.length > 0 &&
+                              mergedRows.every((r) =>
+                                sel.some(
+                                  (s) => s.layer === layer && s.kk === r.kk,
+                                ),
+                              )
+                            }
+                            onCheckedChange={() => toggleAllRowKks()}
+                            title="Select all rows"
+                          />
+                        </th>
+                        {showRaw && <th className={TH}>KK</th>}
+                        <th className={TH}>Key</th>
+                        {showRaw && <th className={TH}>T</th>}
+                        {showRaw && <th className={TH}>Record</th>}
+                        <th className={TH}>Meaning</th>
+                        <th className={TH}>Hue°</th>
+                        <th className={TH}>Sat</th>
+                        <th className={TH}>Swatch</th>
+                        {showRaw && <th className={TH}>Raw</th>}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {mergedRows.map(({ kk, key, led }, i) => {
+                        const meaning = key ? describeRecord(key.rec) : "—";
+                        return (
+                          <tr
+                            key={kk + "-" + i}
+                            className={
+                              meaning.startsWith("empty") ? "text-[#666]" : ""
+                            }
+                          >
+                            <td className="px-2 py-1 border-b border-border">
+                              <Checkbox
+                                checked={sel.some(
+                                  (s) => s.layer === layer && s.kk === kk,
+                                )}
+                                onCheckedChange={() => toggleKk(kk)}
                               />
-                            ) : (
-                              "—"
-                            )}
-                          </td>
-                          {showRaw && (
-                            <td className={HEX}>
-                              {led
-                                ? toHex(
-                                    new Uint8Array([
-                                      kk,
-                                      led.h & 0xff,
-                                      (led.h >> 8) & 0xff,
-                                      led.s,
-                                    ]),
-                                  )
-                                : "—"}
                             </td>
-                          )}
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            </CardContent>
-          </Card>
+                            {showRaw && (
+                              <td className="font-mono px-2 py-1 border-b border-border">
+                                {hex2(kk)}
+                              </td>
+                            )}
+                            <td className="font-mono px-2 py-1 border-b border-border">
+                              {POS_KEY[String(kk)] ?? "—"}
+                            </td>
+                            {showRaw && (
+                              <td className="font-mono px-2 py-1 border-b border-border">
+                                {key ? hex2(key.t) : "—"}
+                              </td>
+                            )}
+                            {showRaw && (
+                              <td className={HEX}>
+                                {key ? toHex(key.rec) : "—"}
+                              </td>
+                            )}
+                            <td className={TD}>{meaning}</td>
+                            <td className="font-mono px-2 py-1 border-b border-border">
+                              {led ? led.h : "—"}
+                            </td>
+                            <td className="font-mono px-2 py-1 border-b border-border">
+                              {led ? led.s : "—"}
+                            </td>
+                            <td className={TD}>
+                              {led ? (
+                                <span
+                                  className="inline-block h-3.5 w-3.5 rounded"
+                                  style={{ background: ledCss(led.h, led.s) }}
+                                />
+                              ) : (
+                                "—"
+                              )}
+                            </td>
+                            {showRaw && (
+                              <td className={HEX}>
+                                {led
+                                  ? toHex(
+                                      new Uint8Array([
+                                        kk,
+                                        led.h & 0xff,
+                                        (led.h >> 8) & 0xff,
+                                        led.s,
+                                      ]),
+                                    )
+                                  : "—"}
+                              </td>
+                            )}
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </CardContent>
+            </Card>
           )}
 
           {sel.length > 0 && (
             <Card className="mb-3">
               <CardHeader className="flex-wrap">
-                <CardTitle>
-                  Selected ({sel.length}) — Layer {layer}
-                </CardTitle>
+                <CardTitle>Selected ({sel.length})</CardTitle>
                 <Button
                   variant="ghost"
                   size="sm"
@@ -1513,26 +1586,28 @@ export default function App() {
                   <X /> Clear selection
                 </Button>
               </CardHeader>
-              <CardContent className="grid gap-4 md:grid-cols-2">
+              <CardContent className="grid gap-4 md:grid-cols-3">
                 <div>
-                  <div className="mb-2 text-sm font-medium">Assign action</div>
-                  <div className="mb-2 flex flex-wrap gap-1">
-                    {sel.map((kk) => (
-                      <span
-                        key={kk}
-                        className="inline-flex items-center gap-1 rounded-full bg-accent px-2 py-0.5 font-mono text-xs"
-                      >
-                        {POS_KEY[String(kk)] ?? hex2(kk)}
+                  <div className="mb-2 text-sm font-medium">
+                    Selected keys ({sel.length})
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {sel.map(({ layer: l, kk }) => (
+                      <Kbd key={l + ":" + kk}>
+                        {(POS_KEY[String(kk)] ?? hex2(kk)) + "·L" + l}
                         <button
                           className="text-muted-foreground hover:text-foreground"
-                          onClick={() => toggleKk(kk)}
+                          onClick={() => removePair(l, kk)}
                           title="Remove from selection"
                         >
-                          <X className="size-3" />
+                          <X className="size-4" />
                         </button>
-                      </span>
+                      </Kbd>
                     ))}
                   </div>
+                </div>
+                <div>
+                  <div className="mb-2 text-sm font-medium">Assign action</div>
                   <ActionPalette
                     onPick={setPickedAction}
                     pickedId={pickedAction?.id ?? null}
@@ -1570,9 +1645,7 @@ export default function App() {
                             : "")
                         }
                         style={{ background: hsToHex(p.h, p.s) }}
-                        onClick={() =>
-                          setPanelColor({ h: p.h, s: p.s })
-                        }
+                        onClick={() => setPanelColor({ h: p.h, s: p.s })}
                       />
                     ))}
                     <button
@@ -1612,8 +1685,7 @@ export default function App() {
                   </div>
                   <p className="mt-1.5 text-xs text-muted-foreground">
                     Factory amber ≈ H38/S100. Fill layer queues the color for
-                    all {ledsByLayer[layer]?.length ?? 0} LEDs of Layer{" "}
-                    {layer}.
+                    all {ledsByLayer[layer]?.length ?? 0} LEDs of Layer {layer}.
                   </p>
                 </div>
               </CardContent>
@@ -1622,10 +1694,9 @@ export default function App() {
 
           <p className="text-xs text-muted-foreground">
             Scope: dual-half connect, keymap + LED editing via a queued draft
-            (click a key → pick an action → Flash), exports, activity
-            timeouts. Writes use 30/1004 + 30/100e and apply instantly — no
-            fe/100a commit is ever sent. Remap + LED commands answer on the
-            LEFT half only.
+            (click a key → pick an action → Flash), exports, activity timeouts.
+            Writes use 30/1004 + 30/100e and apply instantly — no fe/100a commit
+            is ever sent. Remap + LED commands answer on the LEFT half only.
           </p>
         </div>
 

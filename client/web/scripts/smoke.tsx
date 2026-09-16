@@ -239,7 +239,8 @@ const iconCases: Array<[string, string | null]> = [
   ['Volume −', 'C_VOL_DOWN'], ['Next Track', 'C_NEXT'],
   ['Prev Track', 'C_PREVIOUS'], ['Mouse Left', 'MOUSE_LEFT'],
   ['Mouse Right', 'MOUSE_RIGHT'], ['BT Device 1', 'BT_DEVICE_1'],
-  ['BT Device 5', 'BT_DEVICE_5'],   ['Naya key (factory)', 'NAYA'],
+  ['BT Device 5', 'BT_DEVICE_5'],   ['Hold layer 2', 'HOLD_LAYER_2'],
+  ['BT Clear', 'BT_CLEAR'],
   ['special 43 05 04 01 00 00 00', 'MO_LAYER_1'],
   ['special 44 05 04 01 00 00 00', 'MO_LAYER_1'],
   ['special 3e 05 04 02 00 00 00', null],
@@ -254,13 +255,13 @@ const iconDir = path.join(
   'src', 'assets', 'key-icons',
 );
 const diskFiles = new Set(fs.readdirSync(iconDir).filter((f) => f.endsWith('.svg')));
-eq(diskFiles.size, 53, '53 icon files on disk');
+  eq(diskFiles.size, 54, '54 icon files on disk');
 const tsSrc = fs.readFileSync(path.join(
   process.env.SMOKE_ROOT ?? process.cwd(),
   'src', 'lib', 'key-icons.ts',
 ), 'utf8');
 const imported = new Set([...tsSrc.matchAll(/key-icons\/([A-Z0-9_]+)\.svg\?raw/g)].map((m) => m[1] + '.svg'));
-eq(imported.size, 53, '53 ?raw imports');
+  eq(imported.size, 54, '54 ?raw imports');
 eq([...imported].every((f) => diskFiles.has(f)) && [...diskFiles].every((f) => imported.has(f)) ? 'ok' : 'bad', 'ok', 'imports match disk');
 let iconOk = true;
 for (const f of diskFiles) {
@@ -269,7 +270,7 @@ for (const f of diskFiles) {
       /#fff|#FFF|#ffffff/i.test(s) || !s.includes('currentColor')) { iconOk = false; break; }
 }
 eq(iconOk ? 'ok' : 'bad', 'ok', 'icons 40x40 + currentColor, no #fff');
-for (const d of ['Backspace', 'BT Device 3', 'Naya key (factory)', 'special 43 05 04 01 00 00 00']) {
+for (const d of ['Backspace', 'BT Device 3', 'Hold layer 2', 'BT Clear', 'special 43 05 04 01 00 00 00']) {
   const nm = keyIconName(d);
   eq(nm !== null && diskFiles.has(nm + '.svg') ? 'ok' : 'bad', 'ok', 'mapped file exists: ' + d);
 }
@@ -284,7 +285,7 @@ eq(toHex(recBt), '2e 00 08 03 00 00 00 01 00 00 00', 'build BT1 (matches probe3)
 eq(matchAction(recBt)?.id, 'bt:1', 'matchAction BT1');
 eq(matchAction(recQ)?.id, 'hid:20', 'matchAction Q');
 eq(matchAction(new Uint8Array([0x30, 0x05, 0x04, 1, 0, 0, 0]))?.id, 'special:1', 'match MO');
-eq(matchAction(new Uint8Array([0x30, 0x05, 0x04, 2, 0, 0, 0]))?.id, 'naya', 'match Naya');
+eq(matchAction(new Uint8Array([0x30, 0x05, 0x04, 2, 0, 0, 0]))?.id, 'hold2', 'match Hold2');
 eq(matchAction(new Uint8Array([0x30, 0x78, 0x00]))?.id, 'empty', 'match empty');
 eq(matchAction(new Uint8Array([0x30, 0x03, 0x15, 1, 2, 3])), undefined, 'no match T03');
 

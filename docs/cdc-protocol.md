@@ -117,10 +117,14 @@ Format: `[KK, 05, 04, ID, 00, 00, 00]` (T=05, 7B; describe shows `special <hex>`
 | ID | Meaning | Factory positions |
 |---|---|---|
 | 01 | Momentary-layer-1 hold (MO(1)) | KK67/68 = LH4/RH4 (middle thumb keys) |
-| 02 | Naya-button action | KK62/73 (0x3E/0x49, bottom-row Naya keys) |
+| 02 | Hold-layer-2 (factory bottom-corner keys, NOT the Naya action) | KK62/73 (0x3E/0x49) |
 Evidence: family-04 census over factory L0 (0401→{67,68}, 0402→{62,73}); asar
 `assets/icons/action/` ships `MO_LAYER_$ID` template + `MO_LAYER_0..N` numbered
-set → (04,01) takes `MO_LAYER_1.svg`. Sibling thumbs L0: LH2/RH2 (37/38)=Space,
+set → (04,01) takes `MO_LAYER_1.svg`, (04,02) takes `HOLD_LAYER_2.svg`.
+Renderer registry ground truth: `HOLD_LAYER_2`, `NAYA`, `BT_CLEAR`,
+`MO_LAYER_1` are four DISTINCT actions each with its own icon — the earlier
+'Naya key (factory)' label for 0402 was wrong (physical keycap print ≠ action).
+Sibling thumbs L0: LH2/RH2 (37/38)=Space,
 LH3/RH3 (53/54)=Enter/Backspace; L1 thumbs all transparent (T0e).
 
 ## WRITE path (captured 2026-09-15, cdc-capture3.log — cloned app + interposer in stock core)
@@ -284,7 +288,7 @@ Full frames: `naya-archive/aux-left.txt`, `aux-right.txt`.
   keyboard/action glyphs; `external/` third-party + `internal/ui/tray/logo`
   excluded as NayaFlow UI chrome). asar formula: `jsize=u32@12, json@16,
   base=align4(16+jsize)`, offsets relative to base.
-- 53 files in `client/web/src/assets/key-icons/`: uniform `viewBox 0 0 40 40`,
+- 54 files in `client/web/src/assets/key-icons/`: uniform `viewBox 0 0 40 40`,
   shapes only `#fff` → rewritten to `currentColor` at extraction, so icons
   inherit the legend color (#E5E1E6, #111 when selected).
 - Mapping `describeRecord → filename` in `client/web/src/lib/key-icon-map.ts`
@@ -292,4 +296,6 @@ Full frames: `naya-archive/aux-left.txt`, `aux-right.txt`.
   fallback otherwise. Gaps (text fallback): Shift (no icon in asar at all),
   F-keys (exist as `F<n>.svg`, unused for now), MENU (missing).
 - `MO_LAYER_1.svg` covers T05 family-04 id-01 (LH4/RH4); regex mapping scoped to
-  `^special [0-9a-f]{2} 05 04 01 00 00 00$` (0402 Naya factory unaffected).
+  `^special [0-9a-f]{2} 05 04 01 00 00 00$`. `HOLD_LAYER_2.svg` covers id-02
+  (factory bottom keys); `BT_CLEAR.svg` covers the L2 vendor record
+  `[KK,00,08,00..00]` (A=X=Y=0, BT-bind reset on KK0/LA1 per the manual legend).

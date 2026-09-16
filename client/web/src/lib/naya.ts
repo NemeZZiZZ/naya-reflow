@@ -608,7 +608,7 @@ export function describeRecord(r: Uint8Array | number[]): string {
     return 'usage page ' + page.toString(16) + ' / 0x' + usage.toString(16);
   }
   if (t === 0x05 && u.length === 7) {
-    if (u[2] === 0x04 && u[3] === 0x02) return 'Naya key (factory)';
+    if (u[2] === 0x04 && u[3] === 0x02) return 'Hold layer 2';
     return 'special ' + toHex(u);
   }
   if (t === 0x03)
@@ -620,6 +620,7 @@ export function describeRecord(r: Uint8Array | number[]): string {
     const A = u[1];
     const X = u[3] | (u[4] << 8) | (u[5] << 16) | (u[6] << 24);
     const Y = u[7] | (u[8] << 8) | (u[9] << 16) | (u[10] << 24);
+    if (A === 0x00 && X === 0 && Y === 0) return 'BT Clear';
     if (A === 0x00 && X === 3) return 'BT Device ' + Y;
     if (A === 0x0f && X === 3)
       return MOUSE_BTN[Y] !== undefined ? MOUSE_BTN[Y] : 'Mouse button ' + Y;

@@ -4,7 +4,7 @@
  *   family 0x00 = BT vendor,  payload X u32LE=3, Y u32LE=slot#
  *   family 0x09 = LED vendor, payload X u32LE=0x0d, Y u32LE=effect#
  *   family 0x0f = mouse vendor, payload X u32LE=3, Y u32LE=button bit
- *   family 0x05 = special,    payload u32LE (1 = MO layer, 2 = Naya key)
+  *   family 0x05 = special,    payload u32LE (1 = MO layer, 2 = Hold layer 2)
  *   family 0x78 len 0 = empty slot.
  * Only IDs proven by live capture/flash experiments are included. */
 
@@ -110,7 +110,7 @@ export const ACTIONS: ActionDef[] = [
   ...BT.map(([label, y]): ActionDef => ({ id: `bt:${y}`, label, category: 'Bluetooth', body: () => vendor(0x00, 3, y) })),
   ...LED.map(([label, y]): ActionDef => ({ id: `led:${y}`, label, category: 'LED', body: () => vendor(0x09, 0x0d, y) })),
   { id: 'special:1', label: 'MO (hold layer, = LH4/RH4)', category: 'Layers', body: () => special(1) },
-  { id: 'naya', label: 'Naya key (factory)', category: 'Layers', body: () => special(2) },
+  { id: 'hold2', label: 'Hold layer 2 (= factory bottom keys)', category: 'Layers', body: () => special(2) },
   { id: 'empty', label: 'Empty (unassign)', category: 'Advanced', body: () => EMPTY_BODY },
 ];
 
