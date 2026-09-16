@@ -1,5 +1,7 @@
 /* Action palette: categorized, searchable action grid. Pure UI — the parent
- * supplies onPick(action). */
+ * supplies onPick(action). Categories render as an accordion; while a search
+ * query is active every non-empty group is force-expanded and empty groups
+ * are hidden. */
 
 import { useMemo, useState } from "react";
 import { Search } from "lucide-react";
@@ -14,6 +16,12 @@ import { keyIconName, shortLabel } from "../lib/key-icon-map";
 import { KEY_ICONS } from "../lib/key-icons";
 import { cn } from "../lib/utils";
 import { Button } from "./ui/button";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "./ui/accordion";
 
 // Palette glyph = the same icon the keycap will show: build the record with
 // a dummy KK=0, describe it, resolve via the shared map. The mapping is
@@ -35,81 +43,89 @@ export default function ActionPalette({
   onPick: (a: ActionDef) => void;
   pickedId?: string | null;
 }) {
-  const [cat, setCat] = useState("Keyboard");
   const [q, setQ] = useState("");
+  const [open, setOpen] = useState<string[]>(["Keyboard"]);
 
-  const list = useMemo(() => {
-    const needle = q.trim().toLowerCase();
-    let pool = ACTIONS;
-    if (needle)
-      pool = ACTIONS.filter((a) => a.label.toLowerCase().includes(needle));
-    else pool = ACTIONS.filter((a) => a.category === cat);
-    return pool;
-  }, [cat, q]);
+  const needle = q.trim().toLowerCase();
+  const groups = useMemo(
+    () =>
+      ACTION_CATEGORIES.map((cat) => ({
+        cat,
+        items: ACTIONS.filter(
+          (a) =>
+            a.category === cat &&
+            (!needle || a.label.toLowerCase().includes(needle)),
+        ),
+      })).filter((g) => !needle || g.items.length > 0),
+    [needle],
+  );
+  // Searching force-expands every group with hits; otherwise user-controlled.
+  const value = needle ? groups.map((g) => g.cat) : open;
 
   return (
     <div className="flex flex-col gap-2">
-      <div className="flex items-center gap-1 flex-wrap">
-        {ACTION_CATEGORIES.map((c) => (
-          <button
-            key={c}
-            className={cn(
-              "px-2 py-1 rounded-md text-xs border border-transparent hover:bg-accent",
-              c === cat && !q && "bg-accent border-border font-medium",
-            )}
-            onClick={() => {
-              setCat(c);
-              setQ("");
-            }}
-          >
-            {c}
-          </button>
-        ))}
-        <div className="relative ml-auto">
-          <Search className="absolute left-2 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground" />
-          <input
-            className="pl-7 pr-2 py-1 rounded-md text-xs bg-background border border-border w-44 outline-none focus:border-ring"
-            placeholder="Search actions…"
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-          />
+      <div className="relative">
+        <Search className="absolute left-2 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground" />
+        <input
+          className="pl-7 pr-2 py-1 rounded-md text-xs bg-background border border-border w-full outline-none focus:border-ring"
+          placeholder="Search actions…"
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+        />
+      </div>
+      {groups.length === 0 && (
+        <div className="text-xs text-muted-foreground py-4 text-center">
+          No actions match.
         </div>
-      </div>
-      <div className="grid grid-cols-[repeat(auto-fill,minmax(44px,1fr))] gap-1 max-h-56 overflow-y-auto pr-1">
-        {list.map((a) => {
-          const icon = actionIcon(a);
-          // Text fallback matches the keycap legend (short), not the long
-          // catalog label — e.g. LShift instead of Left Shift.
-          const text =
-            shortLabel(buildRecord(0, a.body())) || a.label;
-          return (
-            <Button
-              variant="outline"
-              key={a.id}
-              title={a.label}
-              className={cn(
-                "hover:bg-accent truncate aspect-square h-auto text-lg",
-                pickedId === a.id && "ring-2 ring-primary",
-              )}
-              onClick={() => onPick(a)}
-            >
-              {icon ? (
-                <span
-                  className="[&_svg]:size-6"
-                  dangerouslySetInnerHTML={{ __html: icon }}
-                />
-              ) : (
-                text
-              )}
-            </Button>
-          );
-        })}
-        {list.length === 0 && (
-          <div className="col-span-6 text-xs text-muted-foreground py-4 text-center">
-            No actions match.
-          </div>
-        )}
-      </div>
+      )}
+      <Accordion
+        type="multiple"
+        value={value}
+        onValueChange={setOpen}
+        className="max-h-64 overflow-y-auto pr-1"
+      >
+        {groups.map((g) => (
+          <AccordionItem key={g.cat} value={g.cat}>
+            <AccordionTrigger>
+              {g.cat}
+              <span className="ml-1 font-mono text-xs text-muted-foreground">
+                {g.items.length}
+              </span>
+            </AccordionTrigger>
+            <AccordionContent>
+              <div className="grid grid-cols-[repeat(auto-fill,minmax(44px,1fr))] gap-1">
+                {g.items.map((a) => {
+                  const icon = actionIcon(a);
+                  // Text fallback matches the keycap legend (short), not the
+                  // long catalog label — e.g. LShift instead of Left Shift.
+                  const text = shortLabel(buildRecord(0, a.body())) || a.label;
+                  return (
+                    <Button
+                      variant="outline"
+                      key={a.id}
+                      title={a.label}
+                      className={cn(
+                        "hover:bg-accent truncate aspect-square h-auto text-lg",
+                        pickedId === a.id && "ring-2 ring-primary",
+                      )}
+                      onClick={() => onPick(a)}
+                    >
+                      {icon ? (
+                        <span
+                          className="[&_svg]:size-6"
+                          dangerouslySetInnerHTML={{ __html: icon }}
+                        />
+                      ) : (
+                        text
+                      )}
+                    </Button>
+                  );
+                })}
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+        ))}
+      </Accordion>
     </div>
   );
 }

@@ -124,6 +124,22 @@ body {
     transform: translateX(0);
   }
 }
+@keyframes accordion-down {
+  from {
+    height: 0;
+  }
+  to {
+    height: var(--radix-accordion-content-height);
+  }
+}
+@keyframes accordion-up {
+  from {
+    height: var(--radix-accordion-content-height);
+  }
+  to {
+    height: 0;
+  }
+}
 .animate-overlay-show {
   animation: overlay-show 150ms ease-out;
 }
@@ -138,4 +154,10 @@ body {
 }
 .animate-sheet-show {
   animation: sheet-show 180ms ease-out;
+}
+.animate-accordion-down {
+  animation: accordion-down 200ms ease-out;
+}
+.animate-accordion-up {
+  animation: accordion-up 200ms ease-out;
 }

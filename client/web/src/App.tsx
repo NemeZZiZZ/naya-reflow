@@ -10,7 +10,9 @@ import {
   Loader2,
   Plug,
   PlugZap,
+  Plus,
   RefreshCw,
+  SettingsIcon,
   Terminal,
   Trash2,
   Wifi,
@@ -36,10 +38,19 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
 } from "./components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "./components/ui/dialog";
+import { Input } from "./components/ui/input";
 import { Label } from "./components/ui/label";
 import { Kbd } from "./components/ui/kbd";
 import { Separator } from "./components/ui/separator";
 import { Sheet, SheetContent, SheetTitle } from "./components/ui/sheet";
+import { Slider } from "./components/ui/slider";
 import { Tabs, TabsList, TabsTrigger } from "./components/ui/tabs";
 import { TooltipProvider } from "./components/ui/tooltip";
 import { HexColorPicker } from "react-colorful";
@@ -386,12 +397,54 @@ export default function App() {
   // Editor view + multi-selection (Shift+click on keyboard, checkboxes in table).
   // Selection is per (layer, KK) pair: keys can be picked on different
   // layers at once; Alt+click grabs the key on ALL layers.
-  interface SelKey { layer: number; kk: number }
+  interface SelKey {
+    layer: number;
+    kk: number;
+  }
   const [view, setView] = useState<"kb" | "table">("kb");
   const [sel, setSel] = useState<SelKey[]>([]);
   const [pickedAction, setPickedAction] = useState<ActionDef | null>(null);
   const [panelColor, setPanelColor] = useState({ h: 180, s: 100 });
-  const [panelPickerOpen, setPanelPickerOpen] = useState(false);
+  // Custom palette colors (H/S), persisted in localStorage.
+  const [customColors, setCustomColors] = useState<{ h: number; s: number }[]>(
+    () => {
+      try {
+        const raw = JSON.parse(
+          localStorage.getItem("naya-custom-colors") ?? "[]",
+        );
+        if (Array.isArray(raw))
+          return raw.filter(
+            (c): c is { h: number; s: number } =>
+              typeof c?.h === "number" &&
+              typeof c?.s === "number" &&
+              c.h >= 0 &&
+              c.h <= 511 &&
+              c.s >= 0 &&
+              c.s <= 100,
+          );
+      } catch {
+        /* ignore */
+      }
+      return [];
+    },
+  );
+  const saveCustomColors = (cs: { h: number; s: number }[]) => {
+    setCustomColors(cs);
+    try {
+      localStorage.setItem("naya-custom-colors", JSON.stringify(cs));
+    } catch {
+      /* ignore */
+    }
+  };
+  const [colorDlg, setColorDlg] = useState(false);
+  const [dlgColor, setDlgColor] = useState({ h: 180, s: 100 });
+  const addCustomColor = () => {
+    const c = { h: dlgColor.h, s: dlgColor.s };
+    if (!customColors.some((x) => x.h === c.h && x.s === c.s))
+      saveCustomColors([...customColors, c]);
+    setPanelColor(c);
+    setColorDlg(false);
+  };
   // Edit queue (draft): all key/color changes accumulate here until Flash.
   const draftRef = useRef(new Draft());
   const [draftVer, setDraftVer] = useState(0); // bump to re-render on draft change
@@ -1059,9 +1112,7 @@ export default function App() {
   }
 
   function removePair(l: number, kk: number) {
-    setSel((prev) =>
-      prev.filter((s) => !(s.layer === l && s.kk === kk)),
-    );
+    setSel((prev) => prev.filter((s) => !(s.layer === l && s.kk === kk)));
   }
 
   function toggleKk(kk: number) {
@@ -1081,9 +1132,7 @@ export default function App() {
         ? prev.filter((s) => !(s.layer === layer && all.includes(s.kk)))
         : [
             ...prev,
-            ...all
-              .filter((kk) => !has(kk))
-              .map((kk) => ({ layer, kk })),
+            ...all.filter((kk) => !has(kk)).map((kk) => ({ layer, kk })),
           ],
     );
   }
@@ -1124,7 +1173,7 @@ export default function App() {
   function queueColorForSelection() {
     let queued = 0;
     let skipped = 0;
-  for (const { layer: l, kk } of sel) {
+    for (const { layer: l, kk } of sel) {
       if (kk < 0 || kk > 0x87) {
         skipped++;
         continue;
@@ -1163,15 +1212,44 @@ export default function App() {
     );
   }
 
-  const selText =
-    sel.length === 0
-      ? ""
-      : `${sel.length} selected: ` +
-        sel
-          .slice(0, 8)
-          .map((s) => `${POS_KEY[String(s.kk)] ?? hex2(s.kk)}·L${s.layer}`)
-          .join(", ") +
-        (sel.length > 8 ? ` +${sel.length - 8} more` : "");
+  // Shared Save dropdown — lives in the headers of both Keyboard and
+  // Layout views (exports read from the layer caches, no device traffic).
+  const SaveMenu = () => (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="outline" size="sm" disabled={!leftOn}>
+          <Download className="mr-1 h-4 w-4" /> Save
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent>
+        <DropdownMenuItem
+          onClick={() => void exportKeys(false)}
+          disabled={!leftOn}
+        >
+          Save keys
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          onClick={() => void exportKeys(true)}
+          disabled={!leftOn}
+        >
+          Save all keys
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem
+          onClick={() => void exportLeds(false)}
+          disabled={!leftOn}
+        >
+          Save colors
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          onClick={() => void exportLeds(true)}
+          disabled={!leftOn}
+        >
+          Save all colors
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
 
   // KKs selected on the currently viewed layer (Keyboard highlights these).
   const selKks = useMemo(
@@ -1198,6 +1276,25 @@ export default function App() {
               </a>
             </h1>
             <Badge variant="info">React</Badge>
+            <Button
+              variant="secondary"
+              size="icon"
+              title="Activity timeouts"
+              disabled={!leftOn}
+              onClick={() => setSettingsOpen(true)}
+              className="ml-auto -my-1"
+            >
+              <SettingsIcon />
+              <span className="sr-only">Settings</span>
+            </Button>
+            <Button
+              variant={logOpen ? "default" : "secondary"}
+              size="default"
+              title={logOpen ? "Hide log" : "Show log"}
+              onClick={() => toggleLog()}
+            >
+              <Terminal /> Log
+            </Button>
           </div>
           <p className="mb-4 text-[13px] text-muted-foreground">
             NayaFlow replacement over WebSerial — Chromium only (Chrome / Edge /
@@ -1254,15 +1351,6 @@ export default function App() {
               <Button
                 variant="secondary"
                 size="sm"
-                title="Activity timeouts"
-                disabled={!leftOn}
-                onClick={() => setSettingsOpen(true)}
-              >
-                Settings
-              </Button>
-              <Button
-                variant="secondary"
-                size="sm"
                 title="Auto-connect known ports on load and hot-plug (first grant still needs one manual pick)"
                 onClick={() => {
                   setAutoConn((v) => {
@@ -1295,14 +1383,6 @@ export default function App() {
               >
                 <Info /> Device info
               </Button>
-              <Button
-                variant={logOpen ? "default" : "secondary"}
-                size="sm"
-                title={logOpen ? "Hide log" : "Show log"}
-                onClick={() => toggleLog()}
-              >
-                <Terminal /> Log
-              </Button>
             </CardContent>
           </Card>
 
@@ -1328,28 +1408,27 @@ export default function App() {
                     <TabsTrigger value="2">Layer 2</TabsTrigger>
                   </TabsList>
                 </Tabs>
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  title="Re-read all layers + LED maps from the LEFT half"
-                  onClick={() => void dump()}
-                  disabled={!leftOn}
-                >
-                  <RefreshCw /> Refresh
-                </Button>
-                <span className="font-mono text-xs text-muted-foreground">
-                  {selText}
+                <span className="ml-auto flex items-center gap-2">
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    title="Re-read all layers + LED maps from the LEFT half"
+                    onClick={() => void dump()}
+                    disabled={!leftOn}
+                  >
+                    <RefreshCw /> Refresh
+                  </Button>
+                  <SaveMenu />
+                  <Label>
+                    <input
+                      type="checkbox"
+                      checked={ledMode}
+                      onChange={(e) => setLedMode(e.target.checked)}
+                      className="h-4 w-4 accent-primary"
+                    />
+                    LED colors on keys
+                  </Label>
                 </span>
-
-                <Label className="ml-auto">
-                  <input
-                    type="checkbox"
-                    checked={ledMode}
-                    onChange={(e) => setLedMode(e.target.checked)}
-                    className="h-4 w-4 accent-primary"
-                  />
-                  LED colors on keys
-                </Label>
               </CardHeader>
               <CardContent>
                 <div
@@ -1406,63 +1485,29 @@ export default function App() {
                     <TabsTrigger value="2">Layer 2</TabsTrigger>
                   </TabsList>
                 </Tabs>
-                <span className="font-mono text-xs text-muted-foreground">
-                  {selText}
+                <span className="ml-auto flex items-center gap-2">
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    title="Re-read all layers + LED maps from the LEFT half"
+                    onClick={() => void dump()}
+                    disabled={!leftOn}
+                  >
+                    <RefreshCw /> Refresh
+                  </Button>
+                  <SaveMenu />
+                  <Checkbox
+                    id="rawvals"
+                    checked={showRaw}
+                    onCheckedChange={(v) => setShowRaw(v === true)}
+                  />
+                  <Label htmlFor="rawvals">Raw values</Label>
                 </span>
               </CardHeader>
               <CardContent>
                 <div className="mb-2 flex flex-wrap items-center gap-2">
-                  <Button
-                    variant="secondary"
-                    onClick={() => void dump()}
-                    disabled={!leftOn}
-                  >
-                    Refresh
-                  </Button>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="outline" disabled={!leftOn}>
-                        <Download className="mr-1 h-4 w-4" /> Save
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent>
-                      <DropdownMenuItem
-                        onClick={() => void exportKeys(false)}
-                        disabled={!leftOn}
-                      >
-                        Save keys
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={() => void exportKeys(true)}
-                        disabled={!leftOn}
-                      >
-                        Save all keys
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem
-                        onClick={() => void exportLeds(false)}
-                        disabled={!leftOn}
-                      >
-                        Save colors
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={() => void exportLeds(true)}
-                        disabled={!leftOn}
-                      >
-                        Save all colors
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
                   <span className="font-mono text-xs">{dumpStat}</span>
                   <span className="font-mono text-xs">{ledDumpStat}</span>
-                  <span className="ml-auto flex items-center gap-2">
-                    <Checkbox
-                      id="rawvals"
-                      checked={showRaw}
-                      onCheckedChange={(v) => setShowRaw(v === true)}
-                    />
-                    <Label htmlFor="rawvals">Raw values</Label>
-                  </span>
                 </div>
                 <div className="max-h-80 overflow-y-auto rounded-md border border-border">
                   <table className="w-full text-[13px]">
@@ -1645,24 +1690,48 @@ export default function App() {
                         onClick={() => setPanelColor({ h: p.h, s: p.s })}
                       />
                     ))}
+                    {customColors.map((c) => (
+                      <span
+                        key={`custom-${c.h}-${c.s}`}
+                        className="group relative"
+                      >
+                        <button
+                          title={`Custom (H${c.h} S${c.s})`}
+                          className={
+                            "size-7 rounded-full border border-border " +
+                            (panelColor.h === c.h && panelColor.s === c.s
+                              ? "ring-2 ring-primary"
+                              : "")
+                          }
+                          style={{ background: hsToHex(c.h, c.s) }}
+                          onClick={() => setPanelColor({ h: c.h, s: c.s })}
+                        />
+                        <button
+                          title="Delete custom color"
+                          className="absolute -right-1.5 -top-1.5 hidden rounded-full bg-background p-0.5 text-muted-foreground shadow group-hover:block hover:text-foreground"
+                          onClick={() =>
+                            saveCustomColors(
+                              customColors.filter(
+                                (x) => x.h !== c.h || x.s !== c.s,
+                              ),
+                            )
+                          }
+                        >
+                          <X className="size-3" />
+                        </button>
+                      </span>
+                    ))}
                     <button
-                      className="text-xs text-muted-foreground underline hover:text-foreground"
-                      onClick={() => setPanelPickerOpen((v) => !v)}
+                      title="Add custom color…"
+                      className="flex size-7 items-center justify-center rounded-full border border-dashed border-border text-muted-foreground hover:text-foreground"
+                      onClick={() => {
+                        setDlgColor(panelColor);
+                        setColorDlg(true);
+                      }}
                     >
-                      {panelPickerOpen ? "Hide picker" : "Custom…"}
+                      <Plus className="size-4" />
                     </button>
                   </div>
-                  {panelPickerOpen && (
-                    <HexColorPicker
-                      className="mb-2"
-                      style={{ width: 160, height: 120 }}
-                      color={hsToHex(panelColor.h, panelColor.s)}
-                      onChange={(hex) => {
-                        const hs = hexToHs(hex);
-                        if (hs) setPanelColor({ h: hs.h, s: hs.s });
-                      }}
-                    />
-                  )}
                   <div className="flex flex-wrap items-center gap-2">
                     <span
                       className="inline-block h-6 w-6 rounded border border-border"
@@ -1688,6 +1757,101 @@ export default function App() {
               </CardContent>
             </Card>
           )}
+
+          <Dialog open={colorDlg} onOpenChange={setColorDlg}>
+            <DialogContent className="max-w-sm">
+              <DialogTitle>Custom color</DialogTitle>
+              <DialogDescription>
+                Pick a color, fine-tune H/S, then add it to the palette.
+              </DialogDescription>
+              <HexColorPicker
+                style={{ width: "100%", height: 140 }}
+                color={hsToHex(dlgColor.h, dlgColor.s)}
+                onChange={(hex) => {
+                  const hs = hexToHs(hex);
+                  if (hs) setDlgColor({ h: hs.h, s: hs.s });
+                }}
+              />
+              <div className="flex items-center gap-2">
+                <span className="w-4 font-mono text-xs">H</span>
+                <Slider
+                  min={0}
+                  max={511}
+                  step={1}
+                  value={[dlgColor.h]}
+                  onValueChange={([v]) =>
+                    setDlgColor((c) => ({ ...c, h: v }))
+                  }
+                  className="flex-1"
+                />
+                <Input
+                  type="number"
+                  min={0}
+                  max={511}
+                  value={dlgColor.h}
+                  onChange={(e) =>
+                    setDlgColor((c) => ({
+                      ...c,
+                      h: Math.min(
+                        511,
+                        Math.max(0, parseInt(e.target.value, 10) || 0),
+                      ),
+                    }))
+                  }
+                  className="w-20"
+                />
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="w-4 font-mono text-xs">S</span>
+                <Slider
+                  min={0}
+                  max={100}
+                  step={1}
+                  value={[dlgColor.s]}
+                  onValueChange={([v]) =>
+                    setDlgColor((c) => ({ ...c, s: v }))
+                  }
+                  className="flex-1"
+                />
+                <Input
+                  type="number"
+                  min={0}
+                  max={100}
+                  value={dlgColor.s}
+                  onChange={(e) =>
+                    setDlgColor((c) => ({
+                      ...c,
+                      s: Math.min(
+                        100,
+                        Math.max(0, parseInt(e.target.value, 10) || 0),
+                      ),
+                    }))
+                  }
+                  className="w-20"
+                />
+              </div>
+              <div className="flex items-center gap-2">
+                <span
+                  className="inline-block h-6 w-6 rounded border border-border"
+                  style={{
+                    background: hsToHex(dlgColor.h, dlgColor.s),
+                  }}
+                />
+                <span className="font-mono text-xs">
+                  H{dlgColor.h} S{dlgColor.s}
+                </span>
+              </div>
+              <DialogFooter>
+                <Button
+                  variant="outline"
+                  onClick={() => setColorDlg(false)}
+                >
+                  Cancel
+                </Button>
+                <Button onClick={addCustomColor}>Add color</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
 
           <p className="text-xs text-muted-foreground">
             Scope: dual-half connect, keymap + LED editing via a queued draft
