@@ -12,21 +12,9 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 import { Button } from "./ui/button";
 import { cn } from "../lib/utils";
+import type { HalfInfo } from "../lib/aux";
 
-export interface HalfInfo {
-  side: "left" | "right";
-  connected: boolean;
-  fw: string;
-  baseMv: number | null;
-  basePct: number | null;
-  bleName: string;
-  modPresent: boolean;
-  modType: string;
-  modFw: string | null;
-  modPctVal: number | null;
-  modMv: number | null;
-  updatedAt: number | null;
-}
+export type { HalfInfo };
 
 function Row({ k, v }: { k: string; v: string }) {
   return (
