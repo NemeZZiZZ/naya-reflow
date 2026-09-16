@@ -184,6 +184,32 @@ v1.25.1 release asset in backup/firmware; tables verified against it).
 - Side effect of this session: board backlight left static WHITE
   (color experiments overwrote per-key customs).
 
+## Live verification 2 — brightness/effects (2026-09-17, left half, USB)
+
+- **1006 INCREMENT / 1007 DECREMENT**: multi-step scale (~7 INCREMENTs
+  from 0 to visible; low end invisible). 1× DECREMENT from max → fully
+  dark; 1003 ON does NOT relight from brightness-0 (INCREMENTs do).
+  ON/OFF state and brightness level are separate axes.
+- **1005 TOGGLE**: proven both directions (on→off→on), ACK `00`.
+- **100F HALT / 1010 RESUME**: proven on BREATHE (freeze mid-fade,
+  continue on resume), ACK `00`.
+- **1008 ADJUST BRIGHTNESS** (6×, empty params): inconclusive, no
+  visible change on breathing board.
+- **100E HUE SATURATION** (empty + `00` param): no visible change
+  on white (param encoding TBD).
+- **10d1 FORCE ON / 10d2 FORCE OFF**: consistent NO-REPLY (2/2 each,
+  `sync lost`), no visible effect, device stays alive (fa/1001
+  answers). Named in the static map but no device handler
+  (or compiled out).
+- **1050 RGB BRIGHTNESS saga**: empty params on a HALTed frame →
+  keys dark, module indicator kept breathing (separate channel:
+  keys RGB master vs module LED). 7× INCREMENT + 1050/`64` → still
+  dark. 1010 RESUME → breathing back, bright. Working hypothesis:
+  bare 1050 parks the key RGB driver (master 0); RESUME restarts it.
+- **1012 SET SCANMODE PWM**: ACK, no visible change (driver-level).
+- **1013 SET LED MAX BRIGHTNESS**: ACK, possibly brighter (weak
+  signal, single sample).
+
 ## T10 27-byte multi-behavior records — T03 experiment (KK30=Z, 2026-09-17)
 
 A key with Tap/Hold/DoubleTap/Tap&Hold becomes a PAIR of T=0x10 records
