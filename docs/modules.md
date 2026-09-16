@@ -62,13 +62,15 @@ VER = 02 03 03 = module FW 0.2.3.3 ✓ (zeroed when empty). The old 'battery byt
 theory is dead BY FRAMING (killed 2026-09-16): those values were CRCs all along.
 Live dock 2026-09-16 re-confirmed: L+Touch presence=01/TYPE=0x10/VER=02 03 03,
 R+Track presence=01/TYPE=0x21/X=0x31; R fe/1006 = 4094mV, L fe/1006 = 4093mV.
-de/100b A-byte still the lead battery/current candidate (L+Touch A=0x64=100 @100%,
-R+Track A=0x5d=93; dock-side: same Track read 0x37 left vs 0x63 right earlier) —
-true source TBD via interposer capture of NayaFlow's battery read.
-UPDATE 2026-09-16 docked re-poll: L A=100→105, R A=93→96 within ~10 min; A EXCEEDS 100
-(105) → definitively NOT percent. Base mV drifted simultaneously (L 4093→4081,
-R 4094→4108, USB plugged/charger hunting). Dumps: aux-{left,right}-docked-20260916-*.txt.
-A = drifting dock-side telemetry (charge current? temp?) — needs controlled experiment.
+SOLVED 2026-09-16 (overnight discharge: Touch 100→67%, Track 100→45%):
+de/100b payload [00, HI, LO, 00] = module-rail voltage, BE millivolts — there never was
+an 'A-byte'. Proof across 10 samples: full Touch 0x1064=4196 (NayaFlow 4222),
+full Track 0x1063=4195 (4206), discharged Touch 0x0F50=3920 (3910),
+discharged Track 0x0E82=3714 (3709) — all within charging-drift of screenshots.
+Module % is HOST-COMPUTED by NayaFlow from this voltage (no % byte on the wire).
+Calibration points: 4222mV→100%, 3910mV→67%, 3709mV→45% (~9.3mV/% in this region).
+Empty-dock quirk: right reports zeros, left floats at ~0x1060 (charger rail unloaded) —
+use de/1001 byte1 as the true presence flag, never de/100b.
 
 ### Power architecture (user-confirmed 2026-09-15)
 Off-USB, the halves are powered BY the docked modules over pogo (VBUS both ways:
