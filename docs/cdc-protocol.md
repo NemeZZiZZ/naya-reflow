@@ -112,6 +112,50 @@ Vs record: [KK, A, 08, X u32LE, Y u32LE]. Full action ID = (A<<16)|(X<<8)|Y.
 A proven action-intrinsic (BT_DEVICE_1 → A=00 on both KK2E and KK30). (A,X) = category: (0,3)=BT, (15,3)=mouse, (9,13)=LED; Y = index.
 Probe positions: KK2E (was LShift), KK2F (was LShift), KK30 (was Z). L1/L2 untouched by remap flash.
 
+## Full CDC command map (static RE of installed NayaCore funcB, 2026-09-17)
+Logged constants == wire codes (20+ empirical cross-checks). Jump tables read
+from the INSTALLED binary (/Applications — NOTE: its md5 differs from the
+v1.25.1 release asset in backup/firmware; tables verified against it).
+- **BE 0x1001–0x1010** (BLE): 1001 SET PAIR ADDR, **1002 GET PAIR ADDRESS**
+  (empirical 8B value), 1003 UNPAIR PAIR, 1004 UNPAIR ALL, 1005 GET ALL PAIRS,
+  1006 GET BLE NAME, 1007 SET BLE NAME, 1008 GET BLE ADDRESS, 1009 SELECT BLE
+  PROFILE, 100A CLEAR BLE PROFILE, 100B SELECT BLE OUT, 100C GET BLE STATUS,
+  100D GET DONGLE ADDR, 100E GET SLOTX ADDR, 100F GET BLE FW VERSION
+  (`00 02 1d` = v0.2.29, NOT battery), 1010 CLEAR ALL SPLIT LINKS.
+- **DE 0x1001–0x100B** (module): 1001 SEND HANDSHAKE, 1002 MODULE DETECT,
+  1003 CHECK HANDSHAKE, 1004 UNKNOWN, 1005 MODULE FWUP, 1006 RESET MODULE,
+  1007 GET ADDRESS, 1008 GET MODULE FW VERSION, 1009 GET BATTERY,
+  100A MODULE FILE FW VERSION, **100B GET PRECISE BATTERY LEVEL**
+  (= module-rail mV read).
+- **EE**: 10ce NORMAL RESET, 10be DFU RESET, 10ae MCU BOOT RESET (compare-chain).
+- **FA** (compare-chain, exactly 3): 1001 TEST FLASH, 1002 FORMAT PARTITION,
+  1006 ERASE CHIP.
+- **FE** (system): 1001 MEDIA ID REQUEST, 1002 GET FW VERSION
+  (`00 03 29 00 38` = base FW 0.3.41.0), 1003 MODULE BATTERY RECOVERY,
+  1004 GET HW ID NUMBER, 1005 SET HOST OS, 1006 GET KB BATTERY LEVEL (base mV),
+  1007 SET RELEASE MODE, 1008 TOGGLE KEYSCAN MODE, 1009 KEYSCAN EVENT,
+  100A SET ACTIVITY TIMEOUTS (13B = status 00 + 3×u32LE ms),
+  100B GET ACTIVITY TIMEOUTS.
+- **FF** (table, 0x1000–0x1003): 1000 WAIT, 1001 VERIFY FLASH,
+  1002 ENQUEUE READ LAYERS, 1003 GET MODULE INFO IF PRESENT.
+- **ED** (table, LED): 1003 LEDs ON, 1004 OFF, 1005 TOGGLE, 1006 INCREMENT,
+  1007 DECREMENT, 1008 ADJUST BRIGHTNESS, 1009 RED, 100A GREEN, 100B BLUE,
+  100C WHITE, 100D EFFECT CYCLE, 100E HUE SATURATION, 100F HALT, 1010 RESUME,
+  1011 SELECT LEDs EFFECT, 1012 SET SCANMODE PWM, 1013 SET LED MAX BRIGHTNESS,
+  1014 SET LED LAYER OVERRIDE, 1050 RGB BRIGHTNESS, 10d1 FORCE ON, 10d2 FORCE OFF
+  (0x1015–0x10d0 minus 0x1050 → UNKNOWN; never seen in NayaCore logs).
+- **CA, F1**: all-UNKNOWN groups (no known commands; `mov w0,x1` + UNKNOWN tag).
+- **30 0x1001–0x100E** (remap): 1001 READ LAYER LIST (= handshake/inventory),
+  1002 WRITE LAYER LIST (never observed on wire), 1003 READ LAYER DATA,
+  1004 WRITE LAYER DATA, 1005–1008 MACRO LIST/DATA read/write (never observed),
+  1009 MODULE CONFIG LIST read, 100A MODULE CONFIG LIST write(?),
+  100B MODULE CONFIG DATA (= 30/100b read), 100C WRITE MODULE CONFIG DATA
+  (never observed), 100D READ LED MAP, 100E WRITE LED MAP.
+- MODMASK census (all NayaCore logs): `00` ×911, `02` ×16 (= 8 dumps × 2 paren
+  keys) → effectively Shift-only; assume HID boot-modifier bits.
+- T10 constants: `c8 00` ×2 = tapping term 200ms (== profile header);
+  `03` and `01 01 00` still unexplained.
+
 ## T10 27-byte multi-behavior records — T03 experiment (KK30=Z, 2026-09-17)
 
 A key with Tap/Hold/DoubleTap/Tap&Hold becomes a PAIR of T=0x10 records

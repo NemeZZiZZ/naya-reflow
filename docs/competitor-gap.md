@@ -52,12 +52,25 @@ dumps with per-key `tap: (ACTION)` + `wire: <hex>` pairs, 8 full dumps).
    tail triplet 4b = pair count. Open sub-questions: shadow-slot allocation for a
    2nd multi-key, `03`/`01 01 00` constants, MODMASK-less behavior triples
    (Shifted hold values untested).
-2. MODMASK bit table (single Shift sample; assume HID boot-modifier bits).
-3. Module-config WRITE wire code (30/100c unconfirmed; logs carry no frame codes).
-4. Per-layer LED ANIMATION setting protocol (Solid/Breathe/Swirl/Spectrum names
-   from screenshot 2 only).
-5. Layer LIST write 30/1002 format (never observed). Macros 30/1005–1008 on wire
-   (1 BASIC macro in DB, never flashed in logs).
+2. ~~MODMASK bit table~~ CLOSED 2026-09-17: census over all logs = {00:911,
+   02:16} (16 = 8 dumps × 2 paren keys) → Shift-only in practice; assume HID
+   boot-modifier bits.
+3. ~~Module-config WRITE wire code~~ code = **30/100c** (static map) but never
+   observed on wire (absent from all captures; logs carry no frame codes) — needs
+   a module-gesture flash capture. Same for 30/1002 layer-list write.
+4. ~~Per-layer LED ANIMATION setting protocol~~ renderer has registry
+   `{SOLID:solid, SWIRL:swirl, BREATHE:breathe, SPECTRUM:spectrum}` + icons, but
+   NO renderer→backend calls and `animation_id NULL` in DB → host-side/planned,
+   no wire path (yet). ED/1011 SELECT LEDs EFFECT + ED/1014 LAYER OVERRIDE are
+   live-probeable candidates.
+5. ~~Full command map~~ CLOSED 2026-09-17: all 9 TYPEs decoded (see
+   `cdc-protocol.md` "Full CDC command map"; incl. FF/1002 ENQUEUE READ LAYERS,
+   FF/1003 GET MODULE INFO IF PRESENT, full ED LED table). CA/F1 = all-UNKNOWN.
+   Macros 30/1005–1008 still never observed on wire.
+6. Macro host schema (for future UI): 1 BASIC macro 'Fantastic Macro', 4 step
+   tables — loop (START/END, iteration 3), mouse (MOUSE_LEFT PRESS/RELEASE),
+   standard (A PRESS/RELEASE), text ('Hello World'); wait_for_release empty.
+   Steps: order_id + delay(2) + correlation groups.
 
 ## Implementation backlog for parity
 
