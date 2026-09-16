@@ -33,11 +33,18 @@ node /tmp/smoke.cjs   # expect: no FAIL lines
 
 - Dual-half connect (VID `0x37D1`, PID 100 = left / 200 = right) with
   auto-connect, hot-plug, and per-side sessions.
-- Full keymap + LED-color read of all 3 layers at once; click a keycap to
-  remap (`30/1004` per-key writes, no commit needed) or recolor (`30/100e`),
+- Full keymap + LED-color read of all 3 layers at once; Keyboard / Layout
+  views with per-layer tabs.
+- Editor: multi-select keys per (layer, KK) pair — click / Shift+click /
+  Alt+click (all layers) on the keyboard, checkboxes in the table. The
+  selection panel assigns an action (searchable accordion palette with keycap
+  glyphs) and/or a color (presets + custom `localStorage` colors). Changes
+  queue into a local draft — nothing writes until the Flash preview/confirm
+  dialog (`30/1004` per-key writes, `30/100e` LED writes, no commit needed),
   with readback verify.
 - Battery + docked-module pills (module % is host-computed from rail voltage),
-  device Sheet, keymap/LED JSON export, categorized CDC log.
+  device Sheet, Save dropdown (keys/colors JSON per layer or all), activity
+  timeouts settings (`fe/100a`/`fe/100b`), categorized CDC log.
 - Keycap outlines + legend icons transcribed from the NayaFlow renderer
   (`src/assets/key-icons/`, `src/lib/kb-data.ts`).
 
