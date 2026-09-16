@@ -451,8 +451,9 @@ export class NayaSession {
     return concat(parts);
   }
 
-  async writeLed(kk: number, h: number, s: number): Promise<Uint8Array> {
-    // 30/100e per-key LED write: params [00,00,KK,H_lo,H_hi,S].
+  async writeLed(kk: number, h: number, s: number, layer = 0): Promise<Uint8Array> {
+    // 30/100e per-key LED write: params [00,layer,KK,H_lo,H_hi,S] (second
+    // byte mirrors writeKey's layer position; stock only ever used layer 0).
     // Returns the ACK payload (expect 00 00). NO commit: applies instantly
     // and persists (proven: cyan->amber roundtrip, readback-verified).
     if (!(kk >= 0 && kk <= 0x87 && h >= 0 && h <= 511 && s >= 0 && s <= 255))
@@ -461,7 +462,7 @@ export class NayaSession {
       0x30,
       0x10,
       0x0e,
-      new Uint8Array([0, 0, kk, h & 0xff, (h >> 8) & 0xff, s]),
+      new Uint8Array([0, layer, kk, h & 0xff, (h >> 8) & 0xff, s]),
     );
     return f.payload;
   }

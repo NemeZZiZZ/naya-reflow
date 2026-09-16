@@ -96,10 +96,11 @@ interface KeyProps {
   led?: LedVal;
   ledMode: boolean;
   selected: boolean;
+  dirty?: boolean;
   onSelect: (pos: number, kk: number) => void;
 }
 
-function Key({ pos, rec, led, ledMode, selected, onSelect }: KeyProps) {
+function Key({ pos, rec, led, ledMode, selected, dirty, onSelect }: KeyProps) {
   const kk = pos; // positionId == KK index (proven: 0=Esc/LA1, 0x30=Z/LC4 …)
   const label = rec ? shortLabel(rec) : (POS_KEY[String(pos)] ?? "");
   // action glyph for non-standard keys (currentColor => follows legend color);
@@ -131,6 +132,12 @@ function Key({ pos, rec, led, ledMode, selected, onSelect }: KeyProps) {
           )}
           dangerouslySetInnerHTML={{ __html: icon ? icon : label }}
         />
+        {dirty && (
+          <span
+            className="absolute -top-0.5 -right-0.5 size-1.5 rounded-full bg-amber-400"
+            title="queued change — not flashed yet"
+          />
+        )}
       </div>
     </div>
   );
@@ -144,6 +151,8 @@ interface KeyboardProps {
   onSelect: (pos: number, kk: number) => void;
   /** disconnected: ignore clicks, render semi-transparent */
   disabled?: boolean;
+  /** KKs with queued (not yet flashed) changes — get a dot marker */
+  dirty?: Set<number>;
 }
 
 export default function Keyboard({
@@ -153,6 +162,7 @@ export default function Keyboard({
   selected,
   onSelect,
   disabled = false,
+  dirty,
 }: KeyboardProps) {
   const pick = disabled ? () => {} : onSelect;
   const K = (pos: number) => (
@@ -163,6 +173,7 @@ export default function Keyboard({
       led={ledmap.get(pos)}
       ledMode={ledMode}
       selected={selected === pos}
+      dirty={dirty?.has(pos) ?? false}
       onSelect={pick}
     />
   );

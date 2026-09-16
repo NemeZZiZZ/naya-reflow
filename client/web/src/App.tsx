@@ -22,17 +22,15 @@ import { Toaster, toast } from "sonner";
 import HalfPill from "./components/HalfPill";
 import type { HalfInfo } from "./components/HalfPill";
 import Keyboard from "./components/Keyboard";
+import KeyEditDialog from "./components/KeyEditDialog";
+import FlashDialog from "./components/FlashDialog";
+import SettingsDialog from "./components/SettingsDialog";
+import LedToolbar from "./components/LedToolbar";
+import type { LedTool } from "./components/LedToolbar";
 import { Badge } from "./components/ui/badge";
 import { Button } from "./components/ui/button";
 import { Checkbox } from "./components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle } from "./components/ui/card";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogTitle,
-} from "./components/ui/dialog";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -40,20 +38,14 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
 } from "./components/ui/dropdown-menu";
-import { Input } from "./components/ui/input";
 import { Label } from "./components/ui/label";
 import { Separator } from "./components/ui/separator";
 import { Sheet, SheetContent, SheetTitle } from "./components/ui/sheet";
-import { Slider } from "./components/ui/slider";
 import { Tabs, TabsList, TabsTrigger } from "./components/ui/tabs";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "./components/ui/tooltip";
+import { TooltipProvider } from "./components/ui/tooltip";
 import { HexColorPicker } from "react-colorful";
 import { POS_KEY } from "./lib/kb-data";
+import { Draft, opSummary } from "./lib/draft";
 import {
   DST_LEFT,
   DST_RIGHT,
@@ -90,22 +82,6 @@ interface LogEntry {
   cls: string;
   cat: "cdc" | "info" | "err";
   msg: string;
-}
-
-interface FlashPlan {
-  kk: number;
-  hid: number;
-  curHex: string;
-  curMean: string;
-  newMean: string;
-}
-
-interface ColorPlan {
-  kk: number;
-  h: number;
-  s: number;
-  curH: number;
-  curS: number;
 }
 
 const hex2 = (n: number) => "0x" + n.toString(16).padStart(2, "0");
@@ -392,33 +368,52 @@ export default function App() {
     keys: [0, 0, 0],
     leds: [0, 0, 0],
   });
-  const [fKK, setFKK] = useState("30");
-  const [fHID, setFHID] = useState("14");
-  const [flashStat, setFlashStat] = useState("");
-  const [flashPlan, setFlashPlan] = useState<FlashPlan | null>(null);
   const [ledDumpStat, setLedDumpStat] = useState("");
-  const [cKK, setCKK] = useState("30");
-  const [cH, setCH] = useState("180");
-  const [cS, setCS] = useState("100");
-  const [ledSetStat, setLedSetStat] = useState("");
-  const [colorPlan, setColorPlan] = useState<ColorPlan | null>(null);
   const [ledMode, setLedMode] = useState(true);
   const [selected, setSelected] = useState(-1);
   const [selInfo, setSelInfo] = useState("");
+  // Edit queue (draft): all key/color changes accumulate here until Flash.
+  const draftRef = useRef(new Draft());
+  const [draftVer, setDraftVer] = useState(0); // bump to re-render on draft change
+  const bumpDraft = () => setDraftVer((v) => v + 1);
+  const [keyEdit, setKeyEdit] = useState<{ layer: number; kk: number } | null>(
+    null,
+  );
+  const [flashOpen, setFlashOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [ledTool, setLedTool] = useState<LedTool>("brush");
+  const [brushColor, setBrushColor] = useState({ h: 180, s: 100 });
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [flashing, setFlashing] = useState(false);
 
+  // Keyboard preview = device state + pending ops overlaid.
   const keymap = useMemo(() => {
     const m = new Map<number, Uint8Array>();
     for (const r of keysByLayer[layer] ?? [])
       if (!m.has(r.kk)) m.set(r.kk, r.rec);
+    for (const o of draftRef.current.ops)
+      if (o.kind === "key" && o.layer === layer) m.set(o.kk, o.record);
     return m;
-  }, [keysByLayer, layer]);
-  const ledmap = useMemo(
-    () =>
-      new Map(
-        (ledsByLayer[layer] ?? []).map((r) => [r.kk, { h: r.h, s: r.s }]),
-      ),
-    [ledsByLayer, layer],
-  );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [keysByLayer, layer, draftVer]);
+  const ledmap = useMemo(() => {
+    const m = new Map(
+      (ledsByLayer[layer] ?? []).map((r) => [r.kk, { h: r.h, s: r.s }]),
+    );
+    for (const o of draftRef.current.ops)
+      if (o.kind === "led" && o.layer === layer)
+        m.set(o.kk, { h: o.h, s: o.s });
+    return m;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ledsByLayer, layer, draftVer]);
+  const dirtyKks = useMemo(() => {
+    const s = new Set<number>();
+    for (const o of draftRef.current.ops) if (o.layer === layer) s.add(o.kk);
+    return s;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [draftVer, layer]);
+  const draftSize = draftRef.current.size;
+  void draftVer; // used via memos
   // Merged table rows: every keymap record in dump order with its LED color
   // joined by KK, then LED-only rows (KK never present in the keymap dump).
   const mergedRows = useMemo(() => {
@@ -609,7 +604,12 @@ export default function App() {
 
   // Single core for full reads: one handshake, then keymap+LED for layers
   // 0..2. Used by auto-fetch on connect and by the Refresh button.
-  async function dumpAll(ses: NayaSession) {
+  // Returns the freshly read layers so callers can reconcile the draft
+  // against real device state (setState alone would leave closures stale).
+  async function dumpAll(ses: NayaSession): Promise<{
+    keys: KeyRec[][];
+    leds: LedRec[][];
+  } | null> {
     busyRef.current = true;
     try {
       log("inf", "dump: all 3 layers (keymap + LED) under one handshake…");
@@ -648,10 +648,12 @@ export default function App() {
       setDumpStat(`3 layers, ${nKeys} key records`);
       setLedDumpStat(`3 layers, ${nLeds} LEDs`);
       log("inf", `dump done: ${nKeys} keys, ${nLeds} LEDs`);
+      return { keys, leds };
     } catch (e) {
       setDumpStat("FAILED: " + (e as Error).message);
       setLedDumpStat("FAILED: " + (e as Error).message);
       log("err", "dump: " + ((e as Error).stack ?? (e as Error).message));
+      return null;
     } finally {
       busyRef.current = false;
     }
@@ -858,100 +860,70 @@ export default function App() {
   async function dump() {
     const ses = leftSes();
     if (!ses) return;
-    await dumpAll(ses);
+    const fresh = await dumpAll(ses);
+    // Fresh device state may satisfy queued ops (e.g. after NayaFlow edits or
+    // a successful flash) — drop those from the queue.
+    if (!fresh) return;
+    const d = draftRef.current;
+    const before = d.size;
+    d.reconcile(fresh.keys, fresh.leds);
+    if (d.size !== before) {
+      bumpDraft();
+      log("inf", `queue: ${before - d.size} op(s) already applied on device`);
+    }
   }
 
-  // Step 1: guards → open confirm dialog. Step 2 (doFlash): handshake → write → readback.
-  function flash() {
+  // Flash the whole queue: handshake once, then every op in order, then a
+  // full re-dump (which reconciles the queue). No fe/100a commit — writes
+  // apply instantly and persist.
+  async function doFlashQueue() {
     const ses = leftSes();
-    if (!ses || !halves.left.connected) {
-      setFlashStat("connect the LEFT half first");
-      return;
-    }
-    if (keysByLayer[0].length === 0) {
-      setFlashStat("refresh layers first");
-      return;
-    }
-    const kk = parseInt(fKK, 16);
-    const hid = parseInt(fHID, 16);
-    if (
-      isNaN(kk) ||
-      kk < 0 ||
-      kk > 0x9b ||
-      isNaN(hid) ||
-      hid < 0 ||
-      hid > 0xff
-    ) {
-      setFlashStat("bad KK/HID hex");
-      return;
-    }
-    const cur = keysByLayer[0].find((r) => r.kk === kk);
-    if (!cur) {
-      setFlashStat("KK not present in last dump");
-      return;
-    }
-    const rec = new Uint8Array([kk, 0x01, 0x04, hid, 0x00, 0x07, 0x00]);
-    if (rec.length !== cur.rec.length) {
-      setFlashStat(
-        `refused: length change ${cur.rec.length}→${rec.length} (device ignores those)`,
-      );
-      return;
-    }
-    setFlashPlan({
-      kk,
-      hid,
-      curHex: toHex(cur.rec),
-      curMean: describeRecord(cur.rec),
-      newMean: describeRecord(rec),
-    });
-  }
-
-  async function doFlash() {
-    const ses = leftSes();
-    const plan = flashPlan;
-    setFlashPlan(null);
-    if (!ses || !plan) return;
+    const d = draftRef.current;
+    if (!ses || d.size === 0) return;
     busyRef.current = true;
+    setFlashing(true);
+    const total = d.size;
+    let done = 0;
     try {
-      log(
-        "inf",
-        `flash: KK ${hex2(plan.kk)} [${plan.curMean}] → [${plan.newMean}]`,
-      );
-      setFlashStat("handshake…");
+      log("inf", `flash queue: ${total} op(s)`);
       await ses.handshake();
-      setFlashStat("writing…");
-      const rec = new Uint8Array([
-        plan.kk,
-        0x01,
-        0x04,
-        plan.hid,
-        0x00,
-        0x07,
-        0x00,
-      ]);
-      const ack = await ses.writeKey(rec, 0);
-      log("inf", "write ACK payload: " + toHex(ack));
-      if (!(ack.length === 2 && ack[0] === 0 && ack[1] === 0)) {
-        setFlashStat("UNEXPECTED ACK: " + toHex(ack));
-        return;
+      for (const o of d.ops) {
+        log("inf", `flash ${done + 1}/${total}: ${opSummary(o)}`);
+        if (o.kind === "key") {
+          const ack = await ses.writeKey(o.record, o.layer);
+          if (!(ack.length === 2 && ack[0] === 0 && ack[1] === 0))
+            throw new Error(`key write NACK: ${toHex(ack)}`);
+        } else {
+          const ack = await ses.writeLed(o.kk, o.h, o.s, o.layer);
+          if (!(ack.length === 2 && ack[0] === 0 && ack[1] === 0))
+            throw new Error(`led write NACK: ${toHex(ack)}`);
+        }
+        done++;
       }
-      setFlashStat("readback…");
-      const blob = await ses.readLayer(0);
-      const parsed = parseLayer(blob);
-      const back = parsed.recs.find((r) => r.kk === plan.kk);
-      if (back && toHex(back.rec) === toHex(rec)) {
-        setFlashStat("OK — press the key to verify behaviorally");
-        log("inf", "readback MATCH");
-        setKeysByLayer((prev) => [parsed.recs, prev[1], prev[2]]);
+      log("inf", `flash queue: ${done}/${total} written, re-reading…`);
+      const fresh = await dumpAll(ses);
+      let dropped = 0;
+      if (fresh) {
+        dropped = d.reconcile(fresh.keys, fresh.leds);
+        bumpDraft();
+      }
+      if (fresh && dropped === total) {
+        toast.success("Flash complete", {
+          description: `${total} change(s) verified on device`,
+        });
+        log("inf", "flash queue: all changes verified on device");
       } else {
-        setFlashStat("READBACK MISMATCH — see log");
-        log("err", "readback: " + (back ? toHex(back.rec) : "KK missing"));
+        toast.error("Flash partially verified", {
+          description: `${dropped}/${total} confirmed — ${d.size} still queued`,
+        });
+        log("err", `flash queue: ${total - dropped} op(s) not reflected`);
       }
     } catch (e) {
-      setFlashStat("FAILED: " + (e as Error).message);
-      log("err", "flash: " + ((e as Error).stack ?? (e as Error).message));
+      toast.error("Flash failed", { description: (e as Error).message });
+      log("err", "flash queue: " + ((e as Error).stack ?? (e as Error).message));
     } finally {
       busyRef.current = false;
+      setFlashing(false);
     }
   }
 
@@ -1035,99 +1007,50 @@ export default function App() {
     log("inf", "export: ledmap JSON saved");
   }
 
-  function ledSet() {
-    const ses = leftSes();
-    if (!ses || !halves.left.connected) {
-      setLedSetStat("connect the LEFT half first");
-      return;
-    }
-    if (ledsByLayer[layer].length === 0) {
-      setLedSetStat("refresh layers first");
-      return;
-    }
-    const kk = parseInt(cKK, 16);
-    const h = parseInt(cH, 10);
-    const s = parseInt(cS, 10);
-    if (
-      isNaN(kk) ||
-      kk < 0 ||
-      kk > 0x87 ||
-      isNaN(h) ||
-      h < 0 ||
-      h > 511 ||
-      isNaN(s) ||
-      s < 0 ||
-      s > 255
-    ) {
-      setLedSetStat("bad KK/H/S");
-      return;
-    }
-    const cur = ledsByLayer[layer].find((r) => r.kk === kk);
-    if (!cur) {
-      setLedSetStat("KK not in last LED dump");
-      return;
-    }
-    setColorPlan({ kk, h, s, curH: cur.h, curS: cur.s });
-  }
-
-  async function doColorSet() {
-    const ses = leftSes();
-    const plan = colorPlan;
-    setColorPlan(null);
-    if (!ses || !plan) return;
-    busyRef.current = true;
-    try {
-      log(
-        "inf",
-        `color: KK ${hex2(plan.kk)} H${plan.curH}/S${plan.curS} → H${plan.h}/S${plan.s}`,
-      );
-      setLedSetStat("handshake…");
-      await ses.handshake();
-      setLedSetStat("writing…");
-      const ack = await ses.writeLed(plan.kk, plan.h, plan.s);
-      log("inf", "color ACK payload: " + toHex(ack));
-      if (!(ack.length === 2 && ack[0] === 0 && ack[1] === 0)) {
-        setLedSetStat("UNEXPECTED ACK: " + toHex(ack));
-        return;
-      }
-      setLedSetStat("readback…");
-      const blob = await ses.readLedmap(layer);
-      const parsed = parseLedmap(blob);
-      const back = parsed.recs.find((r) => r.kk === plan.kk);
-      if (back && back.h === plan.h && back.s === plan.s) {
-        setLedSetStat("OK — look at the key");
-        log("inf", "color readback MATCH");
-        setLedsByLayer((prev) =>
-          prev.map((recs, i) => (i === layer ? parsed.recs : recs)),
-        );
-      } else {
-        setLedSetStat("READBACK MISMATCH — see log");
-        log(
-          "err",
-          "color readback: " + (back ? `H${back.h}/S${back.s}` : "KK missing"),
-        );
-      }
-    } catch (e) {
-      setLedSetStat("FAILED: " + (e as Error).message);
-      log("err", "color: " + ((e as Error).stack ?? (e as Error).message));
-    } finally {
-      busyRef.current = false;
-    }
+  function queueLed(kk: number, h: number, s: number) {
+    draftRef.current.add({ kind: "led", layer, kk, h, s });
+    bumpDraft();
+    log(
+      "inf",
+      `queued LED: ${POS_KEY[String(kk)] ?? "KK " + hex2(kk)} L${layer} → H${h}/S${s}`,
+    );
   }
 
   function onSelect(pos: number, kk: number) {
     const hx = kk.toString(16).padStart(2, "0");
     setSelected(pos);
-    setFKK(hx);
-    setCKK(hx);
     setSelInfo(
       `selected pos ${pos} (${POS_KEY[String(pos)] ?? "?"}) = KK 0x${hx}`,
     );
-    log("inf", `selected KK 0x${hx} (${POS_KEY[String(pos)] ?? "?"})`);
+    if (!leftOn) return;
+    if (ledMode) {
+      // LED tools: brush paints, fill queues the whole layer, pipette picks.
+      if (ledTool === "pipette") {
+        const cur = ledmap.get(kk);
+        if (cur) {
+          setBrushColor({ h: cur.h, s: cur.s });
+          log("inf", `pipette: H${cur.h}/S${cur.s} from ${POS_KEY[String(kk)] ?? hx}`);
+        }
+      } else if (ledTool === "fill") {
+        for (const r of ledsByLayer[layer] ?? [])
+          draftRef.current.add({
+            kind: "led",
+            layer,
+            kk: r.kk,
+            h: brushColor.h,
+            s: brushColor.s,
+          });
+        bumpDraft();
+        log(
+          "inf",
+          `queued fill: ${ledsByLayer[layer]?.length ?? 0} LEDs L${layer} → H${brushColor.h}/S${brushColor.s}`,
+        );
+      } else queueLed(kk, brushColor.h, brushColor.s);
+      return;
+    }
+    setKeyEdit({ layer, kk });
   }
 
-  const hNum = parseInt(cH, 10);
-  const sNum = parseInt(cS, 10);
   const leftOn = halves.left.connected;
   const rightOn = halves.right.connected;
 
@@ -1174,6 +1097,41 @@ export default function App() {
                 onDisconnect={() => void disconnect("right")}
               />
               <span className="flex-1" />
+              <Button
+                size="sm"
+                disabled={!leftOn || draftSize === 0 || flashing}
+                title={
+                  draftSize === 0
+                    ? "Queue is empty — click keys to queue changes"
+                    : `${draftSize} queued change(s)`
+                }
+                onClick={() => setFlashOpen(true)}
+              >
+                <PlugZap /> Flash{draftSize > 0 ? ` (${draftSize})` : ""}
+              </Button>
+              {draftSize > 0 && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  title="Discard the whole queue"
+                  onClick={() => {
+                    draftRef.current.clear();
+                    bumpDraft();
+                    log("inf", "queue cleared");
+                  }}
+                >
+                  <XCircle /> Discard
+                </Button>
+              )}
+              <Button
+                variant="secondary"
+                size="sm"
+                title="Activity timeouts"
+                disabled={!leftOn}
+                onClick={() => setSettingsOpen(true)}
+              >
+                Settings
+              </Button>
               <Button
                 variant="secondary"
                 size="sm"
@@ -1239,6 +1197,34 @@ export default function App() {
               </Label>
             </CardHeader>
             <CardContent>
+              {ledMode && (
+                <div className="mb-3">
+                  <LedToolbar
+                    tool={ledTool}
+                    onTool={setLedTool}
+                    color={brushColor}
+                    onColor={setBrushColor}
+                    disabled={!leftOn}
+                  />
+                  <button
+                    className="mt-1.5 text-xs text-muted-foreground underline hover:text-foreground"
+                    onClick={() => setPickerOpen((v) => !v)}
+                  >
+                    {pickerOpen ? "Hide custom color picker" : "Custom color…"}
+                  </button>
+                  {pickerOpen && (
+                    <HexColorPicker
+                      className="mt-2"
+                      style={{ width: 160, height: 120 }}
+                      color={hsToHex(brushColor.h, brushColor.s)}
+                      onChange={(hex) => {
+                        const hs = hexToHs(hex);
+                        if (hs) setBrushColor({ h: hs.h, s: hs.s });
+                      }}
+                    />
+                  )}
+                </div>
+              )}
               <div
                 className="overflow-hidden rounded-sm bg-background p-4"
                 ref={kbBoxRef}
@@ -1258,12 +1244,15 @@ export default function App() {
                     selected={selected}
                     onSelect={onSelect}
                     disabled={!leftOn}
+                    dirty={dirtyKks}
                   />
                 </div>
               </div>
               <p className="mt-2 text-xs text-muted-foreground">
                 {leftOn
-                  ? "Click a key to select it for Flash / Set color below. Legends and fills load automatically on connect."
+                  ? ledMode
+                    ? "LED mode: brush paints clicked keys, fill queues the layer, pipette picks a key's color. Changes queue up — nothing writes until Flash."
+                    : "Click a key to assign an action. Changes queue up — nothing writes until Flash."
                   : "Connect the LEFT half — legends and colors load automatically."}
               </p>
             </CardContent>
@@ -1408,150 +1397,12 @@ export default function App() {
             </CardContent>
           </Card>
 
-          <Card className="mb-3">
-            <CardHeader>
-              <CardTitle>Flash key</CardTitle>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Badge variant="default">30/1004, no commit</Badge>
-                </TooltipTrigger>
-                <TooltipContent>
-                  Writes one key record and applies it instantly — no fe/100a
-                  commit is ever sent. Persists across reboot.
-                </TooltipContent>
-              </Tooltip>
-            </CardHeader>
-            <CardContent>
-              <div className="flex flex-wrap items-center gap-2">
-                <Label>
-                  KK{" "}
-                  <Input
-                    className="w-16"
-                    value={fKK}
-                    onChange={(e) => setFKK(e.target.value)}
-                  />
-                </Label>
-                <Label>
-                  HID{" "}
-                  <Input
-                    className="w-16"
-                    value={fHID}
-                    onChange={(e) => setFHID(e.target.value)}
-                  />
-                </Label>
-                <Button onClick={flash} disabled={!leftOn}>
-                  Flash HID key
-                </Button>
-                <span className="font-mono text-xs">{flashStat}</span>
-              </div>
-              <p className="mt-2 text-xs text-muted-foreground">
-                Builds a T01 record [KK,01,04,HID,00,07,00] on Layer 0. Requires
-                a fresh Layer-0 dump above (same-length guard refuses 7B↔11B
-                changes — the device ignores those). LEFT half only.
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="mb-3">
-            <CardHeader>
-              <CardTitle>Set color</CardTitle>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Badge variant="default">30/100d + 30/100e, no commit</Badge>
-                </TooltipTrigger>
-                <TooltipContent>
-                  Per-layer color store (136 LEDs, KK 0x00–0x87). Applies
-                  instantly, persists across reboot.
-                </TooltipContent>
-              </Tooltip>
-            </CardHeader>
-            <CardContent>
-              <div className="flex flex-wrap items-center gap-2">
-                <Label>
-                  KK{" "}
-                  <Input
-                    className="w-16"
-                    value={cKK}
-                    onChange={(e) => setCKK(e.target.value)}
-                  />
-                </Label>
-                <div className="flex items-center gap-2">
-                  <HexColorPicker
-                    style={{ width: 132, height: 132 }}
-                    color={hsToHex(
-                      isNaN(hNum) ? 0 : hNum,
-                      isNaN(sNum) ? 0 : sNum,
-                    )}
-                    onChange={(hex) => {
-                      const hs = hexToHs(hex);
-                      if (hs) {
-                        setCH(String(hs.h));
-                        setCS(String(hs.s));
-                      }
-                    }}
-                  />
-                </div>
-                <div className="flex min-w-52 flex-1 items-center gap-2">
-                  <Label className="shrink-0">
-                    H{" "}
-                    <span className="font-mono">
-                      {isNaN(hNum) ? "—" : hNum}
-                    </span>
-                  </Label>
-                  <Slider
-                    min={0}
-                    max={511}
-                    step={1}
-                    value={[isNaN(hNum) ? 0 : Math.min(511, Math.max(0, hNum))]}
-                    onValueChange={([v]) => setCH(String(v))}
-                  />
-                  <Input
-                    className="w-16"
-                    value={cH}
-                    onChange={(e) => setCH(e.target.value)}
-                  />
-                </div>
-                <div className="flex min-w-44 flex-1 items-center gap-2">
-                  <Label className="shrink-0">
-                    S{" "}
-                    <span className="font-mono">
-                      {isNaN(sNum) ? "—" : sNum}
-                    </span>
-                  </Label>
-                  <Slider
-                    min={0}
-                    max={255}
-                    step={1}
-                    value={[isNaN(sNum) ? 0 : Math.min(255, Math.max(0, sNum))]}
-                    onValueChange={([v]) => setCS(String(v))}
-                  />
-                  <Input
-                    className="w-16"
-                    value={cS}
-                    onChange={(e) => setCS(e.target.value)}
-                  />
-                </div>
-                <Button onClick={ledSet} disabled={!leftOn}>
-                  Set color
-                </Button>
-                <span className="font-mono text-xs">{ledSetStat}</span>
-              </div>
-              <p className="mt-2 text-xs text-muted-foreground">
-                Factory amber ≈ H38/S100; typical S 0–100. The picker drives the
-                same H/S fields (hue wraps past 360° — type large H manually if
-                needed). Requires a fresh dump of the same layer (guard). LEFT
-                half only.
-              </p>
-            </CardContent>
-          </Card>
-
           <p className="text-xs text-muted-foreground">
-            Scope: device info + keymap dump/flash + LED map dump/set. No
-            fe/100a commit is ever sent. Remap + LED commands answer on the LEFT
-            half only. Battery pills Module presence polls every 1s (single
-            de/1001); battery + module state refresh quietly every 30s; module
-            dock/undock lands in the log as a module event. Log shows info +
-            errors by default, CDC frames via the CDC chip.
+            Scope: dual-half connect, keymap + LED editing via a queued draft
+            (click a key → pick an action → Flash), exports, activity
+            timeouts. Writes use 30/1004 + 30/100e and apply instantly — no
+            fe/100a commit is ever sent. Remap + LED commands answer on the
+            LEFT half only.
           </p>
         </div>
 
@@ -1634,76 +1485,35 @@ export default function App() {
           </SheetContent>
         </Sheet>
 
-        <Dialog
-          open={flashPlan !== null}
-          onOpenChange={(o) => !o && setFlashPlan(null)}
-        >
-          <DialogContent>
-            <DialogTitle>
-              Flash KK {flashPlan && hex2(flashPlan.kk)}?
-            </DialogTitle>
-            <DialogDescription>
-              Writes a T01 record on Layer 0 of the LEFT half. Applies
-              instantly, persists across reboot.
-            </DialogDescription>
-            {flashPlan && (
-              <div className="mt-3 grid grid-cols-[90px_1fr] gap-x-2.5 gap-y-1 text-[13px]">
-                <b className="font-semibold text-muted-foreground">Current</b>
-                <span className="font-mono text-xs">
-                  {flashPlan.curMean} [{flashPlan.curHex}]
-                </span>
-                <b className="font-semibold text-muted-foreground">New</b>
-                <span className="font-mono text-xs">{flashPlan.newMean}</span>
-              </div>
-            )}
-            <DialogFooter>
-              <Button variant="secondary" onClick={() => setFlashPlan(null)}>
-                Cancel
-              </Button>
-              <Button onClick={() => void doFlash()}>Flash</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-
-        <Dialog
-          open={colorPlan !== null}
-          onOpenChange={(o) => !o && setColorPlan(null)}
-        >
-          <DialogContent>
-            <DialogTitle>
-              Set KK {colorPlan && hex2(colorPlan.kk)} color?
-            </DialogTitle>
-            <DialogDescription>
-              Writes the LED map entry on layer {layer} of the LEFT half.
-              Applies instantly, persists across reboot.
-            </DialogDescription>
-            {colorPlan && (
-              <div className="mt-3 flex items-center gap-3 text-[13px]">
-                <span
-                  className="inline-block h-8 w-8 rounded-md border border-border"
-                  style={{ background: ledCss(colorPlan.curH, colorPlan.curS) }}
-                />
-                <span className="font-mono text-xs">
-                  H{colorPlan.curH}/S{colorPlan.curS}
-                </span>
-                <span>→</span>
-                <span
-                  className="inline-block h-8 w-8 rounded-md border border-border"
-                  style={{ background: ledCss(colorPlan.h, colorPlan.s) }}
-                />
-                <span className="font-mono text-xs">
-                  H{colorPlan.h}/S{colorPlan.s}
-                </span>
-              </div>
-            )}
-            <DialogFooter>
-              <Button variant="secondary" onClick={() => setColorPlan(null)}>
-                Cancel
-              </Button>
-              <Button onClick={() => void doColorSet()}>Set color</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+        <KeyEditDialog
+          open={keyEdit !== null}
+          onOpenChange={(o) => !o && setKeyEdit(null)}
+          layer={keyEdit?.layer ?? 0}
+          kk={keyEdit?.kk ?? 0}
+          current={
+            keyEdit
+              ? (keysByLayer[keyEdit.layer] ?? []).find(
+                  (r) => r.kk === keyEdit.kk,
+                )
+              : undefined
+          }
+          draft={draftRef.current}
+          onQueued={bumpDraft}
+        />
+        <FlashDialog
+          open={flashOpen}
+          onOpenChange={setFlashOpen}
+          draft={draftRef.current}
+          onFlash={doFlashQueue}
+          onChanged={bumpDraft}
+          busy={flashing}
+        />
+        <SettingsDialog
+          open={settingsOpen}
+          onOpenChange={setSettingsOpen}
+          left={sesRef.current.get("left")}
+          onLog={log}
+        />
       </div>
       <Toaster theme="dark" position="bottom-right" />
     </TooltipProvider>
