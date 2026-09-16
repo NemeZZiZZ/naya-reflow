@@ -8,6 +8,16 @@ alive and, eventually, run open firmware on them.
 Started as an archive fork of `NayaTech/NayaFlow-releases` (whose Release assets
 GitHub does not copy on fork — see [`backup/software/`](backup/software/)).
 
+> **Community signing-key buyout — read this first.**
+> All 15 stock firmware images (every base epoch, both board revisions, and the
+> Track/Touch module image) are signed by **one single RSA-2048 key**:
+> `KEYHASH de8b0718…5b972`. If the community fundraiser secures that one private
+> key, custom firmware can ship through the stock update path — no donor board,
+> no SWD soldering. Any claimed key can be proven genuine *before money changes
+> hands* with `toolkit/verify-signing-key.py`, and MCUboot trial-swap makes the
+> first custom builds safe to test on a daily driver (failed images auto-revert
+> to stock). Full details: [`docs/firmware-signing.md`](docs/firmware-signing.md).
+
 ## Status (Sep 2026)
 
 | Area | State |
@@ -18,6 +28,8 @@ GitHub does not copy on fork — see [`backup/software/`](backup/software/)).
 | Hardware identification | ✅ nRF52811 halves, STM32F411 modules, nRF52840 dongle ([`docs/hardware.md`](docs/hardware.md)) |
 | BLE custom pipe `0x1234` | ✅ Verdict: not an event channel (input goes via HID only) |
 | Module battery source | ⬜ Open (candidates narrow, needs sniffer session) |
+| Bootloader serial recovery | ✅ Closed: framing, CRC seed 0, echo/reset; IMAGE group compiled out |
+| Signing-key buyout | 🔑 One key signs all 15 images — see callout above + [`docs/firmware-signing.md`](docs/firmware-signing.md) |
 | Color *write* command | ⬜ Open (needs one intercepted stock flash) |
 | Open firmware (ZMK) | ⬜ Blocked on USB-MCU identity + pinout |
 
