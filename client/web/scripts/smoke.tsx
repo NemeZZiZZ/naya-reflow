@@ -274,6 +274,18 @@ for (const d of ['Backspace', 'BT Device 3', 'Hold layer 2', 'BT Clear', 'specia
   const nm = keyIconName(d);
   eq(nm !== null && diskFiles.has(nm + '.svg') ? 'ok' : 'bad', 'ok', 'mapped file exists: ' + d);
 }
+// palette chain: every catalog action must survive buildRecord(0 dummy KK) +
+// describeRecord + keyIconName without throwing.
+let paletteOk = true;
+for (const a of ACTIONS) {
+  try {
+    keyIconName(describeRecord(buildRecord(0, a.body())));
+  } catch {
+    paletteOk = false;
+    break;
+  }
+}
+eq(paletteOk ? 'ok' : 'bad', 'ok', 'palette icon chain over catalog');
 console.log('done-icons', n, 'checks');
 
 // 14. actions.ts catalog + builders
