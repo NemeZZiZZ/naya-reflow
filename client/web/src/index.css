@@ -1,0 +1,84 @@
+@import "tailwindcss";
+
+/* shadcn-style tokens, dark-first (NayaFlow look). Light theme can be added later. */
+:root {
+  --background: #14161a;
+  --foreground: #e8e8e8;
+  --card: #1c1f24;
+  --card-foreground: #e8e8e8;
+  --popover: #22262c;
+  --popover-foreground: #e8e8e8;
+  --primary: #1f6feb;
+  --primary-foreground: #ffffff;
+  --secondary: #2a2e35;
+  --secondary-foreground: #e8e8e8;
+  --muted: #2a2e35;
+  --muted-foreground: #999999;
+  --accent: #2b7fff;
+  --accent-foreground: #ffffff;
+  --destructive: #5c1a1a;
+  --destructive-foreground: #ff9d9d;
+  --border: #2c3138;
+  --input: #2a2e35;
+  --ring: #2b7fff;
+  --radius: 0.625rem;
+  color-scheme: dark;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --radius-lg: var(--radius);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-sm: calc(var(--radius) - 4px);
+}
+
+body {
+  font-family: -apple-system, system-ui, sans-serif;
+  background: var(--background);
+  color: var(--foreground);
+  margin: 0;
+}
+
+/* Transcribed NayaFlow keyboard look: fixed-pixel keycaps, dark stage */
+  #kbwrap { overflow: hidden; background: #0a0b0d; border-radius: 8px; padding: 18px 10px 10px; }
+#kbwrap svg { display: block; }
+#kbwrap .kb-key:hover { filter: brightness(1.5); }
+
+/* Minimal enter animations (no extra deps) */
+@keyframes overlay-show { from { opacity: 0; } to { opacity: 1; } }
+@keyframes dialog-show {
+  from { opacity: 0; transform: translate(-50%, -48%) scale(0.98); }
+  to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+/* popover: opacity ONLY — Radix Popper positions via inline transform,
+   any transform animation here would override it and flash the panel
+   in the corner for the animation duration */
+@keyframes popover-show { from { opacity: 0; } to { opacity: 1; } }
+@keyframes tooltip-show { from { opacity: 0; } to { opacity: 1; } }
+@keyframes sheet-show {
+  from { opacity: 0.4; transform: translateX(2rem); }
+  to { opacity: 1; transform: translateX(0); }
+}
+.animate-overlay-show { animation: overlay-show 150ms ease-out; }
+.animate-dialog-show { animation: dialog-show 150ms ease-out; }
+.animate-popover-show { animation: popover-show 120ms ease-out; }
+.animate-tooltip-show { animation: tooltip-show 120ms ease-out; }
+.animate-sheet-show { animation: sheet-show 180ms ease-out; }
