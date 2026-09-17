@@ -1,0 +1,10 @@
+{
+  "tool": "naya-aux",
+  "side": "right",
+  "created_at": "2026-09-17T18:11:11.012Z",
+  "port": "/dev/cu.usbmodem21201",
+  "de_1001_mod_presence": "000111",
+  "fe_1002_base_fw": "0000032900",
+  "fe_1006_base_bat": "001002",
+  "note": "keymaps live on LEFT (merge host); right is status-only, 30/10xx unanswered"
+}
