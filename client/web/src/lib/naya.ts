@@ -593,28 +593,103 @@ const MOUSE_BTN: Record<number, string> = {
   1: 'Mouse Left', 2: 'Mouse Right', 3: 'Mouse Middle',
 };
 
+const MOD_NAMES = [
+  'LCtrl', 'LShift', 'LAlt', 'LGUI',
+  'RCtrl', 'RShift', 'RAlt', 'RGUI',
+];
+function modSuffix(mod: number): string {
+  if (!mod) return '';
+  const parts: string[] = [];
+  for (let i = 0; i < 8; i++) if (mod & (1 << i)) parts.push(MOD_NAMES[i]);
+  return parts.length ? ' + ' + parts.join('+') : '';
+}
+
+/* Single key behavior triple [HID, 00, page, MOD] inside T03/T10 records. */
+function behaviorName(hid: number, p0: number, p1: number, mod: number): string {
+  const page = (p0 << 8) | p1;
+  let base: string;
+  if (page === 0x0007)
+    base = HID[hid] !== undefined ? HID[hid] : 'HID 0x' + hid.toString(16);
+  else if (page === 0x000c)
+    base = CONSUMER[hid] !== undefined
+      ? CONSUMER[hid]
+      : 'Consumer 0x' + hid.toString(16);
+  else base = 'usage page ' + page.toString(16) + ' / 0x' + hid.toString(16);
+  return base + modSuffix(mod);
+}
+
+/* Naya-type key actions (static t19-map, describe-only: no stock UI path
+ * has ever put T06 on the wire — palette MAC_OS resolves to HID LGUI). */
+const T19_NAMES: Record<number, string> = {
+  150: 'TUNE_MODE_L', 151: 'TUNE_MODE_R',
+  200: 'WINDOWS_OS', 201: 'MAC_OS',
+  300: 'SCROLL_DIRECTION_L', 301: 'SCROLL_DIRECTION_R',
+  400: 'MODULE_CHARGING', 401: 'MODULE_FORCE_CHARGING',
+};
+
+/* LED vendor colors (static LED map, p2=15; Y = S|B<<8|H<<16). */
+const LED_COLORS: Record<number, string> = {
+  0: 'Red', 30: 'Orange', 60: 'Yellow', 120: 'Green',
+  180: 'Cyan', 240: 'Blue', 270: 'Magenta', 300: 'Pink',
+};
+
 export function describeRecord(r: Uint8Array | number[]): string {
   const u = r instanceof Uint8Array ? r : Uint8Array.from(r);
   const t = u[1];
   if (t === 0x01 && u.length === 7 && u[2] === 0x04) {
     const usage = u[3];
     const page = (u[4] << 8) | u[5];
+    const mod = modSuffix(u[6]);
     if (page === 0x0007)
-      return HID[usage] !== undefined ? HID[usage] : 'HID 0x' + usage.toString(16);
+      return (HID[usage] !== undefined ? HID[usage] : 'HID 0x' + usage.toString(16)) + mod;
     if (page === 0x000c)
-      return CONSUMER[usage] !== undefined
+      return (CONSUMER[usage] !== undefined
         ? CONSUMER[usage]
-        : 'Consumer 0x' + usage.toString(16);
-    return 'usage page ' + page.toString(16) + ' / 0x' + usage.toString(16);
+        : 'Consumer 0x' + usage.toString(16)) + mod;
+    return 'usage page ' + page.toString(16) + ' / 0x' + usage.toString(16) + mod;
   }
   if (t === 0x05 && u.length === 7) {
-    if (u[2] === 0x04 && u[3] === 0x02) return 'Hold layer 2';
+    // T05 7B: [KK,05,04,ORDER u24LE] — layer actions. Order 2 = Hold layer 2
+    // (factory bottom corners, NOT the Naya action); order 1 = MO layer 1.
+    if (u[2] === 0x04) {
+      const order = u[3] | (u[4] << 8) | (u[5] << 16);
+      if (order === 2) return 'Hold layer 2';
+      return 'MO layer ' + order;
+    }
     return 'special ' + toHex(u);
+  }
+  if (t === 0x08 && u.length === 7 && u[2] === 0x04) {
+    // T08 7B output select: [KK,08,04,ID,00,00,00].
+    if (u[3] === 1) return 'USB out';
+    if (u[3] === 2) return 'BT out';
+    return 'output select ' + u[3];
+  }
+  if (t === 0x06 && u.length === 7 && u[2] === 0x04) {
+    // T06 7B naya-type: [KK,06,04,p1 u32LE] (describe-only, never on wire).
+    const p1 = u[3] | (u[4] << 8) | (u[5] << 16) | (u[6] << 24);
+    return T19_NAMES[p1] !== undefined ? T19_NAMES[p1] : 'naya-type ' + p1;
+  }
+  if (t === 0x03 && u.length === 24) {
+    // T03 24B hold-only multi: [KK,03,15,01,01,00,TT,TT,A,pad4,B,pad4].
+    // A = hold triple, B = tap triple, each [HID,00,07,MOD].
+    const a = behaviorName(u[8], u[9], u[10], u[11]);
+    const b = behaviorName(u[16], u[17], u[18], u[19]);
+    return 'multi: tap ' + b + ' / hold ' + a;
   }
   if (t === 0x03)
     return (
       'macro (' + u.length + 'B) ' + toHex(u.slice(0, 12)) + (u.length > 12 ? ' …' : '')
     );
+  if (t === 0x10 && u.length === 27) {
+    // T10 27B primary: [KK,10,18,TT,TT,03,01,01,00,TT,TT,A,pad4,B,pad4].
+    const a = behaviorName(u[11], u[12], u[13], u[14]);
+    const b = behaviorName(u[19], u[20], u[21], u[22]);
+    return 'multi: tap ' + b + ' / hold ' + a;
+  }
+  if (t === 0x10 && u.length === 10) {
+    // T10 10B mini shadow @KK+0x52: header + term + 01 + double triple.
+    return 'multi: double ' + behaviorName(u[6], u[7], u[8], u[9]);
+  }
   if (u.length === 11 && u[2] === 0x08) {
     // vendor Vs: [KK,A,08,X u32LE,Y u32LE]
     const A = u[1];
@@ -624,8 +699,29 @@ export function describeRecord(r: Uint8Array | number[]): string {
     if (A === 0x00 && X === 3) return 'BT Device ' + Y;
     if (A === 0x0f && X === 3)
       return MOUSE_BTN[Y] !== undefined ? MOUSE_BTN[Y] : 'Mouse button ' + Y;
-    if (A === 0x09 && X === 0x0d) return 'LED effect #' + Y;
-    if (A === 0x09) return 'LED family (X=0x' + X.toString(16) + ') #' + Y;
+    // LED vendor (static LED map, p2=X): effects, steppers, colors.
+    if (A === 0x09 && X === 13) {
+      const fx = ['Solid', 'Breathe', 'Swirl', 'Spec'][Y];
+      return fx !== undefined ? 'LED ' + fx : 'LED effect #' + Y;
+    }
+    if (A === 0x09 && X === 15) {
+      // Y = S | B<<8 | H<<16. WHITE is anomalous raw p1 = 0x64
+      // (static LED map; NOT packed 0x6400), recorded as-is.
+      if (Y === 0x64) return 'LED White';
+      const s = Y & 0xff, b = (Y >> 8) & 0xff, h = (Y >> 16) & 0xffff;
+      if (s === 0) return 'LED White';
+      const nm = LED_COLORS[h];
+      if (nm !== undefined && s === 100 && b === 70) return 'LED ' + nm;
+      return 'LED H' + h + ' S' + s + ' B' + b;
+    }
+    if (A === 0x09) {
+      const step: Record<number, string> = {
+        0: 'LED On/Off', 7: 'LED Brightness Up', 8: 'LED Brightness Down',
+        9: 'LED Speed Up', 10: 'LED Speed Down', 11: 'LED Effect',
+      };
+      if (step[X] !== undefined) return step[X];
+      return 'LED family (X=0x' + X.toString(16) + ') #' + Y;
+    }
     return (
       'vendor action A=0x' +
       A.toString(16) +
@@ -636,14 +732,10 @@ export function describeRecord(r: Uint8Array | number[]): string {
     );
   }
   if (t === 0x00 && u.length > 8) return 'index block (' + u.length + 'B)';
-  if (
-    t === 0x07 ||
-    t === 0x0e ||
-    t === 0x78 ||
-    (t === 0x00 && u.length === 3) ||
-    (t === 0x02 && u.length === 3)
-  )
-    return 'empty / filler';
+  if (t === 0x07 || (t === 0x00 && u.length === 3) || (t === 0x02 && u.length === 3))
+    return 'Disabled';
+  if (t === 0x0e) return 'Transparent';
+  if (t === 0x78) return 'empty / filler';
   return 'unknown ' + toHex(u);
 }
 

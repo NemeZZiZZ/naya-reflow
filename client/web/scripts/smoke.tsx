@@ -46,6 +46,28 @@ eq(pl.recs.length === 1 && pl.consumed === 7 ? 'ok' : 'bad', 'ok', 'parseLayer T
 // 6. describeRecord
 eq(describeRecord(new Uint8Array([0x1e, 1, 4, 0x73, 0, 7, 0])), 'F24', 'describe F24');
 eq(describeRecord(new Uint8Array([0x2e, 0, 8, 3, 0, 0, 0, 3, 0, 0, 0])), 'BT Device 3', 'describe BTDEV');
+// MODMASK suffix (MODMASK = top byte, static Binding::param1 proof)
+eq(describeRecord(new Uint8Array([0x1e, 1, 4, 0x1e, 0, 7, 2])), '1 + LShift', 'describe MODMASK');
+// T05 family-04 order naming (order 1 = MO layer 1, order 2 = Hold layer 2)
+eq(describeRecord(new Uint8Array([0x43, 5, 4, 1, 0, 0, 0])), 'MO layer 1', 'describe MO layer 1');
+eq(describeRecord(new Uint8Array([0x3e, 5, 4, 2, 0, 0, 0])), 'Hold layer 2', 'describe Hold layer 2');
+// Disabled vs Transparent split (T07 filler vs T0e transparent)
+eq(describeRecord(new Uint8Array([0x00, 7, 0])), 'Disabled', 'describe Disabled');
+eq(describeRecord(new Uint8Array([0x00, 0x0e, 0])), 'Transparent', 'describe Transparent');
+// T08 output select (static out-map: 1 = USB, 2 = BT)
+eq(describeRecord(new Uint8Array([0x00, 8, 4, 1, 0, 0, 0])), 'USB out', 'describe USB out');
+eq(describeRecord(new Uint8Array([0x00, 8, 4, 2, 0, 0, 0])), 'BT out', 'describe BT out');
+// T06 naya-type (static t19-map, describe-only)
+eq(describeRecord(new Uint8Array([0x00, 6, 4, 150, 0, 0, 0])), 'TUNE_MODE_L', 'describe T06');
+// T10 27B primary (KK30 probe: hold Y / tap Z) + 10B mini shadow
+eq(describeRecord(Uint8Array.from([0x30, 0x10, 0x18, 0xc8, 0, 3, 1, 1, 0, 0xc8, 0, 0x1c, 0, 7, 0, 0, 0, 0, 0, 0x1d, 0, 7, 0, 0, 0, 0, 0])), 'multi: tap Z / hold Y', 'describe T10 primary');
+eq(describeRecord(Uint8Array.from([0x74, 0x10, 0x07, 0xc8, 0, 1, 5, 0, 7, 0])), 'multi: double B', 'describe mini shadow');
+// T03 24B hold-only multi (KK30 shiftx probe: hold Shift+X / tap Z)
+eq(describeRecord(Uint8Array.from([0x30, 0x03, 0x15, 1, 1, 0, 0xc8, 0, 0x1b, 0, 7, 2, 0, 0, 0, 0, 0x1d, 0, 7, 0, 0, 0, 0, 0])), 'multi: tap Z / hold X + LShift', 'describe T03 shiftx');
+// LED vendor X-table (static LED map, Y = S|B<<8|H<<16)
+eq(describeRecord(new Uint8Array([0x00, 9, 8, 13, 0, 0, 0, 2, 0, 0, 0])), 'LED Swirl', 'describe LED Swirl');
+eq(describeRecord(new Uint8Array([0x00, 9, 8, 15, 0, 0, 0, 0x64, 0x46, 0, 0])), 'LED Red', 'describe LED Red');
+eq(describeRecord(new Uint8Array([0x00, 9, 8, 15, 0, 0, 0, 0x64, 0, 0, 0])), 'LED White', 'describe LED White');
 eq(fwVersionText(new Uint8Array([0, 0, 3, 0x29, 0])), 'v0.3.41.0  [00 00 03 29 00]  ← stock base signature', 'fw text');
 eq(ledCss(180, 100), 'hsl(180 100% 50%)', 'ledCss');
 // 35. color-picker bridge hex<->H/S
@@ -240,13 +262,19 @@ const iconCases: Array<[string, string | null]> = [
   ['Prev Track', 'C_PREVIOUS'], ['Mouse Left', 'MOUSE_LEFT'],
   ['Mouse Right', 'MOUSE_RIGHT'], ['BT Device 1', 'BT_DEVICE_1'],
   ['BT Device 5', 'BT_DEVICE_5'],   ['Hold layer 2', 'HOLD_LAYER_2'],
+  ['MO layer 1', 'MO_LAYER_1'],
   ['BT Clear', 'BT_CLEAR'],
   ['special 43 05 04 01 00 00 00', 'MO_LAYER_1'],
   ['special 44 05 04 01 00 00 00', 'MO_LAYER_1'],
   ['special 3e 05 04 02 00 00 00', null],
+  ['USB out', null], ['BT out', null],
+  ['TUNE_MODE_L', null], ['WINDOWS_OS', null],
+  ['multi: tap Z / hold Y', null],
+  ['Disabled', null], ['Transparent', null],
+  ['LED Swirl', null], ['LED Red', null],
   ['A', null], ['LShift', null], ['RShift', null], ['Menu', null],
-  ['F13', null], ['Mouse Middle', null], ['Stop', null], ['Power', null],
-  ['LED effect #2', null], ['empty / filler', null],
+  ['F13', null],   ['Mouse Middle', null], ['Stop', null], ['Power', null],
+  ['LED effect #2', null], ['Disabled', null], ['Transparent', null],
 ];
 for (const [d, want] of iconCases)
   eq(keyIconName(d), want, 'icon ' + JSON.stringify(d));
@@ -270,7 +298,7 @@ for (const f of diskFiles) {
       /#fff|#FFF|#ffffff/i.test(s) || !s.includes('currentColor')) { iconOk = false; break; }
 }
 eq(iconOk ? 'ok' : 'bad', 'ok', 'icons 40x40 + currentColor, no #fff');
-for (const d of ['Backspace', 'BT Device 3', 'Hold layer 2', 'BT Clear', 'special 43 05 04 01 00 00 00']) {
+for (const d of ['Backspace', 'BT Device 3', 'Hold layer 2', 'MO layer 1', 'BT Clear', 'special 43 05 04 01 00 00 00']) {
   const nm = keyIconName(d);
   eq(nm !== null && diskFiles.has(nm + '.svg') ? 'ok' : 'bad', 'ok', 'mapped file exists: ' + d);
 }
@@ -294,7 +322,7 @@ eq(shortLabel(buildRecord(0, shiftR.body())), 'RShift', 'palette RShift');
 console.log('done-icons', n, 'checks');
 
 // 14. actions.ts catalog + builders
-eq(ACTIONS.length > 90 ? 'ok' : 'bad: ' + ACTIONS.length, 'ok', 'catalog size');
+eq(ACTIONS.length > 110 ? 'ok' : 'bad: ' + ACTIONS.length, 'ok', 'catalog size');
 const recQ = buildRecord(0x30, ACTIONS.find((a) => a.id === 'hid:20')!.body());
 eq(toHex(recQ), '30 01 04 14 00 07 00', 'build hid Q');
 const recBt = buildRecord(0x2e, ACTIONS.find((a) => a.id === 'bt:1')!.body());
@@ -304,6 +332,15 @@ eq(matchAction(recQ)?.id, 'hid:20', 'matchAction Q');
 eq(matchAction(new Uint8Array([0x30, 0x05, 0x04, 1, 0, 0, 0]))?.id, 'special:1', 'match MO');
 eq(matchAction(new Uint8Array([0x30, 0x05, 0x04, 2, 0, 0, 0]))?.id, 'hold2', 'match Hold2');
 eq(matchAction(new Uint8Array([0x30, 0x78, 0x00]))?.id, 'empty', 'match empty');
+// out select (T08, static out-map) + BT Clear Vs
+eq(matchAction(new Uint8Array([0x00, 8, 4, 1, 0, 0, 0]))?.id, 'out:usb', 'match out:usb');
+eq(matchAction(new Uint8Array([0x00, 8, 4, 2, 0, 0, 0]))?.id, 'out:bt', 'match out:bt');
+eq(matchAction(new Uint8Array([0, 0, 8, 0, 0, 0, 0, 0, 0, 0, 0]))?.id, 'bt-clear', 'match bt-clear');
+// LED catalog (X=13 effects, X=15 colors; Y = S|B<<8|H<<16)
+eq(matchAction(new Uint8Array([0, 9, 8, 13, 0, 0, 0, 2, 0, 0, 0]))?.id, 'led:13:2', 'match led swirl');
+eq(matchAction(new Uint8Array([0, 9, 8, 13, 0, 0, 0, 0, 0, 0, 0]))?.id, 'led:13:0', 'match led solid');
+eq(matchAction(new Uint8Array([0, 9, 8, 15, 0, 0, 0, 0x64, 0x46, 0, 0]))?.id, 'led:15:18020', 'match led red');
+eq(matchAction(new Uint8Array([0, 9, 8, 15, 0, 0, 0, 0x64, 0, 0, 0]))?.id, 'led:15:100', 'match led white');
 eq(matchAction(new Uint8Array([0x30, 0x03, 0x15, 1, 2, 3])), undefined, 'no match T03');
 
 // 15. draft.ts queue logic

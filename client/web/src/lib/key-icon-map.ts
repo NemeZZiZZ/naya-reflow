@@ -8,8 +8,9 @@ import { describeRecord } from './naya';
 export function keyIconName(d: string): string | null {
   const m = /^BT Device ([1-5])$/.exec(d);
   if (m) return 'BT_DEVICE_' + m[1];
-  // T05/7B layer actions: [KK,05,04,ID,...] — family 04 id 01 = MO(layer 1)
-  // hold (LH4/RH4 middle thumbs on the factory map)
+  // T05/7B layer actions: [KK,05,04,ORDER,...] — family 04 id 01 = MO(layer 1)
+  // hold (LH4/RH4 middle thumbs on the factory map). describe() now emits
+  // 'MO layer N' directly; the regex stays for legacy 'special…' strings.
   if (/^special [0-9a-f]{2} 05 04 01 00 00 00$/.test(d)) return 'MO_LAYER_1';
   switch (d) {
     // HID main block
@@ -52,6 +53,7 @@ export function keyIconName(d: string): string | null {
     case 'Mouse Right': return 'MOUSE_RIGHT';
     // vendor actions
     case 'Hold layer 2': return 'HOLD_LAYER_2';
+    case 'MO layer 1': return 'MO_LAYER_1';
     case 'BT Clear': return 'BT_CLEAR';
     default: return null;
   }
@@ -68,7 +70,12 @@ export function shortLabel(rec: Uint8Array): string {
   )
     return '';
   if (d === 'Hold layer 2') return 'Hold 2';
+  if (d === 'MO layer 1') return 'MO 1';
   if (d === 'BT Clear') return 'BT CLR';
+  if (d === 'USB out') return 'USB';
+  if (d === 'BT out') return 'BT';
+  if (d === 'Disabled' || d === 'Transparent') return '';
+  if (d.startsWith('multi')) return 'Multi';
   if (d.startsWith('macro')) return 'Macro';
   let m = d.match(/^BT Device (\d+)$/);
   if (m) return 'BT' + m[1];

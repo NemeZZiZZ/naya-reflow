@@ -518,7 +518,8 @@ Map u64 = `(param2<<32)|param1`; Vs wire records emit `[T,08,HIGH32,LOW32]` =
   BRI_UP/DOWN=(p2=7/8), SPD_UP/DOWN=(p2=9/10), LED_EFFECT=(p2=11).
   Colors (all p2=15, packing Y = S|B<<8|H<<16): RED=H0, ORANGE=H30,
   YELLOW=H60, GREEN=H120, CYAN=H180, BLUE=H240, MAGENTA=H270, PINK=H300
-  (all S=100/B=70); WHITE=(H0/S0/B100) = zero-saturation full-brightness.
+  (all S=100/B=70); WHITE is anomalous raw p1 = `0x64` (static LED map;
+  NOT packed `0x6400`), recorded as-is.
   Static mechanics: x27 is built as ORANGE (`0x0f001e6464`) mid-batch, then
   every other color = H-field arithmetic on x27 (RED=−30, YELLOW=+30,
   GREEN=+90, CYAN=+150, BLUE=+210; PINK=MAGENTA+30); every delta lands
