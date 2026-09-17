@@ -85,8 +85,9 @@ Full NayaCore serial-side source map (from embedded paths):
   `20 01 04 b6 00 0c 00`); T05 7B MO (ORDER as u24); T08 7B out USB/BT (ID u24);
   Vs 11B `[KK,T,08,X(4B),Y(4B)]` (T00 BT / T09 LED / T0f mouse); T07/T0e 3B
   fillers (flag-selected); T10 27B multi-behavior pair (see section below).
-  T {02,03,04,0a} unmapped anywhere; T {06,0b,0c,0d} = dead binding types
-  (never on wire). Wire-T byte is literally the `zmk_behaviour()` id.
+  T {02,03,04,0a} unmapped anywhere; T {0b,0c,0d} = dead binding types
+  (never on wire); T06 = naya-type actions [06,04,p1] (values 150/151/200/201/
+  300/301/400/401 — format decoded static, no live wire sample yet). Wire-T byte is literally the `zmk_behaviour()` id.
   L0 starts Esc(0x29) Grave(0x35) 1(0x1E) 2(0x1F)… = top row. 74 keys/layer
   (matches NayaCore '3 слоёв × 74 клавиши').
 - Minimal client: `naya-archive/cdc-client.py` (pyserial, 115200 placeholder — CDC ignores baud; sets DTR/RTS like Qt). **First live probe got no reply** (empty read, DTR/RTS on/off) — halves likely asleep or not in USB output mode; NayaCore was not running, ports free. Retry after waking the keyboard.
@@ -496,10 +497,9 @@ Map u64 = `(param2<<32)|param1`; Vs wire records emit `[T,08,HIGH32,LOW32]` =
   SCROLL_LEFT=(0xF006,-1), SCROLL_RIGHT=(6,1), ZOOM_IN=(8,1),
   ZOOM_OUT=(0xF008,-1), M4=(3,8), M5=(3,16); LEFT=(low?,−1), RIGHT=(low?,+1)
   (low words unresolved), M1/M2/M3 relative to an unknown base.
-- **Still open**: key map +0x80 contents, out map +0x88 (USB_DEVICE/BT_OUT batch
-  lives in another function), t19 map +0xa0 (static init proven, batch unread),
-  +0x70 identity (13 batch entries), LED RED/GREEN/BLUE/CYAN/YELLOW/ORANGE/PINK
-  u64s, mouse LEFT/RIGHT low word + M1 base.
+- **Still open**: +0x70 identity/direction (13 batch entries, (9,6) anomaly),
+  LED RED/GREEN/BLUE/CYAN/YELLOW/ORANGE/PINK u64s, mouse LEFT/RIGHT low word
+  + M1 base, T06 live wire sample (needs hands).
 
 ## Action vocabulary (renderer icon registry, 2026-09-17)
 
@@ -550,13 +550,18 @@ Fill @disasm 71136–71145 (clear + 2 loop-inserts 0x10003fbb0):
 USB_DEVICE → 1, BT_OUT → 2. CLOSED — matches empirical T08
 (1=USB_DEVICE, 2=BT_OUT).
 
-## Host t19-map (+0xa0): 8 naya-type names (2026-09-17, static)
+## Host t19-map (+0xa0): 8 naya-type actions, values closed (2026-09-17, static)
 
-Fill @disasm 72503–72542 (clear + 8 loop-inserts): TUNE_MODE_L,
-TUNE_MODE_R, WINDOWS_OS, MAC_OS, SCROLL_DIRECTION_L, SCROLL_DIRECTION_R,
-MODULE_CHARGING, MODULE_FORCE_CHARGING. These ARE the naya-type host-only
-actions (binding type 19 → wire T06, dead on wire — explains 0 `tap:` hits
-in all NayaCore logs). Values unread (names only).
+Fill @disasm 72503–72542 (clear + 8 loop-inserts); setup @72390–72502 builds
+all values as direct `mov w8, #imm` decimals: TUNE_MODE_L=150, TUNE_MODE_R=151,
+WINDOWS_OS=200, MAC_OS=201, SCROLL_DIRECTION_L=300, SCROLL_DIRECTION_R=301,
+MODULE_CHARGING=400, MODULE_FORCE_CHARGING=401.
+Format correction: T=6 falls in the 0x3962 bitmask group (bit 6 set), so
+type-19 emits [T,04,p1-u32LE] — e.g. TUNE_MODE_L → `[KK,06,04,96,00,00,00]`
+7B (NOT bare [06]). T06 is absent from all 1776 log wire records only because
+no flashed profile assigns a naya-type action (0 `tap:` hits everywhere);
+a live wire sample needs a NayaFlow naya-action assignment + flash + dump
+(hands work).
 
 ## Host module-gesture map (@0x100aedfe8): 9 behavior slots (2026-09-17, static)
 
