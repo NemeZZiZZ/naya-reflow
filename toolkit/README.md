@@ -17,3 +17,8 @@ Working tools. All tested live against Naya Create (base FW 0.3.41.0).
   Build: `clang -dynamiclib -o interposer.dylib interposer.c`.
   Note: stock NayaFlow binaries strip `DYLD_*` (hardened runtime) — use a
   re-signed clone, see `docs/cdc-protocol.md` (WRITE-path section).
+- [`build-stock-backup.py`](build-stock-backup.py) — device dumps → NayaFlow-
+  acceptable stock backup `zip{backup_meta.json, user-data.db}` (round-trip
+  verified: 222/222 keys byte-equal to the live DB). Live DB is copied as a
+  skeleton and only `key_bindings` are rewritten; `keys.color_hex` is host-side
+  UI state and stays untouched. `--verify` compares without writing.
