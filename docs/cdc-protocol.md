@@ -229,27 +229,39 @@ v1.25.1 release asset in backup/firmware; tables verified against it).
 
 ## T10 27-byte multi-behavior records — T03 experiment (KK30=Z, 2026-09-17)
 
-A key with Tap/Hold/DoubleTap/Tap&Hold becomes a PAIR of T=0x10 records
-(27B = `[KK,10,18]` + 24B payload), proven by device dump + NayaCore log
-(`tap:/hold:/double_tap:/tap_hold:` + `wire:`/`shadow:` lines, byte-identical):
+Multi-behavior keys take THREE shapes by behavior count (live-proven 2026-09-17,
+probes 2–4; dumps `research/dumps/left-probe2multi-*.json`,
+`left-probe3hold-*.json`, `left-probe4double-*.json`):
+| Behaviors | Shape | Example |
+|---|---|---|
+| 2 (press+hold) | T03 single, 24B, no shadow | KK22 D-key Tap=D/Hold=F: `[22,03,15, 01,01,00, c8,00, 09,00,07,00, pad4, 07,00,07,00, pad4]` |
+| 3 (press+hold+double) | T10 primary 27B + MINI shadow 10B @KK+0x52 | KK22 + Double=B: primary as usual; mini `74 10 07 c8 00 01 05 00 07 00` (10B = header + term + `01` + double triple) |
+| 4 (+taphold) | T10 primary 27B + FULL shadow 27B @KK+0x52 | KK30 Z-pair + shadow@82; KK32 C-pair + shadow@84 (verbatim `841018c80003010100c80011000700000000000500070000000000`) |
+
+T10 ≈ T03 + `[TT, 03]` prefix (dual-term: hold threshold + double-tap window);
+the `03` byte is the T03-format marker (probe-3 link). Mini-shadow `01` vs
+full-primary `03` semantics open. hasDoubleTapBindings trigger refined: hold-only
+→ T03; T10 needs double AND taphold (user's «да, нужны» confirmed by device).
+Open: taphold-without-double shape (predict T10prim + mini shadow w/ taphold
+triple); 3-behavior size math closes +10 (877→887 = +3 primary upgrade + 7 mini).
+
+T10 27-byte pairs — format (device dump + NayaCore log `tap:/hold:/double_tap:/
+tap_hold:` + `wire:`/`shadow:` lines, byte-identical):
 
 Format: `[KK, 10, 18, c8,00, 03, 01,01,00, c8,00, A_HID,00,07,00, 00×4, B_HID,00,07,00, 00×4]`
 - `c8 00` ×2 = tapping-term 200ms u16LE (hold threshold + double-tap window).
-- `03`, `01 01 00` = constants (both records identical; meaning TBD).
 - A/B = two behaviors as bare `[HID,00,07,00]` triples (HID + page 0x0007, no MODMASK).
-- Primary @real KK: A=hold, B=tap. Shadow @KK82: A=tap_hold, B=double_tap.
+- Primary @real KK: A=hold, B=tap. Full shadow: A=tap_hold, B=double_tap.
 - Example: KK30 primary `...1c 00 07 00...1d 00 07 00...` (hold Y / tap Z);
   shadow@82 `...1a 00 07 00...1b 00 07 00...` (tap_hold W / double X).
-- Tail index triplet `4b 00 00` → `4b 02 00` when the pair exists (V = T10-record
-  count on layer? single sample; `4c/4d=01` baseline constant in all dumps).
-- Shadow @KK82 was T07 filler in factory — and the slot rule is now PROVEN
-  static: `Key::serializeBindingData(offset)` builds primary with offset=0
-  and shadow with offset=1; the offset-1 path computes the shadow slot as
-  `[Key] + 0x52` (disasm `naya_remap::Key::serializeBindingData`, NayaSniff
-  binary) → KK30 + 0x52 = 0x82. PREDICTION: any multi-behavior key at KK X
-  gets its shadow at X+0x52 (needs a live 2nd-key test). Note: factory's
-  first T07 filler is 0x6d (47 fillers 0x6d–0x9b), so the shadow slot is
-  NOT first-free-filler — don't scan for one.
+- Tail index triplet `4b 00 00` → `4b 02 00` once ANY T10 exists — NOT a pair
+  counter (count stays 1 with two pairs on board). Revised: layout-version /
+  dirty flag (00 factory → 02 modified; removal test open: delete all multi-keys
+  → back to 00?).
+- Shadow slot = KK+0x52, PROVEN static (`Key::serializeBindingData(offset)`,
+  offset-1 path computes `[Key]+0x52`) AND live 3× (KK30→82, KK32→84, KK22→74;
+  an early 0x85 prediction for the C key was wrong — C is KK32, not KK33).
+  Factory's first T07 filler is 0x6d, so the shadow is NOT first-free-filler.
 - Record builder: `Key::wrapDblTapRecord(h1,h2,inner)` emits
   `[h1, 0x10, LEN, term_lo, term_hi, h2, inner...]`, LEN = inner.size()+3.
 - T07-vs-T0e filler decision is a single flag byte: `[Key+8]+0x28 == 0`
@@ -259,11 +271,15 @@ Format: `[KK, 10, 18, c8,00, 03, 01,01,00, c8,00, A_HID,00,07,00, 00×4, B_HID,0
 - WRITE path calls serialize with BOTH offsets (call pairs w1=0/1 in the
   flash writer) and `operator==` compares both → our writer must emit
   primary + shadow and fix 4b, exactly like stock.
-- Old `T03` name was a misnomer (T=0x03 24B records are macros, never observed
-  on wire; DB `macros` table has 1 BASIC macro, never flashed in logs).
+- Old `T03` name was a misnomer only for MACROS (T=0x03 24B macro records never
+  observed on wire; DB `macros` table has 1 BASIC macro, never flashed in logs).
+  The REAL T03 is the 24B hold-only key record above — the name is rehabilitated.
 - DB side: `key_bindings.behavior` ∈ {press, hold, double_tap, tap_hold} per
-  `(key_id)`; stock flashes all four; our writer must emit the pair + fix 4b.
-- Byte math closes: L0 772 → 816 = +20 (KK30 7→27B) + 24 (KK82 3→27B).
+  `(key_id)`; stock flashes per shape table above; our writer must emit
+  primary [+ mini/full shadow @KK+0x52] and keep 4b=02 once any multi-key exists.
+- Byte math closes every time: 772→816 (+20 KK30 7→27, +24 KK82 3→27);
+  816→860 (+20 KK32, +24 KK84); 860→877 (KK22 7→24B T03: +17);
+  877→887 (+3 T03→T10 upgrade, +7 filler→mini-shadow).
 
 ## T05 7-byte special records — family 04 decoded (LH4/RH4, 2026-09-16)
 Format: `[KK, 05, 04, ID, 00, 00, 00]` (T=05, 7B; describe shows `special <hex>`).
