@@ -80,3 +80,7 @@ catalog += LED table / BT_CLEAR / T08 / DISABLE / TRANSPARENT / MO-by-order-id /
 KP_* / consumer set / MODMASK / shifted chars; backup/restore in stock zip format;
 explicit Read-from-keyboard; layer names as host-side display; animations UI after
 RE; modules UI after RE; light theme; Devices/BLE-pairs UI; macros UI.
+Action vocabulary (854 icon names, see `cdc-protocol.md` "Action vocabulary"):
+C_ 12, MB1–MB12, KP_ 20, layer IDs 0..35 (zero-padded icon aliases 00..09);
+gaps: BT_DEVICE_5 icon w/o map entry, LED_GEN/GEN_2 + LED_BRIGHTNESS icons
+beyond the 19-entry map.

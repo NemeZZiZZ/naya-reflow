@@ -488,3 +488,25 @@ Map u64 = `(param2<<32)|param1`; Vs wire records emit `[T,08,HIGH32,LOW32]` =
   lives in another function), t19 map +0xa0 (static init proven, batch unread),
   +0x70 identity (13 batch entries), LED RED/GREEN/BLUE/CYAN/YELLOW/ORANGE/PINK
   u64s, mouse LEFT/RIGHT low word + M1 base.
+
+## Action vocabulary (renderer icon registry, 2026-09-17)
+
+Source: `/tmp/asar/_dist_renderer_assets_index-mihUmo_8.js` → 854 unique names
+matching `action/*.svg` (saved `/tmp/action-icons.txt`). Icon registry only —
+no byte values; icon names ≠ wire actions (only MO(1)/hold-layer-2 proven on
+wire as T05 family-04). For web-catalog completeness:
+- **C_ (consumer, T01 page 0x0c)**: C_BRIGHTNESS_DEC/INC, C_FAST_FORWARD, C_JIS,
+  C_MUTE, C_NEXT, C_PLAY_PAUSE, C_POWER, C_PREVIOUS, C_REWIND, C_VOL_DOWN,
+  C_VOL_UP (12 shown; census said 13 — one unaccounted).
+- **MB1–MB12** (mouse buttons; M-icons absent in registry, MB-icons exist).
+- **KP_ (20)**: NUMBER_0..9, NUMLOCK, PLUS, MINUS, MULTIPLY, DIVIDE, DOT, COMMA,
+  EQUAL, LPAR, RPAR.
+- **Layer actions**: MO_LAYER_0..35 + zero-padded aliases MO_LAYER_00..09
+  (36+10 = 46 family count ✓); TO_LAYER same 36+10+DELETED = 47 ✓;
+  TOGGLE_LAYER same + DELETED + non-layer TOGGLE_* = 52 ✓;
+  HOLD_LAYER_0..35 + DELETED = 37 of 41 HOLD (4 more HOLD_* unlisted).
+  Zero-padded names are icon-lookup aliases; real layer IDs are 0..35.
+- **Gaps vs C++ maps**: BT_DEVICE_5 icon exists, map has only DEVICE_1..4;
+  NEXT/PREV/SELECT_SL have no icons; LED icons add LED_GEN/GEN_2 + LED_BRIGHTNESS
+  over the 19-entry C++ map; icon set is richer in modifier variants (JIS/MAC,
+  LOPT/ROPT, LSHFT/RSHFT, RGUI icons despite no RIGHT_GUI map alias).
