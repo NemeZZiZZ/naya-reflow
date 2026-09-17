@@ -728,6 +728,59 @@ de/1009 GET BATTERY payload 6B: [00][batt u16BE, 0.1mV][usb u16BE, 0.1mV]
 (our sample 00 00 a4 8d cb fb = 4212.5mV batt / 5221.9mV USB; source: usb<4.5V = Qi).
 Battery %%: KB = (mV-3300)/9 clamp 0..100; module = same on 0.1mV scale (33000..42000).
 Text command surface (dump_settings etc.): SILENT on fw 0.3.41.0 both halves.
+
+### nayactl PR #6 cross-ref (warhorse-international + traviswye, Sep 2026, FW 3.41.0)
+Independent dark-board recovery, mirrors our saga. Verified against OUR binary
+(NayaSniff copy) + docs updates below:
+- **1013 = persistent NVS ceiling `max LED Brightness`** (settings-table key; our
+  strings: `No max LED Brightness found in the settings table. Resorting to default.`).
+  At 0 the board stays dark with normal ACKs on every LED command; **module LEDs sit
+  outside the gate** (lit modules + dark keys = the tell — exactly our saga symptom).
+  Neither NayaFlow nor nayactl ever sends 1013, so nothing clears it once at 0.
+- **[target]+[data] CONFIRMED in our binary**: `_constructLEDMessages` does
+  `ldrsb params[0][0]` → static payload, codes 0x1003–0x1050 via jump table
+  (w22-0x1003 <= 0x4d), `ProtocolCDCMessageQueue(0xed, code, static, dynamic)`.
+  Host validators: brightness 0-100 (`Invalid brightness... should be between 0 and 100`),
+  hue 0-360, sat 0-100, effect 0-3 (`effect_id: uint8_t (0-3)`).
+- **Zero-fill reframes our saga**: short payloads are zero-filled, so our 1-byte ED
+  sends were `[target=X, value=0]` — they WROTE ZEROS into NVS settings (1013 ceiling,
+  scanmode), not random garbage. Timeline item 1 mechanism = zeroed max-brightness.
+- **Target VALUE ignored live** (traviswye: ADJUST_BRT targets 0/1/2/3/200 identical;
+  what matters is LENGTH: 1-byte `[100]` = target 100 + level 0 → dark). Our 0xFF
+  convention from NayaCore strings is harmless (device ignores it, host splits it).
+- **LED entry byte3 = saturation** (we already decode S; CONFIRMED): sentinel 150 =
+  unset, white = (H0,S0). **Cold-boot saturation-drop firmware bug** (traviswye):
+  white keys come back RED after power cycle with byte-identical map — boot render
+  ignores saturation. Our amber maps (S=100) are unaffected.
+- **Full-map 100e form** (their claim): `[layer] + 136 entries`, chunked ≤242B with
+  layer byte re-prefixed per continuation (matches our MORE/id countdown read path).
+  NOTE: our single-entry `[00,layer]+entry` 6-byte form WORKS (readback-proven many
+  times incl. L1/L2 layers); their "silently discarded" 5-byte write likely lacked
+  the layer prefix. Both forms coexist; oversized single frames wedge the parser
+  (their 41B/241B wedge) — keep single-entry or correct chunking.
+- **ACK proves parse, not apply** (both learned independently).
+- **LED positions**: 136 = keys 0-73, edge strips 74-80/81-87, module bays 88-111
+  (left) / 112-135 (right); Touch lights first index of its bay. Our dumps show
+  sequential position bytes 00..87 = same 136 slots.
+- Tooling gaps to close: `led max-brightness` setter (1013 [t,level] 0-100);
+  snapshot should record the 1013 ceiling (no GET path — track host-side).
+
+### 2026-09-17 evening: restore side effects + [FF]-phase verdict
+- Bulk 30/100e writes drop the 1050 RGB override back to follow-map render
+  (post-restore board rendered the amber map = "yellow"; override state is NOT part
+  of the snapshot — snapshots hold maps only).
+- **[FF]-phase = winning phase (left)**: RESUME/ON/MAXBRT=100/SCANMODE=1/RGB-white/
+  BRT=100/SOLID/ON all [FF,...] → left half WHITE SOLID. Single phase, no bare/
+  [00]/[01] forms needed. Left [FF]-bundle re-run = idempotent recovery recipe.
+- **Right [FF]-bundle (no 1014): all ACK, NO visible change** — right render stays
+  CDC-deaf (consistent with the whole saga: no 30/10xx, 1014 NO-REPLY, ED ACKs
+  without effect). Right recovery path = hardware Layer2 LED combos only
+  (firmware-internal path, proven 2026-09-17 morning).
+- **Right revival #2 (2026-09-17 evening)**: full power disconnect (USB out + modules
+  undocked + on/off switches — TRUE cold boot, both power sources removed) → LED
+  control combos → right lit. Takeaway: cold boot alone doesn't clear NVS, combos
+  alone worked last time only after prior resets; the reliable recipe is
+  cold-boot FIRST (clears RAM wedge), then firmware-internal LED drive.
 DANGEROUS (never send): ee/10be+10ae (DFU/mcuboot resets), fa/1002, fa/1006,
 text clear_bonds/mcuboot_reset.
 
