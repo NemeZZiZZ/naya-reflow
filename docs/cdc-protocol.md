@@ -545,3 +545,15 @@ TUNE_MODE_R, WINDOWS_OS, MAC_OS, SCROLL_DIRECTION_L, SCROLL_DIRECTION_R,
 MODULE_CHARGING, MODULE_FORCE_CHARGING. These ARE the naya-type host-only
 actions (binding type 19 → wire T06, dead on wire — explains 0 `tap:` hits
 in all NayaCore logs). Values unread (names only).
+
+## Host module-gesture map (@0x100aedfe8): 9 behavior slots (2026-09-17, static)
+
+Fill @disasm 73508–73571 (clear + 1 batch insert (sp+0xf0, 8 elements) +
+8 (QString, element-ptr) loop-inserts 0x10003fbb0). NOTE: different object
+than the 0x100af0000 map struct (adrp 0x100aed000+#0xfe8). Values extracted
+with the key-batch v4 extractor: sequential behavior-slot indices —
+MOUSE_HORIZONTAL=0 (inferred by elimination, batch element), MOUSE_VERTICAL=1,
+MOUSE_STATIC=2, MOUSE_BUTTONS=3, MOUSE_SCROLL_VERTICAL=4,
+STATIC_SCROLL_VERTICAL=5, MOUSE_SCROLL_HORIZONTAL=6,
+STATIC_SCROLL_HORIZONTAL=7, STATIC_ZOOM=8. Track/touch gesture vocabulary
+for the module-config 30/100b path (behaviorSlotStart).
