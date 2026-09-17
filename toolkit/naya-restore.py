@@ -43,8 +43,9 @@ def split_records(blob):
     return recs
 
 
-def ack_ok(frame):
-    return cdc.payload_of(frame) == b"\x00\x00"
+def ack_ok(frame, layer=0):
+    # device echoes the layer in the ACK payload: L0 -> 00 00, L1 -> 00 01 ...
+    return cdc.payload_of(frame) in (b"\x00\x00", b"\x00" + bytes([layer]))
 
 
 def main():
@@ -77,9 +78,10 @@ def main():
             for rec in key_recs[layer]:
                 try:
                     f = ses.write_key(rec, layer)
-                    ok, fail = (ok + 1, fail) if ack_ok(f) else (ok, fail + 1)
-                    if not ack_ok(f):
-                        print(f"  key L{layer} KK{rec[0]:02x}: BAD ACK")
+                    good = ack_ok(f, layer)
+                    ok, fail = (ok + 1, fail) if good else (ok, fail + 1)
+                    if not good:
+                        print(f"  key L{layer} KK{rec[0]:02x}: BAD ACK {f.hex(' ')}")
                 except IOError as e:
                     fail += 1
                     print(f"  key L{layer} KK{rec[0]:02x}: NO-REPLY ({e})")
@@ -93,12 +95,15 @@ def main():
             blob = ledmap[layer]
             for off in range(0, len(blob), 4):
                 kk, h_lo, h_hi, s = blob[off:off + 4]
-                h = h_lo | (h_hi << 8)
                 try:
-                    f = ses.write_led(kk, h, s)
-                    ok, fail = (ok + 1, fail) if ack_ok(f) else (ok, fail + 1)
-                    if not ack_ok(f):
-                        print(f"  led L{layer} KK{kk:02x}: BAD ACK")
+                    # LED params are [00, layer, KK, H_lo, H_hi, S] (proven live:
+                    # layer byte selects the map; ACK echoes it like 30/1004)
+                    f = ses.cmd(0x30, 0x10, 0x0E,
+                                bytes([0x00, layer, kk, h_lo, h_hi, s]))
+                    good = ack_ok(f, layer)
+                    ok, fail = (ok + 1, fail) if good else (ok, fail + 1)
+                    if not good:
+                        print(f"  led L{layer} KK{kk:02x}: BAD ACK {f.hex(' ')}")
                 except IOError as e:
                     fail += 1
                     print(f"  led L{layer} KK{kk:02x}: NO-REPLY ({e})")
