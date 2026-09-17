@@ -22,3 +22,13 @@ Working tools. All tested live against Naya Create (base FW 0.3.41.0).
   verified: 222/222 keys byte-equal to the live DB). Live DB is copied as a
   skeleton and only `key_bindings` are rewritten; `keys.color_hex` is host-side
   UI state and stays untouched. `--verify` compares without writing.
+- [`naya-backup.py`](naya-backup.py) — full read-only snapshot of the left
+  half into one JSON: keymap L0-L2 + LED maps L0-L2 + reference telemetry
+  (FW versions, timeouts, module presence/FW/rail). Our own backup format
+  (stock NayaFlow restore just reloads the app, even on its own archives —
+  not worth chasing). Pair with `naya-restore.py`.
+- [`naya-restore.py`](naya-restore.py) — replays a snapshot: per-record
+  `30/1004` + `30/100e` writes, then readback-verified (`IDENTICAL` /
+  `DIFFERS` per section). Dry run by default, `--apply` writes (quit
+  NayaFlow first). Caveat: length-changing record rewrites are silently
+  ignored by the device — the report lists diverged KKs.
