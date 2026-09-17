@@ -304,13 +304,18 @@ LH3/RH3 (53/54)=Enter/Backspace; L1 thumbs all transparent (T0e).
   (30/1004) → `_remapWriteModuleConfigList` (30/100A) → `_remapReadModuleData`
   (30/100B) → `_remapWriteModuleData` (30/100C) → READ color (30/100D) → WRITE color
   (30/100E). Read-before-write per section (matches capture3's READ-ALL→WRITE→READ-ALL).
-- 30/100C element format (static: `ModuleConfig::toByteArray` + `Slot::serializeSlot`,
-  2026-09-17): per changed slot emit `[slot, 01, 01]` prefix (frame-params analogue
-  of 30/1004's `[00,layer,KK]`; meaning of the two `01` bytes open) + slot record
-  `[SLOT, T, LEN, payload]` (`Binding::serializeBindingData`, same T-table as keys),
-  or `[SLOT, 07, 00]` when the slot is empty. All changed slots concatenated into ONE
-  QByteArray → likely a SINGLE 100c frame (vs per-key frames for 30/1004).
-  Module-config layer association still open.
+- 30/100C element format (static: `ModuleConfig::toByteArray(QList<int>)`
+  @1518490–1518684, 2026-09-17; REFINEMENT: the path branches on
+  `behaviourSlotStart`). `[slot, 01, 01]` = hardcoded immediates (no
+  provenance — writer just emits them). Slots BELOW behaviourSlotStart
+  (likely the 9 gesture/behavior slots) → element = `[slot,01,01,X]` 4B
+  (X = behavior byte from map lookup, or 0x00 if absent). Slots AT/ABOVE
+  start → element = `Slot::serializeSlot()` directly (`[SLOT, T, LEN,
+  payload]` via `Binding::serializeBindingData`, same T-table as keys;
+  `[SLOT, 07, 00]` when empty) with NO prefix. All changed slots
+  concatenated into ONE QByteArray → likely a SINGLE 100c frame (vs
+  per-key frames for 30/1004). Loop guards: skip bit31-set and >= maxSlots
+  indices. Module-config layer association still open.
 
 ## AUX recon (2026-09-15, live via `cdc-client.py left/right aux`)
 All read-only. 30/10xx are LEFT-only (right answers fa/be/de/fe, NOT 30/1001).
@@ -596,3 +601,29 @@ MOUSE_STATIC=2, MOUSE_BUTTONS=3, MOUSE_SCROLL_VERTICAL=4,
 STATIC_SCROLL_VERTICAL=5, MOUSE_SCROLL_HORIZONTAL=6,
 STATIC_SCROLL_HORIZONTAL=7, STATIC_ZOOM=8. Track/touch gesture vocabulary
 for the module-config 30/100b path (behaviorSlotStart).
+
+## Map-page adrp census + guarded maps (2026-09-17, static)
+
+Full adrp→0x100af0000 census (170 sites) by member offset:
+{0x1:1, 0x8:9, 0x10:1, 0x28:1, 0x40:1, 0x58:1, 0x70:14, 0x78:12, 0x80:5,
+0x88:5, 0x90:23, 0x98:29, 0xa0:11, 0xa8:18, 0xb0:14, 0xc0:13}.
+All 14 +0x70 users sit inside the fill cluster → +0x70 has NO readers
+(write-only verdict, see section above).
+
+## Host second mouse map (+0xb0): 13 keys (2026-09-17, static)
+
+Fill @0x1004a738–0x1004a83c via a THIRD insert fn 0x100040290(map,key,value):
+clear + (map, batch-head) + 12× (map, saved-QString, element). The 13 keys
+are M1–M5, MOUSE_UP/DOWN/LEFT/RIGHT, SCROLL_UP/DOWN/LEFT/RIGHT = the mouse
+batch names MINUS ZOOM_IN/ZOOM_OUT (15 − 2 = 13). Values are the same batch
+element pointers as the +0xa8 mouse map. Hypothesis: describe/readback-side
+index (zoom actions excluded — readback never reports them).
+
+## Guarded singleton (+0xb8) + mutex (+0xc0) (2026-09-17, static)
+
++0xc0 is NOT a data map: site @1611477 does `ldr x8,[0x100af0000+#0xc0]` +
+QBasicMutex lockInternal/unlockInternal (casa/casl spinlock) + stores x19
+to +0xb8 = mutex-guarded lazy singleton (double-checked locking); site
+@1627589 registers the +0xc0 mutex destructor via `___cxa_atexit`. So
++0xb8 = guarded singleton pointer, +0xc0 = its mutex. The +0xc0 'users'
+in the census are lock/unlock/atexit refs, not data reads.
