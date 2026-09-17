@@ -530,4 +530,18 @@ w21-target late-batch forms and base mutations).
   LANGn/LANGUAGE_n aliases (LANG3=0x92); K_LOCK=K_SCREENSAVER=K_COFFEE=0xF9;
   C_MUTE=0xe2, C_PREVIOUS=0xb6 (consumer page — corrects old 'C_MUTE b6'
   annotation); PIPE2=Shift+Non-US-backslash (0x02070064, ISO pipe ✓);
-  CLEAR2=Shift+NumLock (0x02070053, as-is).
+   CLEAR2=Shift+NumLock (0x02070053, as-is).
+
+## Host out-map (+0x88): 2 entries (2026-09-17, static)
+
+Fill @disasm 71136–71145 (clear + 2 loop-inserts 0x10003fbb0):
+USB_DEVICE → 1, BT_OUT → 2. CLOSED — matches empirical T08
+(1=USB_DEVICE, 2=BT_OUT).
+
+## Host t19-map (+0xa0): 8 naya-type names (2026-09-17, static)
+
+Fill @disasm 72503–72542 (clear + 8 loop-inserts): TUNE_MODE_L,
+TUNE_MODE_R, WINDOWS_OS, MAC_OS, SCROLL_DIRECTION_L, SCROLL_DIRECTION_R,
+MODULE_CHARGING, MODULE_FORCE_CHARGING. These ARE the naya-type host-only
+actions (binding type 19 → wire T06, dead on wire — explains 0 `tap:` hits
+in all NayaCore logs). Values unread (names only).
