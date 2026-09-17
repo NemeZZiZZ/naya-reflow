@@ -510,3 +510,24 @@ wire as T05 family-04). For web-catalog completeness:
   NEXT/PREV/SELECT_SL have no icons; LED icons add LED_GEN/GEN_2 + LED_BRIGHTNESS
   over the 19-entry C++ map; icon set is richer in modifier variants (JIS/MAC,
   LOPT/ROPT, LSHFT/RSHFT, RGUI icons despite no RIGHT_GUI map alias).
+
+## Host key-map (+0x80): 282 entries decoded (2026-09-17, static)
+
+Fill: static initializer loop @disasm 66833 (`str xzr,[x21,#0x80]` clear,
+w22=0x11a=282 iterations, 0x20-sized elements from sp+0x18 via insert fn
+0x10003fbb0 + `___cxa_atexit`). Setup 59200–66833. Full table saved as
+`research/keymap-host-table.txt` (282 pairs, 281 unique names — KP_CLEAR at
+2 sites with the same value; extractor `/tmp/extract_keybatch4.py`: base
+tracking w20=0x00070090 / w22=0x02070020 + sub/add/MOVR resolution, incl.
+w21-target late-batch forms and base mutations).
+- Encoding: plain = 0x0007HHHH (keyboard page); shifted = 0x02HHHHHH
+  (MODMASK 0x02 accumulated via ' + ' names); consumer = 0x000cHHHH;
+  Generic-Desktop = 0x000100HHHH (SYSTEM_WAKE_UP=0x83, PWR/SLEEP/WAKE).
+- Notables: A=0x04 standard HID; F1–F12=0x3a–0x45; F13–F24=0x68–0x73;
+  KP block incl. KP_DOT=0x63; EXCLAMATION=Shift+'1' (0x0207001e);
+  DELETE=0x4c (+DEL alias); CLEAR=0x34 = quote (action-name quirk);
+  KP_CLEAR=0xD8 (both sites, as-is); INTn/INTERNATIONAL_n aliases (INT1=0x87);
+  LANGn/LANGUAGE_n aliases (LANG3=0x92); K_LOCK=K_SCREENSAVER=K_COFFEE=0xF9;
+  C_MUTE=0xe2, C_PREVIOUS=0xb6 (consumer page — corrects old 'C_MUTE b6'
+  annotation); PIPE2=Shift+Non-US-backslash (0x02070064, ISO pipe ✓);
+  CLEAR2=Shift+NumLock (0x02070053, as-is).
