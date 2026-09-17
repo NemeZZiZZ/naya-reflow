@@ -54,6 +54,9 @@ eq(describeRecord(new Uint8Array([0x3e, 5, 4, 2, 0, 0, 0])), 'Hold layer 2', 'de
 // Disabled vs Transparent split (T07 filler vs T0e transparent)
 eq(describeRecord(new Uint8Array([0x00, 7, 0])), 'Disabled', 'describe Disabled');
 eq(describeRecord(new Uint8Array([0x00, 0x0e, 0])), 'Transparent', 'describe Transparent');
+// Mouse Vs (static mouse map: M1 = (3,1) Left, M2 = (3,2) Right, M3 = (3,4) Middle)
+eq(describeRecord(new Uint8Array([0x2f, 0x0f, 8, 3, 0, 0, 0, 1, 0, 0, 0])), 'Mouse Left', 'describe mouse left');
+eq(describeRecord(new Uint8Array([0x2f, 0x0f, 8, 3, 0, 0, 0, 4, 0, 0, 0])), 'Mouse Middle', 'describe mouse middle');
 // T08 output select (static out-map: 1 = USB, 2 = BT)
 eq(describeRecord(new Uint8Array([0x00, 8, 4, 1, 0, 0, 0])), 'USB out', 'describe USB out');
 eq(describeRecord(new Uint8Array([0x00, 8, 4, 2, 0, 0, 0])), 'BT out', 'describe BT out');

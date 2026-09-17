@@ -587,7 +587,9 @@ const CONSUMER: Record<number, string> = {
   0xcd: 'Play/Pause', 0xe2: 'Mute', 0xe9: 'Volume +', 0xea: 'Volume −',
 };
 const MOUSE_BTN: Record<number, string> = {
-  1: 'Mouse Left', 2: 'Mouse Right', 3: 'Mouse Middle',
+  // Static mouse map (x21 = 0x300000001 base): M1 = (3,1) LEFT, M2 = (3,2)
+  // RIGHT, M3 = (3,4) MIDDLE; Y is a button bitmask, so 3 = Left+Right chord.
+  1: 'Mouse Left', 2: 'Mouse Right', 4: 'Mouse Middle',
 };
 
 const MOD_NAMES = [
