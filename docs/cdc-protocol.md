@@ -507,8 +507,21 @@ Map u64 = `(param2<<32)|param1`; Vs wire records emit `[T,08,HIGH32,LOW32]` =
   LEFT/RIGHT lows come from 32-bit `mov w9` (zero-extends: high32=0);
   SCROLL_DOWN/LEFT and ZOOM_OUT use negated-imm + `movk #0,lsl#48`
   (earlier 0xF004/0xF006/0xF008 readings were pre-movk intermediates).
-- **Still open**: +0x70 identity/direction (13 batch entries, (9,6) anomaly),
-  T06 live wire sample (needs hands).
+- **+0x70 map (0x100af070) — contents CLOSED, reader NONE (write-only verdict)**:
+  13 (u32 key, byte val) pairs: {0:1, 1:12, 2:13, 3:5, 4:11, 5:2, 6:1, 7:14,
+  8:7, 9:6, 13:0, 14:9, 15:8}. Fill: `str xzr` clear → first insert call is
+  single-pair (map, sp+0xf0) → 12 calls with (x1=x19+8k, x2=x19+8k+4) =
+  4B-key+4B-value pairs → `___cxa_atexit`. 11/13 pairs mirror the static
+  T-table @0xa37a78 byte-exact; anomalies 5→2, 9→6 (static says 7,7).
+  Reader hunt (all negative): full adrp→0x100af0000 census = 14 users of
+  +0x70, ALL inside the fill cluster; `add #0x70` sites are batch-element
+  pointer arithmetic (gesture/key batches); `ldr [x8,#0x70]` sites are
+  vtable dispatches / nullable callbacks / object-graph walks. NO reader
+  found via any pattern → write-only from the static viewpoint (a
+  runtime-base+offset read would be unfindable hands-free). Hypotheses:
+  dead type→T override table, debug leftover. `Binding::serializeBindingData`
+  never touches +0x70 (override-map theory dead on the write path too).
+- **Still open**: T06 live wire sample (needs hands).
 
 ## Action vocabulary (renderer icon registry, 2026-09-17)
 
