@@ -77,7 +77,18 @@ Full NayaCore serial-side source map (from embedded paths):
 - **CRC = XOR** of all bytes from C0 through end of payload (`frame[6:-2]`), verified on all 269 frames (136 req + 133 resp). Earlier sum-matches were coincidence on short frames.
 - **Pairing**: responses arrive in request order per port (left 82 req / 81 resp — R00 `fe/1002` reply was lost on the pre-reopen fd; right S00 is one mega-blob: Qt coalesced 17 early responses into a single 262B read).
 - Response header byte3 = **remaining-parts counter** for multi-part reads (30/1003: 02,01,00…), payload byte0 = more-flag (01 = more parts, 00 = last), byte1 = layer echo.
-- **Keymap record** (30/1003, per key, 7 bytes): `KK 01 04 CC 00 07 00` — KK = key index, CC = HID usage, `00 07 00` = usage page 0x0007. Layer0 starts Esc(0x29) Grave(0x35) 1(0x1E) 2(0x1F)… = top row. Empty slots: `KK 00 00`; other types: `03 15 …` (16B, consumer/macro?), `05 04 …`, tail filler `78 00`. 74 keys/layer (matches NayaCore '3 слоёв × 74 клавиши').
+- **Keymap record** (30/1003): universal `[KK, T, LEN, payload]`. Full T table
+  (proven static in `Binding::serializeBindingData` + 1776-record log census
+  closes exactly — 7B:975=927+32+16, 11B:176=120+48+8, 3B:624=368+256, 27B:1):
+  T01 7B `[KK,01,04,HID,PAGE_BE,MOD]` where u32 param1=(mod<<24)|(page<<16)|hid
+  (MODMASK = top byte; consumer keys are T01 with page 0x000c, e.g. C_MUTE
+  `20 01 04 b6 00 0c 00`); T05 7B MO (ORDER as u24); T08 7B out USB/BT (ID u24);
+  Vs 11B `[KK,T,08,X(4B),Y(4B)]` (T00 BT / T09 LED / T0f mouse); T07/T0e 3B
+  fillers (flag-selected); T10 27B multi-behavior pair (see section below).
+  T {02,03,04,0a} unmapped anywhere; T {06,0b,0c,0d} = dead binding types
+  (never on wire). Wire-T byte is literally the `zmk_behaviour()` id.
+  L0 starts Esc(0x29) Grave(0x35) 1(0x1E) 2(0x1F)… = top row. 74 keys/layer
+  (matches NayaCore '3 слоёв × 74 клавиши').
 - Minimal client: `naya-archive/cdc-client.py` (pyserial, 115200 placeholder — CDC ignores baud; sets DTR/RTS like Qt). **First live probe got no reply** (empty read, DTR/RTS on/off) — halves likely asleep or not in USB output mode; NayaCore was not running, ports free. Retry after waking the keyboard.
 - Baud rate: no baud strings in NayaCore; CDC-ACM ignores it electrically.
 
@@ -153,7 +164,10 @@ v1.25.1 release asset in backup/firmware; tables verified against it).
   100B MODULE CONFIG DATA (= 30/100b read), 100C WRITE MODULE CONFIG DATA
   (never observed), 100D READ LED MAP, 100E WRITE LED MAP.
 - MODMASK census (all NayaCore logs): `00` ×911, `02` ×16 (= 8 dumps × 2 paren
-  keys) → effectively Shift-only; assume HID boot-modifier bits.
+  keys) → effectively Shift-only; assume HID boot-modifier bits. CORRECTION
+  (static): MODMASK is the TOP BYTE of the u32 param1 = (mod<<24)|(page<<16)|hid
+  (common tail of `Binding::serializeBindingData` appends the shifted top byte),
+  NOT a Key-level append.
 - T10 constants: `c8 00` ×2 = tapping term 200ms (== profile header) —
   proven static: `wrapDblTapRecord` reads the term as u16 @ `[Key+8]+0x18`
   (default `0xc8`=200 when the profile object is null); `03` and `01 01 00`
