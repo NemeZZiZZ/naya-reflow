@@ -586,9 +586,14 @@ MODULE_CHARGING=400, MODULE_FORCE_CHARGING=401.
 Format correction: T=6 falls in the 0x3962 bitmask group (bit 6 set), so
 type-19 emits [T,04,p1-u32LE] — e.g. TUNE_MODE_L → `[KK,06,04,96,00,00,00]`
 7B (NOT bare [06]). T06 is absent from all 1776 log wire records only because
-no flashed profile assigns a naya-type action (0 `tap:` hits everywhere);
-a live wire sample needs a NayaFlow naya-action assignment + flash + dump
-(hands work).
+no flashed profile assigns a naya-type action (0 `tap:` hits everywhere).
+LIVE TEST 2026-09-17 (KK31=X→MAC_OS via stock NayaFlow, flash, dump
+`research/dumps/left-t06probe-20260917-030154.json`): NO T06 on wire —
+the palette MAC_OS action resolves host-side to a plain HID LGUI key
+(`31 01 04 e3 00 07 00`), behaviorally confirmed as Cmd ⌘. So the
+NayaFlow palette MAC_OS/WINDOWS_OS entries are NOT t19 bindings; the
+t19-map entries are more likely module-config values than key actions.
+A genuine T06 wire sample is still open (if any UI path emits one).
 
 ## Host module-gesture map (@0x100aedfe8): 9 behavior slots (2026-09-17, static)
 
