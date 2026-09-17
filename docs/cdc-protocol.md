@@ -451,3 +451,40 @@ Full frames: `naya-archive/aux-left.txt`, `aux-right.txt`.
   `^special [0-9a-f]{2} 05 04 01 00 00 00$`. `HOLD_LAYER_2.svg` covers id-02
   (factory bottom keys); `BT_CLEAR.svg` covers the L2 vendor record
   `[KK,00,08,00..00]` (A=X=Y=0, BT-bind reset on KK0/LA1 per the manual legend).
+
+## Host name→value maps (static initializers, 2026-09-17)
+
+`Binding::param1/param2()` resolve action names through runtime maps filled by
+static initializers (NayaSniff binary; statics @ `0x100af0000` page).
+Map u64 = `(param2<<32)|param1`; Vs wire records emit `[T,08,HIGH32,LOW32]` =
+`[T,08,p2,p1]`.
+
+- **Modifier map (+0x98, COMPLETE, 27 names**, insert fn `0x100019178`, byte
+  values = standard HID boot-modifier bits):
+  `0x01`: LCTRL/CTRL/LEFT_CTRL; `0x02`: LSHIFT/SHIFT/LEFT_SHIFT;
+  `0x04`: LALT/ALT/LEFT_ALT;
+  `0x08`: LGUI/GUI/META/CMD/LEFT_GUI/LEFT_META/LMETA/LCMD/LWIN/LEFT_WIN/LEFT_COMMAND
+  (11 aliases); `0x10`: RCTRL/RIGHT_CTRL; `0x20`: RSHIFT/RIGHT_SHIFT;
+  `0x40`: RALT (only); `0x80`: RGUI (only — no RIGHT_ALT/RIGHT_GUI aliases).
+  HID names split on ` + `; extra parts OR their byte into `param1<<24`
+  (= MODMASK, e.g. `Shift + A` → `0x02070004`).
+- **BT map (+0x78, COMPLETE, 8 names)**: CLEAR→0, NEXT→`0x100000000`,
+  PREV→`0x200000000`, SELECT_SL→`0x300000000`, DEVICE_n→`0x30000000+n`
+  (family 3 = BT; DEVICE_1 → wire X=3,Y=1, byte-matching probe3).
+- **LED map (+0x90, names COMPLETE, most values open)**: EFFECT_ON_OFF,
+  BREATHE, SOLID, SWIRL, SPEC, EFFECT, BRIGHTNESS_UP/DOWN, SPEED_UP/DOWN,
+  COLOR_RED/GREEN/BLUE/WHITE/CYAN/MAGENTA/YELLOW/ORANGE/PINK (19).
+  Decoded values: SOLID=`0xd00000000` (p2=13,p1=0 → wire X=13,Y=0 ✓);
+  BRI_UP/DOWN=(p2=7/8), SPD_UP/DOWN=(p2=9/10), LED_EFFECT=(p2=11);
+  MAGENTA=`0x0f010e6464` = (p2=15, H270/S100/B70) ⇒ color packing
+  Y = S|B<<8|H<<16; WHITE=`0x0f00000064` (anomalous p1, as-is).
+- **Mouse map (+0xa8, 15 names)**: (X,Y)=(fn,signed-delta), consistent with the
+  module-config 30/100b fn table (0/4=move, 1=button, 3=wheel, 6=pan):
+  UP=(1,-1), DOWN=(1,1), SCROLL_UP=(4,1), SCROLL_DOWN=(0xF004,-1),
+  SCROLL_LEFT=(0xF006,-1), SCROLL_RIGHT=(6,1), ZOOM_IN=(8,1),
+  ZOOM_OUT=(0xF008,-1), M4=(3,8), M5=(3,16); LEFT=(low?,−1), RIGHT=(low?,+1)
+  (low words unresolved), M1/M2/M3 relative to an unknown base.
+- **Still open**: key map +0x80 contents, out map +0x88 (USB_DEVICE/BT_OUT batch
+  lives in another function), t19 map +0xa0 (static init proven, batch unread),
+  +0x70 identity (13 batch entries), LED RED/GREEN/BLUE/CYAN/YELLOW/ORANGE/PINK
+  u64s, mouse LEFT/RIGHT low word + M1 base.
