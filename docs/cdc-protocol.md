@@ -496,14 +496,19 @@ Map u64 = `(param2<<32)|param1`; Vs wire records emit `[T,08,HIGH32,LOW32]` =
   every other color = H-field arithmetic on x27 (RED=−30, YELLOW=+30,
   GREEN=+90, CYAN=+150, BLUE=+210; PINK=MAGENTA+30); every delta lands
   exactly on the canonical hue.
-- **Mouse map (+0xa8, 15 names)**: (X,Y)=(fn,signed-delta), consistent with the
-  module-config 30/100b fn table (0/4=move, 1=button, 3=wheel, 6=pan):
-  UP=(1,-1), DOWN=(1,1), SCROLL_UP=(4,1), SCROLL_DOWN=(0xF004,-1),
-  SCROLL_LEFT=(0xF006,-1), SCROLL_RIGHT=(6,1), ZOOM_IN=(8,1),
-  ZOOM_OUT=(0xF008,-1), M4=(3,8), M5=(3,16); LEFT=(low?,−1), RIGHT=(low?,+1)
-  (low words unresolved), M1/M2/M3 relative to an unknown base.
+- **Mouse map (+0xa8, 15 names) — FULLY CLOSED**: (X,Y)=(fn,signed-delta);
+  wire Vs = [T,08,HIGH32,LOW32] so e.g. M1=(3,1) → `0f 08 03 01` ✓ (probe3
+  MOUSE_L byte-exact). Complete table: LEFT=(0,−1), RIGHT=(0,1), UP=(1,−1),
+  DOWN=(1,1), SCROLL_UP=(4,1), SCROLL_DOWN=(4,−1), SCROLL_LEFT=(6,−1),
+  SCROLL_RIGHT=(6,1), ZOOM_IN=(8,1), ZOOM_OUT=(8,−1), M1=(3,1)=LEFT-button,
+  M2=(3,2)=RIGHT-button, M3=(3,4)=MIDDLE, M4=(3,8), M5=(3,16). fn mapping:
+  0=H-move, 1=V-move, 3=buttons(bitmask 1/2/4/8/16), 4=wheel, 6=pan, 8=zoom.
+  Static notes: M1/M2/M3 derive from x21=0x300000001 base (+0/+1/+3);
+  LEFT/RIGHT lows come from 32-bit `mov w9` (zero-extends: high32=0);
+  SCROLL_DOWN/LEFT and ZOOM_OUT use negated-imm + `movk #0,lsl#48`
+  (earlier 0xF004/0xF006/0xF008 readings were pre-movk intermediates).
 - **Still open**: +0x70 identity/direction (13 batch entries, (9,6) anomaly),
-  mouse LEFT/RIGHT low word + M1 base, T06 live wire sample (needs hands).
+  T06 live wire sample (needs hands).
 
 ## Action vocabulary (renderer icon registry, 2026-09-17)
 
