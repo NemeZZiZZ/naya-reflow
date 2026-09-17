@@ -683,7 +683,8 @@ All ED commands take `[target, value...]`: target uint8, 0xFF = all.
 - 1050 RGB_BRT (global color override): [target, R, G, B, brightness 0-100] — **survives ee/10ce**
 - 10d1/10d2 FORCE ON/OFF: NO-REPLY on both halves (normal)
 - Empty params = self-target (wave-2 proven); right half: 1014 = NO-REPLY (left ACKs)
-- Empty-param 1012/1013/1014 return bare ACK 00 (no GET path)
+- Empty-param 1012/1013/1014 return bare ACK 00 (no GET path — live-confirmed
+  2026-09-17 on left: ED/1013 empty → `00`, ED/1012 empty → `00`)
 
 ### NVS-persisted (per NayaCore verify strings)
 `scanmode_pwm`, `led_layer_override` (+ apparently the RGB/hue override state).
