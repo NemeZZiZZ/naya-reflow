@@ -185,7 +185,12 @@ v1.25.1 release asset in backup/firmware; tables verified against it).
   asar animation registry; the registry is device-real (host only
   lacks a caller).
 - **ED 1011 SELECT LEDs EFFECT** (empty params): ACK `00`, no visible
-  effect (needs an effect-id param; encoding TBD).
+  effect (needs an effect-id param; encoding TBD). Probe scripted
+  2026-09-17 (`toolkit/naya-effect-spike.py`): candidate forms `[effect]`,
+  `[0, effect]` (1012/1013/1014 target convention), `[layer, effect]`
+  (distinct effect per layer); restore = SOLID + ED/100D cycle check.
+  **Live verdict PENDING** (controller-run) — until a form is proven, the
+  UI falls back to the ED/100D cycle button.
 - **ED 1014 SET LED LAYER OVERRIDE** (empty / `01` / `02` / `00 01`):
   ACK `00` every time, no observable change (typing + backlight
   unchanged). Possibly working invisibly — all 3 layers' LED maps

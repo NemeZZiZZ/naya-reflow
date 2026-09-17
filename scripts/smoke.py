@@ -23,6 +23,7 @@ def load(name, rel):
 
 t10spike = load("naya_t10_spike", "toolkit/naya-t10-spike.py")
 modspike = load("naya_modules_spike", "toolkit/naya-modules-spike.py")
+fxspike = load("naya_effect_spike", "toolkit/naya-effect-spike.py")
 
 n = 0
 bad = 0
@@ -95,6 +96,25 @@ eq(modspike.parse_slots(bytes.fromhex("00 00 00 01 00 00")),
    "parse all-zero L0-style blob")
 eq(modspike.find_swap_pair(modspike.parse_slots(bytes.fromhex("00 00 00"))),
    None, "no swap pair in zero-only blob")
+
+# 23. Task 3.0 effect-spike payload forms (ed/1011 candidates + restore)
+eq(fxspike.EFFECTS, {"SOLID": 0, "BREATHE": 1, "SWIRL": 2, "SPECTRUM": 3},
+   "effect registry ids")
+fs = fxspike.forms()
+eq([f[0] for f in fs],
+   ["[effect] bare", "[0, effect] target", "[layer, effect] per-layer"],
+   "three candidate forms in probe order")
+eq([p.hex(" ") for p in fs[0][1]], ["01"], "form 1 probe: [effect]")
+eq([p.hex(" ") for p in fs[1][1]], ["00 01"], "form 2 probe: [0, effect]")
+eq([p.hex(" ") for p in fs[2][1]], ["00 01", "01 02", "02 03"],
+   "form 3 probe: [layer, effect] distinct per layer")
+eq([p.hex(" ") for p in fs[0][2]], ["00"], "form 1 restore: [SOLID]")
+eq([p.hex(" ") for p in fs[1][2]], ["00 00"], "form 2 restore: [0, SOLID]")
+eq([p.hex(" ") for p in fs[2][2]], ["00 00", "01 00", "02 00"],
+   "form 3 restore: SOLID per layer")
+# full-frame parity with cdc-client build (ED/1011 form 2, dst=left)
+eq(fxspike.cdc.build(0x50, 0xED, 0x10, 0x11, bytes([0, 1])).hex(" "),
+   "aa 00 50 00 ed 04 10 11 00 01 00 04", "ED/1011 [0,1] frame bytes")
 
 print(f"{n - bad}/{n} ok" + ("" if bad == 0 else f" — {bad} FAILURES"))
 sys.exit(1 if bad else 0)
