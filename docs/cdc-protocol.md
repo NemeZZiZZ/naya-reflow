@@ -286,6 +286,12 @@ Format: `[KK, 10, 18, c8,00, 03, 01,01,00, c8,00, A_HID,00,07,00, 00×4, B_HID,0
 - Byte math closes every time: 772→816 (+20 KK30 7→27, +24 KK82 3→27);
   816→860 (+20 KK32, +24 KK84); 860→877 (KK22 7→24B T03: +17);
   877→887 (+3 T03→T10 upgrade, +7 filler→mini-shadow).
+- SPIKE 2026-09-17 (`toolkit/naya-t10-spike.py`): full-set writer — t10Primary
+  + mini shadow @KK+0x52 + tail `4b 02 00` written via plain 30/1004 with
+  layer-echo ACK checks, readback compare, then restore + full-dump verify.
+  Dry-run green (scripts/smoke.py §21 pins the byte vectors); **live verdict
+  PENDING** (controller-run). Outcome, FAMILY_KEY byte and any tail-semantics
+  corrections get recorded here after the live run.
 
 ## T05 7-byte special records — family 04 decoded (LH4/RH4, 2026-09-16)
 Format: `[KK, 05, 04, ID, 00, 00, 00]` (T=05, 7B; describe shows `special <hex>`).
