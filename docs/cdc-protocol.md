@@ -240,10 +240,16 @@ probes 2–4; dumps `research/dumps/left-probe2multi-*.json`,
 
 T10 ≈ T03 + `[TT, 03]` prefix (dual-term: hold threshold + double-tap window);
 the `03` byte is the T03-format marker (probe-3 link). Mini-shadow `01` vs
-full-primary `03` semantics open. hasDoubleTapBindings trigger refined: hold-only
-→ T03; T10 needs double AND taphold (user's «да, нужны» confirmed by device).
-Open: taphold-without-double shape (predict T10prim + mini shadow w/ taphold
-triple); 3-behavior size math closes +10 (877→887 = +3 primary upgrade + 7 mini).
+full-primary `03` semantics open (looks like extra-behavior count in that
+record: 1 in mini, 3 non-tap in full). Trigger ladder: hold-only → T03;
++double → T10prim + mini shadow; +taphold → full shadow.
+NayaFlow UI enforces the chain Tap→Hold→DoubleTap→Tap&Hold (each next unlocks
+only after the previous — user-reported 2026-09-17), so THESE THREE SHAPES are
+the only stock-producible states; the table is complete by construction
+(taphold-without-double is UNPRODUCIBLE in stock, probe canceled). Competitor
+(OpenFlow screenshot) allows independent behaviors — our future writer can
+exceed stock (e.g. taphold-without-double via direct 30/1004 writes +
+readback/behavioral test; device-side validation unknown).
 
 T10 27-byte pairs — format (device dump + NayaCore log `tap:/hold:/double_tap:/
 tap_hold:` + `wire:`/`shadow:` lines, byte-identical):
