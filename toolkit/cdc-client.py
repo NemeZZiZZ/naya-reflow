@@ -427,6 +427,30 @@ if __name__ == "__main__":
             ("ble fw", ble_fw_text(bytes.fromhex("00 02 1D")), "v0.2.29"),
             ("payload_of", payload_of(bytes.fromhex("AA 50 00 00 FE 07 10 02 00 00 03 29 00 DE 04")),
              bytes.fromhex("00 00 03 29 00")),
+            # universal record rule: [KK, T, LEN, payload x LEN], ln = byte2+3
+            ("parse T01", parse_layer(bytes.fromhex("1E 01 04 73 00 07 00")),
+             {0x1E: (0, bytes.fromhex("1E 01 04 73 00 07 00"))}),
+            ("parse Vs", parse_layer(bytes.fromhex("2E 00 08 03 00 00 00 01 00 00 00")),
+             {0x2E: (0, bytes.fromhex("2E 00 08 03 00 00 00 01 00 00 00"))}),
+            ("parse T10", parse_layer(bytes.fromhex(
+                "30 10 18 C8 00 03 01 01 00 C8 00 1C 00 07 00 00 00 00 00 "
+                "1D 00 07 00 00 00 00 00")),
+             {0x30: (0, bytes.fromhex(
+                 "30 10 18 C8 00 03 01 01 00 C8 00 1C 00 07 00 00 00 00 00 "
+                 "1D 00 07 00 00 00 00 00"))}),
+            ("parse mini", parse_layer(bytes.fromhex("74 10 07 C8 00 01 05 00 07 00")),
+             {0x74: (0, bytes.fromhex("74 10 07 C8 00 01 05 00 07 00"))}),
+            ("parse T03", parse_layer(bytes.fromhex(
+                "30 03 15 01 01 00 C8 00 1B 00 07 02 00 00 00 00 "
+                "1D 00 07 00 00 00 00 00")),
+             {0x30: (0, bytes.fromhex(
+                 "30 03 15 01 01 00 C8 00 1B 00 07 02 00 00 00 00 "
+                 "1D 00 07 00 00 00 00 00"))}),
+            ("parse filler", parse_layer(bytes.fromhex("4A 07 00")),
+             {0x4A: (0, bytes.fromhex("4A 07 00"))}),
+            ("parse concat", parse_layer(bytes.fromhex("1E 01 04 73 00 07 00 4A 07 00")),
+             {0x1E: (0, bytes.fromhex("1E 01 04 73 00 07 00")),
+              0x4A: (7, bytes.fromhex("4A 07 00"))}),
         ]
         bad = 0
         for name, actual, expected in cases:
