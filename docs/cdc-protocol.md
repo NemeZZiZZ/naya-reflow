@@ -654,3 +654,69 @@ to +0xb8 = mutex-guarded lazy singleton (double-checked locking); site
 @1627589 registers the +0xc0 mutex destructor via `___cxa_atexit`. So
 +0xb8 = guarded singleton pointer, +0xc0 = its mutex. The +0xc0 'users'
 in the census are lock/unlock/atexit refs, not data reads.
+
+## ED LED debug interface — the dark-saga (2026-09-17, CLOSED, device recovered)
+
+**WARNING: ED writes can persistently park the LED render.** Malformed (wrong-arity) ED
+writes stored garbage into NVS-persisted LED settings; keys went dark for hours and
+survived reboots, NayaFlow full reset, and settings re-flashes. Recovery recipe below.
+
+### Wire formats (NayaCore strings, constructLEDCommands.cpp)
+All ED commands take `[target, value...]`: target uint8, 0xFF = all.
+- 1003/1004/1005 ON/OFF/TOGGLE: [target]
+- 1006/1007 INC/DEC: [target, amount 0-100]
+- 1008 ADJ_BRT: [target, brightness 0-100]  (nayactl's 0-255 is WRONG)
+- 100D EFFECT CYCLE, 100F HALT, 1010 RESUME: [target]
+- 100E HUE_SAT: [target, hue u16, sat 0-100]
+- 1011 SELECT EFFECT: [target, effect 0-3 = SOLID/BREATHE/SWIRL/SPECTRUM]
+- 1012 SET SCANMODE PWM, 1013 SET LED MAX BRIGHTNESS, 1014 SET LED LAYER OVERRIDE: [target, value]
+- 1050 RGB_BRT (global color override): [target, R, G, B, brightness 0-100] — **survives ee/10ce**
+- 10d1/10d2 FORCE ON/OFF: NO-REPLY on both halves (normal)
+- Empty params = self-target (wave-2 proven); right half: 1014 = NO-REPLY (left ACKs)
+- Empty-param 1012/1013/1014 return bare ACK 00 (no GET path)
+
+### NVS-persisted (per NayaCore verify strings)
+`scanmode_pwm`, `led_layer_override` (+ apparently the RGB/hue override state).
+Persist across ee/10ce and cold boots. NayaFlow full reset does NOT clear them.
+
+### NayaFlow NEVER sends ED (capture5, sniff clone, 2026-09-17)
+Settings flashes (scan-mode toggle, LED max slider) produced ZERO ED frames: only
+7x identical fe/100a (timeouts) + reads. The v1.25.1 settings UI controls for
+scanmode/max-brightness/LED-override-mode are dead host-side controls (no wire path,
+same as LED animations: registry exists, animation_id NULL, no calls).
+fe/100a = SET ACTIVITY TIMEOUTS, 13B payload: status 00 + 3x u32LE ms (idle, sleep, deep).
+User sample: (6000000, 6000000, 30000). It is NOT a commit (earlier "commit" reading wrong).
+Single-key color flash = lone 30/100e on LEFT port only; right port gets polls only,
+forever (no 30/10xx, no writes — NayaFlow's path to right-half colors stays unobserved).
+
+### Dark-saga timeline (how we broke + fixed it)
+1. Wave-2 left LEDs healthy. Malformed 1-byte ED writes (missing target byte) began
+   parking the render: keys dark, module LED ok (separate channel), typing unaffected.
+2. All reboots were fake (switch-flip with USB plugged = no MCU reset, proven in
+   boot-trap era). True reboot = ee/10ce (both halves re-enumerate) or USB replug.
+3. LED map wipe: NayaFlow color reassignment zeroed left L0 (all 136 = H0/S0) while
+   L1/L2 stayed factory amber. Map rewritten cleanly (30/100e loop) — still dark:
+   map content fine, render engine parked.
+4. NayaFlow full reset: no effect (doesn't touch NVS LED settings).
+5. RECOVERY (left): clean-write sequence, all [0xFF, value] per formats above:
+   1013 maxbrt=100, 1012 scanmode=1, 1014 override=0, 1050 white/100, 1008 brt=100,
+   1011 SOLID, 1003 ON (plus RESUME). Left lit WHITE SOLID (white = 1050 RGB override
+   beating the orange map; persisted through later ee/10ce).
+6. Right half: ACKs ED but render stayed dark through everything (settings, resets,
+   link re-establishment, stock flashes, KK15 30/100e forwarding probe — no reaction).
+   Right render is fed differently (its LED map is not CDC-accessible; forwarding path
+   unproven). RECOVERY (right): hardware Layer2 LED combos on the right half itself
+   (Hold-2 corner key + brightness/effect keys) — firmware-internal path. Then user
+   force-reflashed both halves + re-paired in NayaFlow: full normal function restored.
+7. Jerky-animation symptom during the saga = broken scanmode_pwm (discrete steps).
+
+### nayactl cross-ref (github.com/Qonfused/nayactl, RE of NayaCore v1.19.1, fw 3.30.1/3.41.0)
+Wire format + command map = 1:1 ours. Their extras: 30/10CA CLEAR ALL DATA, fe/1004
+GET HW ID = ASCII, CAT 0xCA = IC_CHARGER, keyscan fe/1008 [01=on]/events fe/1009
+[row,col,state 0=PRESS]; handshake = fe/1001 MEDIA_ID then fe/1002 (no 30/1001).
+de/1009 GET BATTERY payload 6B: [00][batt u16BE, 0.1mV][usb u16BE, 0.1mV]
+(our sample 00 00 a4 8d cb fb = 4212.5mV batt / 5221.9mV USB; source: usb<4.5V = Qi).
+Battery %%: KB = (mV-3300)/9 clamp 0..100; module = same on 0.1mV scale (33000..42000).
+Text command surface (dump_settings etc.): SILENT on fw 0.3.41.0 both halves.
+DANGEROUS (never send): ee/10be+10ae (DFU/mcuboot resets), fa/1002, fa/1006,
+text clear_bonds/mcuboot_reset.

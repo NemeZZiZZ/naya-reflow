@@ -451,7 +451,7 @@ if __name__ == "__main__":
         label = sys.argv[3] if len(sys.argv) >= 4 else "snap"
         side = "left" if dst == DST_LEFT else "right"
         stamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
-        fn = f"naya-archive/dumps/{side}-{label}-{stamp}.json"
+        fn = f"research/dumps/{side}-{label}-{stamp}.json"
         json.dump(layers, open(fn, "w"))
         print("saved", fn)
     elif len(sys.argv) >= 3 and sys.argv[2] == "aux":
@@ -473,7 +473,7 @@ if __name__ == "__main__":
                 out[str(layer)] = blob.hex()
                 print(f"ledmap L{layer}: {len(blob)} bytes")
             stamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
-            fn = f"naya-archive/dumps/left-ledmap-{stamp}.json"
+            fn = f"research/dumps/left-ledmap-{stamp}.json"
             json.dump(out, open(fn, "w"))
             print("saved", fn)
         finally:
@@ -490,7 +490,7 @@ if __name__ == "__main__":
                 out[str(layer)] = blob.hex()
                 print(f"100b L{layer}: {len(blob)} bytes")
             stamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
-            fn = f"naya-archive/dumps/left-100b-{stamp}.json"
+            fn = f"research/dumps/left-100b-{stamp}.json"
             json.dump(out, open(fn, "w"))
             print("saved", fn)
         finally:
