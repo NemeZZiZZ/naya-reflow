@@ -14,6 +14,9 @@ import * as path from 'path';
 import { keyIconName, shortLabel } from '../src/lib/key-icon-map';
 import { ACTIONS, buildRecord, matchAction } from '../src/lib/actions';
 import { Draft } from '../src/lib/draft';
+import type { KeyRec, LedRec } from '../src/lib/naya';
+import { parseSnapshotFile, diffSnapshotToDraft } from '../src/lib/importers';
+import type { SnapMaps } from '../src/lib/importers';
 import { timeoutsMs, timeoutsPayload } from '../src/lib/naya';
 import Keyboard from '../src/components/Keyboard';
 
@@ -393,5 +396,52 @@ eq(timeoutsMs(new Uint8Array([1, 2, 3])), null, 'timeoutsMs rejects short');
   eq(isWriteAck(u('01 00'), 0), false, 'ack nonzero status rejected');
   eq(isWriteAck(u('00'), 0), false, 'ack short rejected');
   eq(isWriteAck(u('00 00 00'), 0), false, 'ack long rejected');
+}
+
+// 18. snapshot import (restore-from-file)
+{
+  const rec7 = new Uint8Array([0x1e, 0x01, 0x04, 0x73, 0x00, 0x07, 0x00]);
+  const led4 = new Uint8Array([0x1e, 0xb4, 0x00, 0x64]);
+  const hx = (b: Uint8Array) => [...b].map((x) => x.toString(16).padStart(2, '0')).join('');
+  const snap = parseSnapshotFile({
+    tool: 'naya-backup', version: 1,
+    keymap: { '0': hx(rec7) }, ledmap: { '0': hx(led4) }, info: {},
+  });
+  eq('error' in snap ? 'err' : snap.layers.join(','), '0', 'backup snapshot parses');
+  if (!('error' in snap)) {
+    const liveKeys: KeyRec[][] = [[{ kk: 0x1e, t: 1, rec: rec7, offset: 0 }], [], []];
+    const liveLeds: LedRec[][] = [[{ kk: 0x1e, h: 180, s: 100, offset: 0 }], [], []];
+    const d0 = new Draft();
+    const r0 = diffSnapshotToDraft(d0, snap, liveKeys, liveLeds);
+    eq(r0.keysQueued + r0.ledsQueued + d0.size, 0, 'identical snapshot queues nothing');
+    const rec7b = new Uint8Array([0x1e, 0x01, 0x04, 0x73, 0x00, 0x08, 0x00]);
+    const snap2 = parseSnapshotFile({
+      tool: 'naya-backup', version: 1,
+      keymap: { '0': hx(rec7b) }, ledmap: { '0': hx(new Uint8Array([0x1e, 0xb4, 0x00, 0x63])) }, info: {},
+    });
+    const d1 = new Draft();
+    const r1 = diffSnapshotToDraft(d1, snap2 as SnapMaps, liveKeys, liveLeds);
+    eq(r1.keysQueued === 1 && r1.ledsQueued === 1 && d1.size === 2 ? 'ok' : 'bad', 'ok', 'changed key+led queued');
+    const snap3 = parseSnapshotFile({
+      tool: 'naya-reflow', kind: 'keymap-layer',
+      layers: { '1': { totalBytes: 11, records: [{ kk: 5, kkHex: '0x05', t: 1, rec: hx(new Uint8Array([5, 1, 4, 1, 2, 3, 4])), meaning: 'x' }] } },
+    });
+    eq('error' in snap3 ? 'err' : (snap3 as SnapMaps).layers.join(','), '1', 'web keymap export parses');
+    const d2 = new Draft();
+    const r2 = diffSnapshotToDraft(d2, snap3 as SnapMaps, [[], [], []], [[], [], []]);
+    eq(r2.skippedMissing, 1, 'no live counterpart skipped');
+    const snap4 = parseSnapshotFile({
+      tool: 'naya-reflow', kind: 'ledmap-layer',
+      layers: { '0': { totalBytes: 4, leds: [{ kk: 9, kkHex: '0x09', hue: 10, sat: 20 }] } },
+    }) as SnapMaps;
+    const d3 = new Draft();
+    const rec11 = new Uint8Array([9, 1, 8, 1, 2, 3, 4, 5, 6, 7, 8]);
+    const r3 = diffSnapshotToDraft(d3, {
+      keys: [[{ kk: 9, t: 1, rec: rec7, offset: 0 }], [], []],
+      leds: snap4.leds, layers: [0],
+    }, [[{ kk: 9, t: 1, rec: rec11, offset: 0 }], [], []], [[{ kk: 9, h: 10, s: 20, offset: 0 }], [], []]);
+    eq(r3.skippedLen, 1, 'length change skipped');
+    eq('error' in parseSnapshotFile({ tool: 'nope' }) ? 'err' : 'ok', 'err', 'unknown tool rejected');
+  }
 }
 void main();

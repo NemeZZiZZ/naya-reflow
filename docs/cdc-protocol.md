@@ -759,11 +759,15 @@ Independent dark-board recovery, mirrors our saga. Verified against OUR binary
   the layer prefix. Both forms coexist; oversized single frames wedge the parser
   (their 41B/241B wedge) — keep single-entry or correct chunking.
 - **ACK proves parse, not apply** (both learned independently).
+- **Write ACK echoes the layer** (live-proven 2026-09-17, `toolkit/naya-restore.py`
+  + web `isWriteAck`): 30/1004 ACK payload = `00 00` on L0, `00 01` on L1,
+  `00 02` on L2. A strict `== 00 00` matcher false-NACKs L1/L2 writes that
+  actually applied — accept `00 00` OR `00 <layer>`.
 - **LED positions**: 136 = keys 0-73, edge strips 74-80/81-87, module bays 88-111
   (left) / 112-135 (right); Touch lights first index of its bay. Our dumps show
   sequential position bytes 00..87 = same 136 slots.
-- Tooling gaps to close: `led max-brightness` setter (1013 [t,level] 0-100);
-  snapshot should record the 1013 ceiling (no GET path — track host-side).
+- Tooling: `toolkit/naya-maxbrt.py` sets the 1013 ceiling (default dry run);
+  snapshot should still record the assumed ceiling host-side (no GET path).
 
 ### 2026-09-17 evening: restore side effects + [FF]-phase verdict
 - Bulk 30/100e writes drop the 1050 RGB override back to follow-map render

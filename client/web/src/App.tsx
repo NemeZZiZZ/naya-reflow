@@ -30,6 +30,7 @@ import { useCustomColors } from "./hooks/useCustomColors";
 import { useKbFit } from "./hooks/useKbFit";
 import { queueAction, queueColor, queueFillLayer } from "./lib/queue";
 import { buildKeymapExport, buildLedmapExport, saveJson } from "./lib/exporters";
+import { diffSnapshotToDraft, parseSnapshotFile } from "./lib/importers";
 import type { ActionDef } from "./lib/actions";
 import type { KeyRec, LedRec, Side } from "./lib/naya";
 import type { EditorView } from "./components/ViewLayerTabs";
@@ -159,6 +160,39 @@ export default function App() {
     log("inf", "export: ledmap JSON saved");
   }
 
+  const importRef = useRef<HTMLInputElement>(null);
+
+  async function importSnapshotFile(f: File) {
+    if (keysByLayer.some((k) => k.length === 0)) {
+      log("err", "import: layer cache empty — Refresh first (diff needs live state)");
+      return;
+    }
+    let obj: unknown;
+    try {
+      obj = JSON.parse(await f.text());
+    } catch {
+      log("err", `import: '${f.name}' is not valid JSON`);
+      return;
+    }
+    const snap = parseSnapshotFile(obj);
+    if ("error" in snap) {
+      log("err", `import: ${snap.error}`);
+      return;
+    }
+    const r = diffSnapshotToDraft(draftRef.current, snap, keysByLayer, ledsByLayer);
+    bumpDraft();
+    log(
+      "inf",
+      `import '${f.name}': layers [${snap.layers.join(",")}] → ` +
+        `${r.keysQueued} key(s) + ${r.ledsQueued} LED(s) queued` +
+        (r.skippedLen > 0 ? `, ${r.skippedLen} skipped (length change — device ignores)` : "") +
+        (r.skippedMissing > 0 ? `, ${r.skippedMissing} skipped (no live counterpart)` : ""),
+    );
+    if (r.keysQueued + r.ledsQueued > 0)
+      log("inf", "import: review the queue, then Flash to apply");
+    else log("inf", "import: device already matches the snapshot");
+  }
+
   function queueActionForSelection() {
     if (!pickedAction) return;
     const { queued, skipped } = queueAction(
@@ -206,7 +240,25 @@ export default function App() {
   }
 
   const saveMenu = (
-    <SaveMenu leftOn={leftOn} onExportKeys={exportKeys} onExportLeds={exportLeds} />
+    <>
+      <input
+        ref={importRef}
+        type="file"
+        accept="application/json,.json"
+        className="hidden"
+        onChange={(e) => {
+          const f = e.target.files?.[0];
+          e.target.value = "";
+          if (f) void importSnapshotFile(f);
+        }}
+      />
+      <SaveMenu
+        leftOn={leftOn}
+        onExportKeys={exportKeys}
+        onExportLeds={exportLeds}
+        onImport={() => importRef.current?.click()}
+      />
+    </>
   );
 
   // --- render -------------------------------------------------------------

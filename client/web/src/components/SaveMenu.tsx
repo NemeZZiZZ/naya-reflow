@@ -14,10 +14,12 @@ export default function SaveMenu({
   leftOn,
   onExportKeys,
   onExportLeds,
+  onImport,
 }: {
   leftOn: boolean;
   onExportKeys: (all: boolean) => void;
   onExportLeds: (all: boolean) => void;
+  onImport: () => void;
 }) {
   return (
     <DropdownMenu>
@@ -39,6 +41,10 @@ export default function SaveMenu({
         </DropdownMenuItem>
         <DropdownMenuItem onClick={() => onExportLeds(true)} disabled={!leftOn}>
           Save all colors
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem onClick={onImport} disabled={!leftOn}>
+          Import snapshot…
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
