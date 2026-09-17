@@ -484,13 +484,18 @@ Map u64 = `(param2<<32)|param1`; Vs wire records emit `[T,08,HIGH32,LOW32]` =
 - **BT map (+0x78, COMPLETE, 8 names)**: CLEAR→0, NEXT→`0x100000000`,
   PREV→`0x200000000`, SELECT_SL→`0x300000000`, DEVICE_n→`0x30000000+n`
   (family 3 = BT; DEVICE_1 → wire X=3,Y=1, byte-matching probe3).
-- **LED map (+0x90, names COMPLETE, most values open)**: EFFECT_ON_OFF,
+- **LED map (+0x90, COMPLETE — names + all values, 2026-09-17)**: EFFECT_ON_OFF,
   BREATHE, SOLID, SWIRL, SPEC, EFFECT, BRIGHTNESS_UP/DOWN, SPEED_UP/DOWN,
   COLOR_RED/GREEN/BLUE/WHITE/CYAN/MAGENTA/YELLOW/ORANGE/PINK (19).
-  Decoded values: SOLID=`0xd00000000` (p2=13,p1=0 → wire X=13,Y=0 ✓);
-  BRI_UP/DOWN=(p2=7/8), SPD_UP/DOWN=(p2=9/10), LED_EFFECT=(p2=11);
-  MAGENTA=`0x0f010e6464` = (p2=15, H270/S100/B70) ⇒ color packing
-  Y = S|B<<8|H<<16; WHITE=`0x0f00000064` (anomalous p1, as-is).
+  Non-colors: SOLID=`0xd00000000` (p2=13,p1=0 → wire X=13,Y=0 ✓);
+  BRI_UP/DOWN=(p2=7/8), SPD_UP/DOWN=(p2=9/10), LED_EFFECT=(p2=11).
+  Colors (all p2=15, packing Y = S|B<<8|H<<16): RED=H0, ORANGE=H30,
+  YELLOW=H60, GREEN=H120, CYAN=H180, BLUE=H240, MAGENTA=H270, PINK=H300
+  (all S=100/B=70); WHITE=(H0/S0/B100) = zero-saturation full-brightness.
+  Static mechanics: x27 is built as ORANGE (`0x0f001e6464`) mid-batch, then
+  every other color = H-field arithmetic on x27 (RED=−30, YELLOW=+30,
+  GREEN=+90, CYAN=+150, BLUE=+210; PINK=MAGENTA+30); every delta lands
+  exactly on the canonical hue.
 - **Mouse map (+0xa8, 15 names)**: (X,Y)=(fn,signed-delta), consistent with the
   module-config 30/100b fn table (0/4=move, 1=button, 3=wheel, 6=pan):
   UP=(1,-1), DOWN=(1,1), SCROLL_UP=(4,1), SCROLL_DOWN=(0xF004,-1),
@@ -498,8 +503,7 @@ Map u64 = `(param2<<32)|param1`; Vs wire records emit `[T,08,HIGH32,LOW32]` =
   ZOOM_OUT=(0xF008,-1), M4=(3,8), M5=(3,16); LEFT=(low?,−1), RIGHT=(low?,+1)
   (low words unresolved), M1/M2/M3 relative to an unknown base.
 - **Still open**: +0x70 identity/direction (13 batch entries, (9,6) anomaly),
-  LED RED/GREEN/BLUE/CYAN/YELLOW/ORANGE/PINK u64s, mouse LEFT/RIGHT low word
-  + M1 base, T06 live wire sample (needs hands).
+  mouse LEFT/RIGHT low word + M1 base, T06 live wire sample (needs hands).
 
 ## Action vocabulary (renderer icon registry, 2026-09-17)
 
