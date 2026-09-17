@@ -720,3 +720,22 @@ Battery %%: KB = (mV-3300)/9 clamp 0..100; module = same on 0.1mV scale (33000..
 Text command surface (dump_settings etc.): SILENT on fw 0.3.41.0 both halves.
 DANGEROUS (never send): ee/10be+10ae (DFU/mcuboot resets), fa/1002, fa/1006,
 text clear_bonds/mcuboot_reset.
+
+### Post-recovery healthy baseline (2026-09-17, read-only, no writes)
+Dumps: `research/dumps/left-healthy-post-recovery-20260917-064553.json`
+(L0 789B, L1 636, L2 660), `research/dumps/left-ledmap-20260917-064601.json`.
+- Keymap L0 = factory + 5 known customs: F24@1e (stock flash), BT_DEVICE_1 Vs@2e,
+  MOUSE_RIGHT Vs@2f (probe3 pair), Z/Shift+X T03@30 (MOD-byte 0x02 live proof),
+  LGUI@31 (palette MAC_OS resolves to HID LGUI — T06-test-1 proof),
+  tail 4b=02 (sticky dirty flag, still set). L1/L2 byte-identical factory.
+  Size math closes: 764 +4 (2e 7→11B) +4 (2f 7→11B) +17 (30 7→24B T03) = 789.
+- LED map: left L0 = all 136 x [KK,00,00,00] (saga wipe still in place);
+  L1/L2 = factory amber [KK,26,00,64]. Keys lit at dump time via the 1050 white
+  RGB override beating the zeroed map (override-beats-map confirmed live).
+  Cosmetic open: 'follow-map' clear value for 1050/100E still unknown.
+- Aux left: Track docked (de/1001 TYPE 0x20), rail 4179mV (~95% host-computed),
+  base 4174mV; module FW 0.2.3.3, base FW v0.3.41.0 (fe/1002 stock sig),
+  BLE FW v0.2.29 (be/100f 00 02 1d), timeouts 6000/6000/30 (user setting persists).
+- Aux right: Touch docked, rail ~4220mV (~100%), base ~4095mV; right half silent
+  on ALL 30/10xx (remap lives on left — by design, not a defect).
+- Modules currently swapped vs the earlier layout (Track left / Touch right).
