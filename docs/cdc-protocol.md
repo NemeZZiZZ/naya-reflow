@@ -154,8 +154,10 @@ v1.25.1 release asset in backup/firmware; tables verified against it).
   (never observed), 100D READ LED MAP, 100E WRITE LED MAP.
 - MODMASK census (all NayaCore logs): `00` ×911, `02` ×16 (= 8 dumps × 2 paren
   keys) → effectively Shift-only; assume HID boot-modifier bits.
-- T10 constants: `c8 00` ×2 = tapping term 200ms (== profile header);
-  `03` and `01 01 00` still unexplained.
+- T10 constants: `c8 00` ×2 = tapping term 200ms (== profile header) —
+  proven static: `wrapDblTapRecord` reads the term as u16 @ `[Key+8]+0x18`
+  (default `0xc8`=200 when the profile object is null); `03` and `01 01 00`
+  still unexplained (h2 const / inner payload, single sample).
 
 ## Live verification (2026-09-17, left half, USB, NayaFlow closed)
 
@@ -225,8 +227,23 @@ Format: `[KK, 10, 18, c8,00, 03, 01,01,00, c8,00, A_HID,00,07,00, 00×4, B_HID,0
   shadow@82 `...1a 00 07 00...1b 00 07 00...` (tap_hold W / double X).
 - Tail index triplet `4b 00 00` → `4b 02 00` when the pair exists (V = T10-record
   count on layer? single sample; `4c/4d=01` baseline constant in all dumps).
-- Shadow slot KK82 = T07 filler in factory; addressing rule for 2nd+ multi-key
-  unproven (needs a two-multi-key experiment: new shadow at 0x83? 4b→04?).
+- Shadow @KK82 was T07 filler in factory — and the slot rule is now PROVEN
+  static: `Key::serializeBindingData(offset)` builds primary with offset=0
+  and shadow with offset=1; the offset-1 path computes the shadow slot as
+  `[Key] + 0x52` (disasm `naya_remap::Key::serializeBindingData`, NayaSniff
+  binary) → KK30 + 0x52 = 0x82. PREDICTION: any multi-behavior key at KK X
+  gets its shadow at X+0x52 (needs a live 2nd-key test). Note: factory's
+  first T07 filler is 0x6d (47 fillers 0x6d–0x9b), so the shadow slot is
+  NOT first-free-filler — don't scan for one.
+- Record builder: `Key::wrapDblTapRecord(h1,h2,inner)` emits
+  `[h1, 0x10, LEN, term_lo, term_hi, h2, inner...]`, LEN = inner.size()+3.
+- T07-vs-T0e filler decision is a single flag byte: `[Key+8]+0x28 == 0`
+  → `07`, else `0e` (matches profile `transparent as default = 1`).
+- `hasDoubleTapBindings()` = map lookup @ `Key+0x18` (exact trigger key
+  unresolved — one more branch to read).
+- WRITE path calls serialize with BOTH offsets (call pairs w1=0/1 in the
+  flash writer) and `operator==` compares both → our writer must emit
+  primary + shadow and fix 4b, exactly like stock.
 - Old `T03` name was a misnomer (T=0x03 24B records are macros, never observed
   on wire; DB `macros` table has 1 BASIC macro, never flashed in logs).
 - DB side: `key_bindings.behavior` ∈ {press, hold, double_tap, tap_hold} per

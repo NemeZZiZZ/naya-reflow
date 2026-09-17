@@ -49,9 +49,11 @@ dumps with per-key `tap: (ACTION)` + `wire: <hex>` pairs, 8 full dumps).
 
 1. **T03 multi-behavior — SOLVED 2026-09-17** (see `cdc-protocol.md` "T10 27-byte"
    section): T=0x10 pair (primary@KK: hold+tap, shadow@KK82: tap_hold+double_tap),
-   tail triplet 4b = pair count. Open sub-questions: shadow-slot allocation for a
-   2nd multi-key, `03`/`01 01 00` constants, MODMASK-less behavior triples
-   (Shifted hold values untested).
+   tail triplet 4b = pair count. Shadow-slot rule PROVEN static 2026-09-17:
+   shadow = KK+0x52 (`serializeBindingData(1)`; prediction only, needs a live
+   2nd-key test). T07-vs-T0e = flag byte (proven static). Still open:
+   `03`/`01 01 00` constants, MODMASK-less behavior triples
+   (Shifted hold values untested), single-hold-only key shape.
 2. ~~MODMASK bit table~~ CLOSED 2026-09-17: census over all logs = {00:911,
    02:16} (16 = 8 dumps × 2 paren keys) → Shift-only in practice; assume HID
    boot-modifier bits.
