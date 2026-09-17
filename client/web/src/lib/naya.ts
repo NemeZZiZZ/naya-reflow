@@ -523,27 +523,24 @@ export class NayaSession {
   }
 }
 
-/* Keymap layer parser (robust rule, field-proven): T01/T05 = 7B, T03 = 24B,
- * everything else [KK, A, LEN] + LEN bytes. */
+/* Keymap layer parser. Universal record rule (proven over all dumps):
+ * every record is [KK, T, LEN, payload x LEN], length = byte2 + 3.
+ * T01/T05 (LEN 0x04 -> 7) and T03 (LEN 0x15 -> 24) are just special cases;
+ * T06/T08 Vs, T10, fillers all follow the rule, so no fixed table needed. */
 export function parseLayer(blob: Uint8Array | number[]): {
   recs: KeyRec[];
   consumed: number;
   total: number;
 } {
   const u = blob instanceof Uint8Array ? blob : Uint8Array.from(blob);
-  const fixed: Record<number, number> = { 0x01: 7, 0x03: 24, 0x05: 7 };
   const recs: KeyRec[] = [];
   let i = 0;
   while (i < u.length) {
+    if (i + 2 >= u.length) break; // truncated tail
+    const ln = u[i + 2] + 3;
+    if (i + ln > u.length) break; // truncated tail
     const kk = u[i];
     const t = u[i + 1];
-    if (t === undefined) break;
-    let ln = fixed[t];
-    if (ln === undefined) {
-      if (i + 2 >= u.length) break;
-      ln = u[i + 2] + 3;
-    }
-    if (i + ln > u.length) break;
     recs.push({ kk, t, rec: u.slice(i, i + ln), offset: i });
     i += ln;
   }

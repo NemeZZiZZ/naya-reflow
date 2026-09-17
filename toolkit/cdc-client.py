@@ -303,22 +303,19 @@ class Session:
 
 
 def parse_layer(blob: bytes) -> dict:
-    """KK -> (offset, record bytes). Records: T01/T05=7B, T03=24B,
-    Vs vendor [KK,A,08,X u32,Y u32]=11B, short [KK,T,LEN]+LEN for
-    T in {00,02,07,0e,78}."""
-    known = {0x01: 7, 0x03: 24, 0x05: 7}
+    """KK -> (offset, record bytes). Universal record rule (proven over all
+    dumps): [KK, T, LEN, payload x LEN], record length = byte2 + 3.
+    Subsumes every old special case: T01 0x04->7, T03 0x15->24, T05 0x04->7,
+    T06 0x04->7, T08 0x04->7, Vs 0x08->11, T10 0x18->27 / 0x07->10,
+    fillers 0x07/0x0e/0x00/0x02/0x78 with LEN 0x00->3."""
     out, i = {}, 0
     while i < len(blob):
-        kk, t = blob[i], blob[i + 1]
-        ln = known.get(t)
-        if ln is None:
-            if i + 2 < len(blob) and blob[i + 2] == 0x08:
-                ln = 11  # vendor Vs record
-            elif t in (0x07, 0x0e, 0x02, 0x00, 0x78):
-                ln = blob[i + 2] + 3
-            else:
-                break
-        out[kk] = (i, blob[i:i + ln])
+        if i + 2 >= len(blob):
+            break  # truncated tail
+        ln = blob[i + 2] + 3
+        if i + ln > len(blob):
+            break  # truncated tail
+        out[blob[i]] = (i, blob[i:i + ln])
         i += ln
     return out
 

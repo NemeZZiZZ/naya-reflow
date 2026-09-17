@@ -421,6 +421,15 @@ Full frames: `naya-archive/aux-left.txt`, `aux-right.txt`.
 ### Parser fixes (cdc-client.py parse_layer)
 - Added T=0x78 3B-empty records (`[KK,78,00]` fillers) and Vs 11B detection
   (third byte 0x08 → 11B). Keymap L1 now parses 156 keys / full 636B.
+- Superseded by the UNIVERSAL RULE (proven over all dumps): every keymap
+  record is `[KK, T, LEN, payload x LEN]`, record length = byte2 + 3.
+  The old fixed table was a special case (T01 0x04→7, T03 0x15→24,
+  T05 0x04→7); T06/T08 Vs/T10-fillers all follow byte2+3. Old-vs-new
+  verified: 30 keymap layers across 13 dumps, all close to zero
+  (incl. all probe dumps: T03/T10/T06-test, 4b=02 tails).
+  Non-keymap blends (`left-diag1` keymap+aux mix, `left-postw` RAM-garbage
+  snap) are NOT parse failures — those files mix keymap blobs with aux
+  frames/entropy and can never close.
 
 ---
 
