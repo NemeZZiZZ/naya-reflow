@@ -61,6 +61,18 @@ export interface LedRec {
 export const sleep = (ms: number): Promise<void> =>
   new Promise((r) => setTimeout(r, ms));
 
+// Write ACK check for 30/1004 (keys) and 30/100e (LED): the device echoes the
+// layer in the ACK payload (L0 -> 00 00, L1 -> 00 01, L2 -> 00 02; proven live
+// 2026-09-17 — a strict 00 00 match false-NACKs every L1/L2 write).
+export function isWriteAck(
+  ack: Uint8Array | number[],
+  layer: number,
+): boolean {
+  return (
+    ack.length === 2 && ack[0] === 0 && (ack[1] === 0 || ack[1] === layer)
+  );
+}
+
 export function toHex(u8: Uint8Array | number[]): string {
   return Array.from(u8, (b) => b.toString(16).padStart(2, '0')).join(' ');
 }
@@ -424,7 +436,7 @@ export class NayaSession {
   async writeKey(record: Uint8Array | number[], layer = 0): Promise<Uint8Array> {
     // 30/1004 per-key write. record = full key record incl. KK as first
     // byte (7B T01/T05, 11B vendor, 24B macro). Returns the ACK payload
-    // (expect 00 00). NO commit: the write applies instantly and persists
+    // (00 + layer echo: 00 00 on L0, 00 01 on L1...). NO commit: the write applies instantly and persists
     // across reboot; replaying fe/100a commit bytes wedges the device.
     const rec = record instanceof Uint8Array ? record : Uint8Array.from(record);
     if (rec.length < 3) throw new Error('record too short');
@@ -454,8 +466,8 @@ export class NayaSession {
   async writeLed(kk: number, h: number, s: number, layer = 0): Promise<Uint8Array> {
     // 30/100e per-key LED write: params [00,layer,KK,H_lo,H_hi,S] (second
     // byte mirrors writeKey's layer position; stock only ever used layer 0).
-    // Returns the ACK payload (expect 00 00). NO commit: applies instantly
-    // and persists (proven: cyan->amber roundtrip, readback-verified).
+    // Returns the ACK payload (00 + layer echo, same as writeKey).
+    // NO commit: applies instantly and persists (proven: cyan->amber roundtrip, readback-verified).
     if (!(kk >= 0 && kk <= 0x87 && h >= 0 && h <= 511 && s >= 0 && s <= 255))
       throw new Error('KK/H/S out of range');
     const f = await this.cmd(

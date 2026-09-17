@@ -4,7 +4,7 @@ import {
   buildFrame, toHex, verifyFrame, parseLayer, parseLedmap,
   describeRecord, ledCss, fwVersionText, NayaSession, FrameReader,
   modPresence, modFwText, modRailMv, modPct, batteryMv, batteryPctRough,
-  sideFromUsbInfo, hsToHex, hexToHs,
+  sideFromUsbInfo, hsToHex, hexToHs, isWriteAck,
 } from '../src/lib/naya';
 import {
   POS_KEY, POS_SHAPE, SHAPES,
@@ -380,5 +380,18 @@ eq(JSON.stringify(timeoutsMs(factoryTo)), JSON.stringify({ idleMs: 90000, sleepM
 const rt = timeoutsPayload(6000000, 6000000, 30000);
 eq(rt.length === 13 && timeoutsMs(rt)!.idleMs === 6000000 ? 'ok' : 'bad', 'ok', 'timeouts roundtrip');
 eq(timeoutsMs(new Uint8Array([1, 2, 3])), null, 'timeoutsMs rejects short');
+}
+
+// 17. write ACK layer echo (live-proven 2026-09-17: device echoes layer)
+{
+  const u = (s: string) => s.split(' ').map((h) => parseInt(h, 16));
+  eq(isWriteAck(u('00 00'), 0), true, 'ack L0');
+  eq(isWriteAck(u('00 01'), 1), true, 'ack L1 echo');
+  eq(isWriteAck(u('00 02'), 2), true, 'ack L2 echo');
+  eq(isWriteAck(u('00 00'), 1), true, 'ack 00 accepted any layer');
+  eq(isWriteAck(u('00 03'), 1), false, 'ack wrong layer rejected');
+  eq(isWriteAck(u('01 00'), 0), false, 'ack nonzero status rejected');
+  eq(isWriteAck(u('00'), 0), false, 'ack short rejected');
+  eq(isWriteAck(u('00 00 00'), 0), false, 'ack long rejected');
 }
 void main();

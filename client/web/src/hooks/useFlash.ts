@@ -6,7 +6,7 @@ import { useCallback, useState } from 'react';
 import { toast } from 'sonner';
 import { opSummary } from '../lib/draft';
 import type { Draft } from '../lib/draft';
-import { toHex } from '../lib/naya';
+import { isWriteAck, toHex } from '../lib/naya';
 import type { NayaSession, Side } from '../lib/naya';
 import type { LayerDump } from './useLayers';
 import type { LogFn } from './useLog';
@@ -43,11 +43,11 @@ export function useFlash({
         log('inf', `flash ${done + 1}/${total}: ${opSummary(o)}`);
         if (o.kind === 'key') {
           const ack = await ses.writeKey(o.record, o.layer);
-          if (!(ack.length === 2 && ack[0] === 0 && ack[1] === 0))
+          if (!isWriteAck(ack, o.layer))
             throw new Error(`key write NACK: ${toHex(ack)}`);
         } else {
           const ack = await ses.writeLed(o.kk, o.h, o.s, o.layer);
-          if (!(ack.length === 2 && ack[0] === 0 && ack[1] === 0))
+          if (!isWriteAck(ack, o.layer))
             throw new Error(`led write NACK: ${toHex(ack)}`);
         }
         done++;
