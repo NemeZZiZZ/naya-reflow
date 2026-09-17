@@ -417,6 +417,27 @@ Full frames: `naya-archive/aux-left.txt`, `aux-right.txt`.
   still open (L1-only content, HID-like codes).
 - Client: `left dump100b`. NOTE: no 100b WRITE observed yet (stock flash used only 30/1004).
 
+### 30/100b module config — write format (spike 2026-09-17, live verdict PENDING)
+
+- Read path (proven): `30/100b` multipart, params `[part, layer]` → records
+  `[SLOT, FAMILY, LEN, payload x LEN]` (universal byte2+3 rule, same parser as
+  the keymap). L1 carries the content; L0/L2 are all-zero 3B records.
+- Write hypothesis under test (`toolkit/naya-modules-spike.py`): 30/1004-style
+  frame with **c1=`0x0b`** (write verb == read verb), params
+  `[00, SLOT] + record` — record is the full same-length replacement,
+  SLOT byte included (mirrors 30/1004's record-includes-KK convention).
+  ACK check: first payload byte `0x00`. Fallback candidate if 0x0b NACKs:
+  **c1=`0x0c`** (static map: 100C WRITE MODULE CONFIG DATA, never observed).
+- Same-length rule assumed (per the 30/1004 length-change caveat): the spike
+  swaps action bytes between two same-shape slots, never changes record length.
+- Behavior slots: 9 host gestures (see §"Host module-gesture map"):
+  0 MOUSE_HORIZONTAL, 1 MOUSE_VERTICAL, 2 MOUSE_STATIC, 3 MOUSE_BUTTONS,
+  4 MOUSE_SCROLL_VERTICAL, 5 STATIC_SCROLL_VERTICAL, 6 MOUSE_SCROLL_HORIZONTAL,
+  7 STATIC_SCROLL_HORIZONTAL, 8 STATIC_ZOOM. Blob slot↔gesture mapping
+  UNPROVEN until spike readback.
+- Live verdict: PENDING (controller-run). Exact working c1, ACK shape and slot
+  offsets get recorded here after the run; Task 5.1 consumes this section.
+
 ### Commit-token correction (supersedes stale-replay theory in part)
 - fe/100b payload == fe/100a params, byte-identical **across sessions/reboots/factory-restore**
   (`905f0100 e0930400 30750000` in capture3 AND today). So the token is STABLE, not a

@@ -22,6 +22,7 @@ def load(name, rel):
 
 
 t10spike = load("naya_t10_spike", "toolkit/naya-t10-spike.py")
+modspike = load("naya_modules_spike", "toolkit/naya-modules-spike.py")
 
 n = 0
 bad = 0
@@ -68,6 +69,32 @@ frame_bad = bytes(8) + bytes.fromhex("01 00") + bytes(2)
 eq(t10spike.ack_ok(frame_l0, 0), True, "ack_ok L0 00 00")
 eq(t10spike.ack_ok(frame_l2, 2), True, "ack_ok L2 layer echo")
 eq(t10spike.ack_ok(frame_bad, 0), False, "ack_ok rejects status 01")
+
+# 22. S2 module-config spike (slot parse / same-length swap / write params)
+mblob = bytes.fromhex(
+    "00 01 04 29 00 07 00"  # slot 0: family 01, action HID 0x29
+    " 01 01 04 2b 00 07 00"  # slot 1: same shape, action HID 0x2b
+    " 02 00 00"              # slot 2: zero record
+    " 03 0f 08 01 00 00 00 ff ff ff ff")  # slot 3: 11B family 0f
+mrecs = modspike.parse_slots(mblob)
+eq([off for off, _ in mrecs], [0, 7, 14, 17], "parse_slots offsets")
+eq([len(r) for _, r in mrecs], [7, 7, 3, 11], "parse_slots lengths")
+eq(len(modspike.GESTURES), 9, "9 behavior slots")
+eq(modspike.GESTURES[0], "MOUSE_HORIZONTAL", "gesture slot 0")
+eq(modspike.GESTURES[8], "STATIC_ZOOM", "gesture slot 8")
+(off_v, victim), (off_d, donor) = modspike.find_swap_pair(mrecs)
+eq((off_v, off_d), (0, 7), "swap pair = slots 0/1 (same shape, action differs)")
+new_rec = modspike.build_swap_record(victim, donor)
+eq(new_rec.hex(" "), "00 01 04 2b 00 07 00",
+   "swap: victim header + donor action bytes (same length)")
+eq(len(new_rec), len(victim), "swap keeps record length")
+eq(modspike.build_write_params(0x00, new_rec).hex(" "),
+   "00 00 00 01 04 2b 00 07 00", "write params [00, SLOT] + record")
+eq(modspike.parse_slots(bytes.fromhex("00 00 00 01 00 00")),
+   [(0, bytes.fromhex("00 00 00")), (3, bytes.fromhex("01 00 00"))],
+   "parse all-zero L0-style blob")
+eq(modspike.find_swap_pair(modspike.parse_slots(bytes.fromhex("00 00 00"))),
+   None, "no swap pair in zero-only blob")
 
 print(f"{n - bad}/{n} ok" + ("" if bad == 0 else f" — {bad} FAILURES"))
 sys.exit(1 if bad else 0)
