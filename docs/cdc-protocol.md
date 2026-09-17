@@ -297,7 +297,19 @@ LH3/RH3 (53/54)=Enter/Backspace; L1 thumbs all transparent (T0e).
   (chaotic reads) — recovered by power reboot, no NVS damage. Stock ritual per key is
   READ-ALL → 30/1004 → READ-ALL → fe/100a, but our writer works with handshake → 30/1004 → READ-ALL.
   Full factory restore done programmatically: 4× `left set` (1e→CapsLock, 2e/2f→LShift, 30→Z),
-  all 3 layers byte-identical to factory baseline dump. NEVER replay commit bytes across sessions.
+   all 3 layers byte-identical to factory baseline dump. NEVER replay commit bytes across sessions.
+- Stock WRITE-ritual chain, fully decoded static 2026-09-17 (disasm 1049541–1049589):
+  `_remapWriteLayerList` → `_remapReadLayerData` (30/1003) → `_remapWriteLayerData`
+  (30/1004) → `_remapWriteModuleConfigList` (30/100A) → `_remapReadModuleData`
+  (30/100B) → `_remapWriteModuleData` (30/100C) → READ color (30/100D) → WRITE color
+  (30/100E). Read-before-write per section (matches capture3's READ-ALL→WRITE→READ-ALL).
+- 30/100C element format (static: `ModuleConfig::toByteArray` + `Slot::serializeSlot`,
+  2026-09-17): per changed slot emit `[slot, 01, 01]` prefix (frame-params analogue
+  of 30/1004's `[00,layer,KK]`; meaning of the two `01` bytes open) + slot record
+  `[SLOT, T, LEN, payload]` (`Binding::serializeBindingData`, same T-table as keys),
+  or `[SLOT, 07, 00]` when the slot is empty. All changed slots concatenated into ONE
+  QByteArray → likely a SINGLE 100c frame (vs per-key frames for 30/1004).
+  Module-config layer association still open.
 
 ## AUX recon (2026-09-15, live via `cdc-client.py left/right aux`)
 All read-only. 30/10xx are LEFT-only (right answers fa/be/de/fe, NOT 30/1001).

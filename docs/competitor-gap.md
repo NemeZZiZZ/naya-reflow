@@ -57,9 +57,11 @@ dumps with per-key `tap: (ACTION)` + `wire: <hex>` pairs, 8 full dumps).
 2. ~~MODMASK bit table~~ CLOSED 2026-09-17: census over all logs = {00:911,
    02:16} (16 = 8 dumps × 2 paren keys) → Shift-only in practice; assume HID
    boot-modifier bits.
-3. ~~Module-config WRITE wire code~~ code = **30/100c** (static map) but never
-   observed on wire (absent from all captures; logs carry no frame codes) — needs
-   a module-gesture flash capture. Same for 30/1002 layer-list write.
+3. ~~Module-config WRITE wire code~~ code = **30/100c**, FORMAT STATIC-DECODED
+   2026-09-17 (see `cdc-protocol.md` WRITE path): element = `[slot,01,01]` +
+   `[SLOT,T,LEN,payload]` (or `[SLOT,07,00]` empty), all changed slots in one frame;
+   full stock ritual chain decoded. Still never observed on wire — needs a live
+   module-gesture flash to confirm the `01,01` bytes. Same for 30/1002 layer-list write.
 4. ~~Per-layer LED ANIMATION setting protocol~~ renderer has registry
    `{SOLID:solid, SWIRL:swirl, BREATHE:breathe, SPECTRUM:spectrum}` + icons, but
    NO renderer→backend calls and `animation_id NULL` in DB → host-side/planned,
