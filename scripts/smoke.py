@@ -89,6 +89,11 @@ new_rec = modspike.build_swap_record(victim, donor)
 eq(new_rec.hex(" "), "00 01 04 2b 00 07 00",
    "swap: victim header + donor action bytes (same length)")
 eq(len(new_rec), len(victim), "swap keeps record length")
+eq(modspike.build_swap_record(new_rec, victim), victim,
+   "swap-back yields the original record (restore payload)")
+eq(mblob[:off_v] + modspike.build_swap_record(new_rec, victim)
+   + mblob[off_v + len(victim):], mblob,
+   "restore write reproduces the original blob byte-for-byte")
 eq(modspike.build_write_params(0x00, new_rec).hex(" "),
    "00 00 00 01 04 2b 00 07 00", "write params [00, SLOT] + record")
 eq(modspike.parse_slots(bytes.fromhex("00 00 00 01 00 00")),

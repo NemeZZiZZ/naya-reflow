@@ -161,25 +161,39 @@ def main():
         print(f"  old: {victim.hex(' ')}")
         print(f"  new: {new_rec.hex(' ')}")
 
+        def restore_slot():
+            """Best-effort revert of the probed slot to its original record
+            (same hardening as naya-t10-spike.py's restore_originals: a write
+            that landed but diverged on readback must not leave the slot
+            modified)."""
+            f = ses.cmd(0x30, 0x10, C1_WRITE, build_write_params(slot, victim))
+            ack = cdc.payload_of(f)
+            if ack[:1] != b"\x00":
+                print(f"  restore slot {slot:#04x}: BAD ACK {ack.hex(' ')}",
+                      flush=True)
+                return False
+            print(f"  restored slot {slot:#04x}: {victim.hex(' ')}", flush=True)
+            return True
+
         params = build_write_params(slot, new_rec)
         f = ses.cmd(0x30, 0x10, C1_WRITE, params)
         ack = cdc.payload_of(f)
         print(f"  write ACK: {ack.hex(' ')}", flush=True)
         if ack[:1] != b"\x00":
+            restore_slot()
             return fail("write ACK", "params", params, "ACK", ack)
 
         blob1 = ses.read_multipart(C1_READ, a.layer)
         live = dict((r[0], r) for _, r in parse_slots(blob1)).get(slot)
         if live != new_rec:
+            restore_slot()
             return fail("readback", "want", new_rec,
                         "got", live if live is not None else b"")
         print(f"readback: slot {slot:#04x} byte-identical")
 
-        f = ses.cmd(0x30, 0x10, C1_WRITE, build_write_params(slot, victim))
-        ack = cdc.payload_of(f)
-        if ack[:1] != b"\x00":
-            return fail("restore ACK", "record", victim, "ACK", ack)
-        print(f"  restored slot {slot:#04x}: {victim.hex(' ')}", flush=True)
+        if not restore_slot():
+            return fail("restore ACK", "record", victim,
+                        "note", "see restore lines above")
 
         blob2 = ses.read_multipart(C1_READ, a.layer)
         if blob2 != blob0:
