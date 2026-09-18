@@ -32,3 +32,21 @@ Working tools. All tested live against Naya Create (base FW 0.3.41.0).
   `DIFFERS` per section). Dry run by default, `--apply` writes (quit
   NayaFlow first). Caveat: length-changing record rewrites are silently
   ignored by the device — the report lists diverged KKs.
+- [`naya-undark.py`](naya-undark.py) — one-shot dark-board revival: 1013
+  ceiling + [FF]-phase bundle. Dry run by default, `--apply` writes.
+- [`naya-led-recover.py`](naya-led-recover.py) — LED-engine phase sweep for
+  the dark saga; `--phase ff` is the winning single phase. Dry run default.
+- [`naya-maxbrt.py`](naya-maxbrt.py) — set/query the `ed/1013` max-brightness
+  ceiling (no GET path — snapshot the assumed value host-side).
+- Spikes (each dry-run by default, `--apply` writes; verdicts live in
+  `docs/cdc-protocol.md`):
+  [`naya-t10-spike.py`](naya-t10-spike.py) — T10 full-set write (PROVEN;
+  `--dump FILE` saves the keymap for flavor diffs),
+  [`naya-modules-spike.py`](naya-modules-spike.py) — `30/100c` module-slot
+  write (PROVEN, c1=0x0c, params `[00,LAYER]`+record),
+  [`naya-effect-spike.py`](naya-effect-spike.py) — `ed/1011` per-layer
+  effect probe (PROVEN `[layer,effect]`),
+  [`naya-led-batch-spike.py`](naya-led-batch-spike.py) — `30/100e` chunked
+  full-map batch write (OPEN S4; candidate forms `--form layer|00layer`,
+  `--ack-mode per-chunk|final-only`, oracle = `30/100d` readback,
+  single-entry restore).
