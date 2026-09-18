@@ -247,26 +247,17 @@ export default function App() {
     setColorDlg(false);
   }
 
+  // saveMenu JSX is shared by the header tabs and the bindings-tab cards —
+  // keep it free of the hidden file input: a second copy would steal the ref
+  // and React nulls it when that copy unmounts on tab switch. The input is
+  // mounted once below, beside the dialogs.
   const saveMenu = (
-    <>
-      <input
-        ref={importRef}
-        type="file"
-        accept="application/json,.json"
-        className="hidden"
-        onChange={(e) => {
-          const f = e.target.files?.[0];
-          e.target.value = "";
-          if (f) void importSnapshotFile(f);
-        }}
-      />
-      <SaveMenu
-        leftOn={leftOn}
-        onExportKeys={exportKeys}
-        onExportLeds={exportLeds}
-        onImport={() => importRef.current?.click()}
-      />
-    </>
+    <SaveMenu
+      leftOn={leftOn}
+      onExportKeys={exportKeys}
+      onExportLeds={exportLeds}
+      onImport={() => importRef.current?.click()}
+    />
   );
 
   // --- render -------------------------------------------------------------
@@ -405,6 +396,17 @@ export default function App() {
           onOpenChange={setSettingsOpen}
           left={sesRef.current.get("left")}
           onLog={log}
+        />
+        <input
+          ref={importRef}
+          type="file"
+          accept="application/json,.json"
+          className="hidden"
+          onChange={(e) => {
+            const f = e.target.files?.[0];
+            e.target.value = "";
+            if (f) void importSnapshotFile(f);
+          }}
         />
       </div>
       <Toaster theme="dark" position="bottom-right" />
