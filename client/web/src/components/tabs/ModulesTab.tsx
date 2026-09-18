@@ -9,6 +9,7 @@
 // Reads run on mount with the left half connected; any failure degrades to a
 // muted "module config unavailable" note, never a crash.
 import { useCallback, useEffect, useState } from 'react';
+import { toast } from 'sonner';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
 import { Card, CardContent, CardHeader } from '../ui/card';
@@ -17,8 +18,11 @@ import type { NayaSession, Side } from '../../lib/naya';
 import { describeRecord, toHex } from '../../lib/naya';
 import { matchAction } from '../../lib/actions';
 import type { HalfSnapshot } from '../../lib/aux';
+import type { Draft } from '../../lib/draft';
 import { parseModuleConfig } from '../../lib/modules';
 import type { GestureBinding, ModuleConfig } from '../../lib/modules';
+import { queueModuleGesture } from '../../lib/queue';
+import { usePersistentFlag } from '../../hooks/usePersistentFlag';
 import type { LogFn } from '../../hooks/useLog';
 import { cn } from '../../lib/utils';
 
@@ -60,17 +64,29 @@ export default function ModulesTab({
   halves,
   leftOn,
   log,
+  draftRef,
+  bumpDraft,
 }: {
   left: NayaSession | undefined;
   halves: Record<Side, HalfSnapshot>;
   leftOn: boolean;
   log: LogFn;
+  draftRef: React.RefObject<Draft>;
+  bumpDraft: () => void;
 }) {
   const [layer, setLayer] = useState('1');
   const [cfgs, setCfgs] = useState<Record<string, ModuleConfig | null>>({});
   const [loaded, setLoaded] = useState(false);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  // Experimental gesture write (Task 5.3): toggled only via devtools /
+  // localStorage, no UI toggle (deliberate). When on, clicking a FLASHABLE
+  // row expands a donor picker that copies another slot's bytes — exactly
+  // the S2-proven same-shape swap. The plan's ActionPalette pick cannot work
+  // here: palette actions are key-record bodies (6-10B) and can never satisfy
+  // the same-length rule for 1B gesture payloads.
+  const [writeEnabled] = usePersistentFlag('naya-modules-write', false);
+  const [donorFor, setDonorFor] = useState<number | null>(null);
 
   const load = useCallback(async () => {
     if (!left) return;
@@ -106,6 +122,26 @@ export default function ModulesTab({
   const cfg = cfgs[layer] ?? null;
   const gestures = cfg?.gestures.filter((g) => g.slot < GESTURE_SLOTS) ?? [];
   const raw = cfg?.gestures.filter((g) => g.slot >= GESTURE_SLOTS) ?? [];
+
+  const copyFrom = useCallback(
+    (g: GestureBinding, donor: GestureBinding) => {
+      const r = queueModuleGesture(
+        draftRef.current,
+        Number(layer),
+        g,
+        Array.from(donor.actionRaw.slice(3)),
+      );
+      if (r.queued) {
+        log('inf', `queued module write L${layer} ${g.gesture} ← slot ${donor.slot} bytes`);
+        bumpDraft();
+        setDonorFor(null);
+      } else {
+        log('err', `module write not queued: ${r.error}`);
+        toast.error('Gesture write rejected', { description: r.error });
+      }
+    },
+    [draftRef, bumpDraft, layer, log],
+  );
 
   return (
     <div className="grid grid-cols-[220px_1fr] gap-4 p-4">
@@ -157,34 +193,72 @@ export default function ModulesTab({
           {cfg && (
             <>
               <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-x-3 gap-y-1.5">
-                {gestures.map((g) => (
-                  <div key={g.slot} className="contents">
-                    <span
-                      className={cn(
-                        'font-mono text-xs',
-                        !g.flashable && 'text-muted-foreground opacity-60',
-                      )}
-                    >
-                      {g.gesture}
-                    </span>
-                    {g.flashable ? (
-                      <Badge variant="ok">FLASHABLE</Badge>
-                    ) : (
-                      <span title="Read-only in this client: only family-01 gestures have a proven write path">
-                        <Badge variant="default">APP ONLY</Badge>
+                {gestures.map((g) => {
+                  const clickable = writeEnabled && g.flashable;
+                  const donors =
+                    donorFor === g.slot && cfg
+                      ? cfg.gestures.filter(
+                          (d) =>
+                            d.flashable &&
+                            d.slot !== g.slot &&
+                            d.actionRaw.length === g.actionRaw.length,
+                        )
+                      : [];
+                  return (
+                    <div key={g.slot} className="contents">
+                      <span
+                        className={cn(
+                          'font-mono text-xs',
+                          !g.flashable && 'text-muted-foreground opacity-60',
+                          clickable && 'cursor-pointer hover:underline',
+                        )}
+                        onClick={
+                          clickable
+                            ? () => setDonorFor(donorFor === g.slot ? null : g.slot)
+                            : undefined
+                        }
+                        title={
+                          clickable
+                            ? 'Experimental write: pick a donor slot to copy its bytes'
+                            : undefined
+                        }
+                      >
+                        {g.gesture}
                       </span>
-                    )}
-                    <span
-                      className={cn(
-                        'truncate font-mono text-xs tabular-nums',
-                        !g.flashable && 'text-muted-foreground opacity-60',
+                      {g.flashable ? (
+                        <Badge variant="ok">FLASHABLE</Badge>
+                      ) : (
+                        <span title="Read-only in this client: only family-01 gestures have a proven write path">
+                          <Badge variant="default">APP ONLY</Badge>
+                        </span>
                       )}
-                      title={toHex(g.actionRaw)}
-                    >
-                      {actionLabel(g)}
-                    </span>
-                  </div>
-                ))}
+                      <span
+                        className={cn(
+                          'truncate font-mono text-xs tabular-nums',
+                          !g.flashable && 'text-muted-foreground opacity-60',
+                        )}
+                        title={toHex(g.actionRaw)}
+                      >
+                        {actionLabel(g)}
+                        {donors.length > 0 && (
+                          <span className="mt-1 flex flex-wrap gap-1">
+                            {donors.map((d) => (
+                              <Button
+                                key={d.slot}
+                                size="sm"
+                                variant="outline"
+                                onClick={() => copyFrom(g, d)}
+                                title={`Copy ${toHex(d.actionRaw)} (S2-proven same-shape swap)`}
+                              >
+                                ← slot {d.slot}
+                              </Button>
+                            ))}
+                          </span>
+                        )}
+                      </span>
+                    </div>
+                  );
+                })}
               </div>
               {raw.length > 0 && (
                 <details className="mt-3">

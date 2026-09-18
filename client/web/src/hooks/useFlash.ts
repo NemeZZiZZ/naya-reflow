@@ -6,7 +6,7 @@ import { useCallback, useState } from 'react';
 import { toast } from 'sonner';
 import { opSummary } from '../lib/draft';
 import type { Draft } from '../lib/draft';
-import { isWriteAck, toHex } from '../lib/naya';
+import { concat, isWriteAck, toHex } from '../lib/naya';
 import type { NayaSession, Side } from '../lib/naya';
 import type { LayerDump } from './useLayers';
 import type { LogFn } from './useLog';
@@ -64,8 +64,21 @@ export function useFlash({
           if (f.payload.length === 0 || f.payload[0] !== 0x00)
             throw new Error(`${o.path} write NACK: ${toHex(f.payload)}`);
           d.removeAt(d.ops.indexOf(o)); // no GET — ACK is the only verification
+        } else if (o.kind === 'module') {
+          // S2-proven write: 30/100c (c1=0x0c), params [00, LAYER] + full
+          // record, ACK = 00 <layer>. c1=0x0b parse-ACKs WITHOUT applying —
+          // never use it here.
+          const f = await ses.cmd(
+            0x30,
+            0x10,
+            0x0c,
+            concat([new Uint8Array([0, o.layer]), o.payload]),
+          );
+          if (!isWriteAck(f.payload, o.layer))
+            throw new Error(`module write NACK: ${toHex(f.payload)}`);
+          d.removeAt(d.ops.indexOf(o)); // no GET — ACK is the only verification
         } else {
-          throw new Error('module writes not enabled (Phase 5 feature flag)');
+          throw new Error('unknown op kind');
         }
         done++;
       }

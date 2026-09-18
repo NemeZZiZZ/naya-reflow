@@ -393,6 +393,8 @@ export default function App() {
               halves={halves}
               leftOn={leftOn}
               log={log}
+              draftRef={draftRef}
+              bumpDraft={bumpDraft}
             />
           )}
 

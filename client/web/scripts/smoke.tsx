@@ -536,6 +536,7 @@ import {
 } from '../src/lib/settings';
 import { FLAVORS, flavorById } from '../src/lib/flavors';
 import { queueSetting } from '../src/lib/queue';
+import { queueModuleGesture } from '../src/lib/queue';
 import {
   GESTURE_NAMES, gestureName, parseModuleConfig, gesturePayload,
 } from '../src/lib/modules';
@@ -629,5 +630,40 @@ function hexBytes(h: string): Uint8Array {
   eq(cfg2!.gestures[5].flashable, false, '07-family slot read-only');
   eq(parseModuleConfig(new Uint8Array([0x00, 0x01]), 0), null, 'truncated blob → null');
   eq(parseModuleConfig(new Uint8Array(0), 0), null, 'empty blob → null');
+}
+
+// 24. queueModuleGesture: S2-proven path only, latest-wins per (layer, slot)
+{
+  const g = {
+    slot: 0,
+    gesture: 'MOUSE_HORIZONTAL',
+    actionRaw: Uint8Array.from([0x00, 0x01, 0x01, 0x0a]),
+    flashable: true,
+  };
+  const d = new Draft();
+  let r = queueModuleGesture(d, 1, g, [0x32]);
+  eq(r.queued, true, 'gesture write queued');
+  eq(d.size, 1, 'one op');
+  eq(d.ops[0].kind, 'module', 'module op kind');
+  if (d.ops[0].kind === 'module') {
+    eq(d.ops[0].layer, 1, 'op carries layer (30/100c params need it)');
+    eq(toHex(d.ops[0].payload), '00 01 01 32', 'op payload = rebuilt record');
+  }
+  eq(opSummary(d.ops[0]).includes('L1 slot 0'), true, 'summary shows layer+slot');
+  // latest-wins: re-queue same target with other bytes replaces, not appends
+  r = queueModuleGesture(d, 1, g, [0x14]);
+  eq(r.queued, true, 're-queue ok');
+  eq(d.size, 1, 'still one op');
+  if (d.ops[0].kind === 'module') eq(toHex(d.ops[0].payload), '00 01 01 14', 'payload replaced');
+  // same slot on another layer is a separate write
+  queueModuleGesture(d, 0, g, [0x32]);
+  eq(d.size, 2, 'other layer coexists');
+  // guards: unproven family + length change rejected
+  r = queueModuleGesture(d, 1, { ...g, flashable: false }, [0x32]);
+  eq(r.queued, false, 'non-flashable rejected');
+  eq(typeof r.error, 'string', 'rejection explains why');
+  r = queueModuleGesture(d, 1, g, [0x32, 0x00]);
+  eq(r.queued, false, 'length change rejected');
+  eq(d.size, 2, 'rejections queue nothing');
 }
 void main();

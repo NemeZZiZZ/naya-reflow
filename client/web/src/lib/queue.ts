@@ -5,8 +5,11 @@ import { buildRecord } from './actions';
 import type { ActionDef } from './actions';
 import { behaviorSetOps } from './t10';
 import type { BehaviorSet } from './t10';
+import { gesturePayload } from './modules';
+import type { GestureBinding } from './modules';
 import type { Draft } from './draft';
 import type { SettingsOp } from './draft';
+import { toHex } from './naya';
 import type { KeyRec, LedRec } from './naya';
 
 export interface SelKey {
@@ -89,6 +92,33 @@ export function queueBehaviorSet(
     const op = behaviorSetOps(kk, set, layer, label);
     if (!op) return { queued: false, error: 'tap-only — use the plain action queue' };
     draft.add(op);
+    return { queued: true };
+  } catch (e) {
+    return { queued: false, error: (e as Error).message };
+  }
+}
+
+/** Queue a module gesture write (30/100c, S2-proven path only).
+ * Latest-wins per (layer, slot): stale ops for the same target are dropped
+ * so the flash sends one write per gesture. */
+export function queueModuleGesture(
+  draft: Draft,
+  layer: number,
+  g: GestureBinding,
+  actionBody: number[],
+): { queued: boolean; error?: string } {
+  try {
+    const payload = gesturePayload(g, actionBody);
+    draft.ops = draft.ops.filter(
+      (o) => !(o.kind === 'module' && o.layer === layer && o.slot === g.slot),
+    );
+    draft.add({
+      kind: 'module',
+      layer,
+      slot: g.slot,
+      payload,
+      label: `${g.gesture} → ${toHex(payload)}`,
+    });
     return { queued: true };
   } catch (e) {
     return { queued: false, error: (e as Error).message };

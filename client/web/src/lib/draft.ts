@@ -39,8 +39,9 @@ export interface SettingsOp {
 }
 export interface ModuleOp {
   kind: 'module';
-  slot: number;
-  payload: Uint8Array;
+  layer: number; // 0|1|2 — 30/100c params are [00, LAYER] (S2 addressing trap)
+  slot: number; // gesture slot = record byte 0 (S2: slot == gesture index)
+  payload: Uint8Array; // full record incl. slot byte
   label: string;
 }
 export type Op = KeyOp | LedOp | KeySetOp | SettingsOp | ModuleOp;
@@ -58,7 +59,7 @@ export function opKey(o: Op): string {
       // always 0, so timeout payloads still dedup to one op.
       return `settings:${o.path}:${o.payload[0] ?? 0}`;
     case 'module':
-      return `module:${o.slot}:${toHex(o.payload)}`;
+      return `module:${o.layer}:${o.slot}:${toHex(o.payload)}`;
   }
 }
 
@@ -212,6 +213,6 @@ export function opSummary(o: Op): string {
     case 'settings':
       return `${o.path} → ${o.label}`;
     case 'module':
-      return `slot ${o.slot} → ${o.label}`;
+      return `L${o.layer} slot ${o.slot} → ${o.label}`;
   }
 }
