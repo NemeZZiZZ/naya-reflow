@@ -411,7 +411,11 @@ export default function App() {
           )}
 
           {tab === "devices" && (
-            <DevicesTab onDeviceInfo={() => setSheetOpen(true)} />
+            <DevicesTab
+              halves={halves}
+              draftRef={draftRef}
+              onDeviceInfo={() => setSheetOpen(true)}
+            />
           )}
 
           <ColorDialog
