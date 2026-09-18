@@ -39,7 +39,8 @@ export function useFlash({
     try {
       log('inf', `flash queue: ${total} op(s)`);
       await ses.handshake();
-      for (const o of d.ops) {
+      // Snapshot iteration: settings ops self-remove from d.ops on ACK.
+      for (const o of [...d.ops]) {
         log('inf', `flash ${done + 1}/${total}: ${opSummary(o)}`);
         if (o.kind === 'key') {
           const ack = await ses.writeKey(o.record, o.layer);
@@ -49,13 +50,26 @@ export function useFlash({
           const ack = await ses.writeLed(o.kk, o.h, o.s, o.layer);
           if (!isWriteAck(ack, o.layer))
             throw new Error(`led write NACK: ${toHex(ack)}`);
+        } else if (o.kind === 'keyset') {
+          for (const rec of o.records) {
+            const ack = await ses.writeKey(rec, o.layer);
+            if (!isWriteAck(ack, o.layer))
+              throw new Error(
+                `keyset write NACK @0x${rec[0].toString(16)}: ${toHex(ack)}`,
+              );
+          }
+        } else if (o.kind === 'settings') {
+          const [t, c0, c1] = o.path.split('/').map((h) => parseInt(h, 16));
+          const f = await ses.cmd(t, c0, c1, o.payload);
+          if (f.payload.length === 0 || f.payload[0] !== 0x00)
+            throw new Error(`${o.path} write NACK: ${toHex(f.payload)}`);
+          d.removeAt(d.ops.indexOf(o)); // no GET — ACK is the only verification
         } else {
-          // keyset/settings/module executor lands with the 5-tab
-          // configurator; nothing produces these ops yet — never skip one.
-          throw new Error(`flash: no executor for op kind '${o.kind}' yet`);
+          throw new Error('module writes not enabled (Phase 5 feature flag)');
         }
         done++;
       }
+      bumpDraft(); // settings ops removed themselves above
       log('inf', `flash queue: ${done}/${total} written, re-reading…`);
       const fresh = await dumpAll(ses);
       let dropped = 0;
@@ -63,7 +77,7 @@ export function useFlash({
         dropped = d.reconcile(fresh.keys, fresh.leds);
         bumpDraft();
       }
-      if (fresh && dropped === total) {
+      if (fresh && d.size === 0) {
         toast.success('Flash complete', {
           description: `${total} change(s) verified on device`,
         });
@@ -72,7 +86,7 @@ export function useFlash({
         toast.error('Flash partially verified', {
           description: `${dropped}/${total} confirmed — ${d.size} still queued`,
         });
-        log('err', `flash queue: ${total - dropped} op(s) not reflected`);
+        log('err', `flash queue: ${d.size} op(s) not reflected`);
       }
     } catch (e) {
       toast.error('Flash failed', { description: (e as Error).message });
