@@ -5,7 +5,7 @@
 // Composition root: all state lives in hooks (useSessions / useLayers /
 // useDraft / …), all views in components. This file only wires them.
 import { useMemo, useRef, useState } from "react";
-import { Toaster } from "sonner";
+import { Toaster, toast } from "sonner";
 import Header from "./components/Header";
 import type { AppTab } from "./components/AppTabs";
 import Toolbar from "./components/Toolbar";
@@ -31,10 +31,11 @@ import { useDraft } from "./hooks/useDraft";
 import { useFlash } from "./hooks/useFlash";
 import { useCustomColors } from "./hooks/useCustomColors";
 import { useKbFit } from "./hooks/useKbFit";
-import { queueAction, queueColor, queueFillLayer } from "./lib/queue";
+import { queueAction, queueBehaviorSet, queueColor, queueFillLayer } from "./lib/queue";
 import { buildKeymapExport, buildLedmapExport, saveJson } from "./lib/exporters";
 import { diffSnapshotToDraft, parseSnapshotFile } from "./lib/importers";
 import type { ActionDef } from "./lib/actions";
+import type { BehaviorSet } from "./lib/t10";
 import type { KeyRec, LedRec, Side } from "./lib/naya";
 import type { EditorView } from "./components/ViewLayerTabs";
 
@@ -219,8 +220,23 @@ export default function App() {
     );
   }
 
-  function queueColorForSelection() {
-    const { queued, skipped } = queueColor(draftRef.current, sel, panelColor);
+  function queueBehaviorSetForKey(
+    layer: number,
+    kk: number,
+    set: BehaviorSet,
+    label: string,
+  ) {
+    const r = queueBehaviorSet(draftRef.current, layer, kk, set, 200, label);
+    bumpDraft();
+    if (r.queued)
+      log("inf", `queued behavior set L${layer} KK ${kk} → ${label}`);
+    else {
+      log("err", `behavior set not queued: ${r.error}`);
+      toast.error(r.error ?? "behavior set not queued");
+    }
+  }
+
+  function queueColorForSelection() {    const { queued, skipped } = queueColor(draftRef.current, sel, panelColor);
     bumpDraft();
     log(
       "inf",
@@ -324,6 +340,8 @@ export default function App() {
               pickedAction={pickedAction}
               onPickAction={setPickedAction}
               onQueueAction={queueActionForSelection}
+              keysByLayer={keysByLayer}
+              onQueueBehaviorSet={queueBehaviorSetForKey}
               panelColor={panelColor}
               onPanelColor={setPanelColor}
               customColors={customColors}

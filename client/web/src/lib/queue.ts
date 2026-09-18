@@ -3,6 +3,8 @@
 
 import { buildRecord } from './actions';
 import type { ActionDef } from './actions';
+import { behaviorSetOps } from './t10';
+import type { BehaviorSet } from './t10';
 import type { Draft } from './draft';
 import type { KeyRec, LedRec } from './naya';
 
@@ -63,4 +65,26 @@ export function queueFillLayer(
   for (const r of recs)
     draft.add({ kind: 'led', layer, kk: r.kk, h: color.h, s: color.s });
   return recs.length;
+}
+
+/** Queue a full T10/T03 behavior set for one key (device stores truth per
+ * set — editing any behavior rewrites all slots). `tappingTerm` stays an
+ * independent setting (default 200ms); flavor policy is UI-only until the
+ * S1 flavor-diff proves a wire encoding. */
+export function queueBehaviorSet(
+  draft: Draft,
+  layer: number,
+  kk: number,
+  set: BehaviorSet,
+  _tappingTerm: number,
+  label: string,
+): { queued: boolean; error?: string } {
+  try {
+    const op = behaviorSetOps(kk, set, layer, label);
+    if (!op) return { queued: false, error: 'tap-only — use the plain action queue' };
+    draft.add(op);
+    return { queued: true };
+  } catch (e) {
+    return { queued: false, error: (e as Error).message };
+  }
 }

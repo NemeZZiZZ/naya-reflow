@@ -44,9 +44,11 @@ function actionIcon(a: ActionDef): string | undefined {
 export default function ActionPalette({
   onPick,
   pickedId,
+  filter,
 }: {
   onPick: (a: ActionDef) => void;
   pickedId?: string | null;
+  filter?: (a: ActionDef) => boolean;
 }) {
   const [q, setQ] = useState("");
   const [open, setOpen] = useState<string[]>(["Keyboard"]);
@@ -59,10 +61,11 @@ export default function ActionPalette({
         items: ACTIONS.filter(
           (a) =>
             a.category === cat &&
+            (!filter || filter(a)) &&
             (!needle || a.label.toLowerCase().includes(needle)),
         ),
       })).filter((g) => !needle || g.items.length > 0),
-    [needle],
+    [needle, filter],
   );
   // Searching force-expands every group with hits; otherwise user-controlled.
   const value = needle ? groups.map((g) => g.cat) : open;
