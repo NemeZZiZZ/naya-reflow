@@ -7,6 +7,7 @@
 import { useMemo, useRef, useState } from "react";
 import { Toaster } from "sonner";
 import Header from "./components/Header";
+import type { AppTab } from "./components/AppTabs";
 import Toolbar from "./components/Toolbar";
 import KeyboardCard from "./components/KeyboardCard";
 import LayoutTable from "./components/LayoutTable";
@@ -43,6 +44,7 @@ export default function App() {
   const [logOpen, toggleLog] = usePersistentFlag("naya-logopen", false);
 
   // --- editor state -----------------------------------------------------
+  const [tab, setTab] = useState<AppTab>("bindings");
   const [view, setView] = useState<EditorView>("kb");
   const [layer, setLayer] = useState(0);
   const [showRaw, setShowRaw] = useState(false);
@@ -271,6 +273,12 @@ export default function App() {
             onSettings={() => setSettingsOpen(true)}
             logOpen={logOpen}
             onToggleLog={toggleLog}
+            tab={tab}
+            onTab={setTab}
+            draftSize={draftSize}
+            flashing={flashing}
+            onFlashOpen={() => setFlashOpen(true)}
+            saveMenu={saveMenu}
           />
 
           <Toolbar
@@ -281,14 +289,6 @@ export default function App() {
             onDisconnect={(side) => void sessions.disconnect(side)}
             leftOn={leftOn}
             rightOn={rightOn}
-            draftSize={draftSize}
-            flashing={flashing}
-            onFlashOpen={() => setFlashOpen(true)}
-            onDiscard={() => {
-              draftRef.current.clear();
-              bumpDraft();
-              log("inf", "queue cleared");
-            }}
             autoConn={autoConn}
             onToggleAuto={sessions.toggleAutoConn}
             onRefreshAux={() => void refreshAux()}

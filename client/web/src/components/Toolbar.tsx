@@ -1,6 +1,6 @@
-// Toolbar card: per-half connect groups, Flash/Discard, auto-connect,
-// aux refresh, device info.
-import { Info, PlugZap, RefreshCw, Wifi, WifiOff, XCircle } from "lucide-react";
+// Toolbar card: per-half connect groups, auto-connect, aux refresh,
+// device info. (Flash + draft badge moved to the header tabs in Task 1.3.)
+import { Info, RefreshCw, Wifi, WifiOff } from "lucide-react";
 import HalfGroup from "./HalfGroup";
 import { Button } from "./ui/button";
 import { Card, CardContent } from "./ui/card";
@@ -16,10 +16,6 @@ export default function Toolbar({
   onDisconnect,
   leftOn,
   rightOn,
-  draftSize,
-  flashing,
-  onFlashOpen,
-  onDiscard,
   autoConn,
   onToggleAuto,
   onRefreshAux,
@@ -32,10 +28,6 @@ export default function Toolbar({
   onDisconnect: (side: Side) => void;
   leftOn: boolean;
   rightOn: boolean;
-  draftSize: number;
-  flashing: boolean;
-  onFlashOpen: () => void;
-  onDiscard: () => void;
   autoConn: boolean;
   onToggleAuto: () => void;
   onRefreshAux: () => void;
@@ -63,28 +55,6 @@ export default function Toolbar({
           onDisconnect={() => onDisconnect("right")}
         />
         <span className="flex-1" />
-        <Button
-          size="sm"
-          disabled={!leftOn || draftSize === 0 || flashing}
-          title={
-            draftSize === 0
-              ? "Queue is empty — click keys to queue changes"
-              : `${draftSize} queued change(s)`
-          }
-          onClick={onFlashOpen}
-        >
-          <PlugZap /> Flash{draftSize > 0 ? ` (${draftSize})` : ""}
-        </Button>
-        {draftSize > 0 && (
-          <Button
-            variant="ghost"
-            size="sm"
-            title="Discard the whole queue"
-            onClick={onDiscard}
-          >
-            <XCircle /> Discard
-          </Button>
-        )}
         <Button
           variant="secondary"
           size="sm"

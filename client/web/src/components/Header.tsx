@@ -1,5 +1,7 @@
-// App header: title + badges + settings/log buttons.
+// App header: title + badges + settings/log buttons, then the app tabs.
+import type { ReactNode } from "react";
 import { SettingsIcon, Terminal } from "lucide-react";
+import AppTabs, { type AppTab } from "./AppTabs";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
 
@@ -8,11 +10,23 @@ export default function Header({
   onSettings,
   logOpen,
   onToggleLog,
+  tab,
+  onTab,
+  draftSize,
+  flashing,
+  onFlashOpen,
+  saveMenu,
 }: {
   leftOn: boolean;
   onSettings: () => void;
   logOpen: boolean;
   onToggleLog: () => void;
+  tab: AppTab;
+  onTab: (t: AppTab) => void;
+  draftSize: number;
+  flashing: boolean;
+  onFlashOpen: () => void;
+  saveMenu: ReactNode;
 }) {
   return (
     <>
@@ -48,6 +62,14 @@ export default function Header({
           <Terminal /> Log
         </Button>
       </div>
+      <AppTabs
+        tab={tab}
+        onTab={onTab}
+        draftSize={draftSize}
+        flashing={flashing}
+        onFlashOpen={onFlashOpen}
+        saveMenu={saveMenu}
+      />
       <p className="mb-4 text-[13px] text-muted-foreground">
         NayaFlow replacement over WebSerial — Chromium only (Chrome / Edge /
         Opera). Close NayaFlow first: ports open exclusively.
