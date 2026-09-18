@@ -12,7 +12,7 @@ import {
 import * as fs from 'fs';
 import * as path from 'path';
 import { keyIconName, shortLabel } from '../src/lib/key-icon-map';
-import { ACTIONS, buildRecord, matchAction } from '../src/lib/actions';
+import { ACTIONS, buildRecord, findAction, matchAction } from '../src/lib/actions';
 import { Draft, opKey, opSection } from '../src/lib/draft';
 import type { KeySetOp } from '../src/lib/draft';
 import type { KeyRec, LedRec } from '../src/lib/naya';
@@ -483,4 +483,52 @@ eq(timeoutsMs(new Uint8Array([1, 2, 3])), null, 'timeoutsMs rejects short');
   eq(d2.reconcile(keysLive, [[]]), 1, 'reconcile drops satisfied keyset');
   eq(d2.size, 0, 'queue empty after keyset reconcile');
 }
+// 20. T10/T03 behavior-set records
+{
+  eq(toHex(t03Record(0x22, 0x09, 0x07)),
+     '22 03 15 01 01 00 c8 00 09 00 07 00 00 00 00 00 07 00 07 00 00 00 00 00',
+     'T03 24B verbatim (KK22 hold=F tap=D)');
+  eq(toHex(t10ShadowMini(0x22, 0x05)), '74 10 07 c8 00 01 05 00 07 00',
+     'T10 mini shadow verbatim (KK22 double=B)');
+  eq(toHex(t10ShadowFull(0x32, 0x11, 0x05)),
+     '84 10 18 c8 00 03 01 01 00 c8 00 11 00 07 00 00 00 00 00 05 00 07 00 00 00 00 00',
+     'T10 full shadow verbatim (KK32 pair @84)');
+  eq(toHex(t10Primary(0x30, 0x1c, 0x1d)),
+     '30 10 18 c8 00 03 01 01 00 c8 00 1c 00 07 00 00 00 00 00 1d 00 07 00 00 00 00 00',
+     'T10 primary shape (KK30 hold=Y tap=Z)');
+  // parser roundtrips
+  const recs = [
+    { kk: 0x30, rec: t10Primary(0x30, 0x1c, 0x1d) },
+    { kk: 0x82, rec: t10ShadowFull(0x30, 0x1a, 0x1b) },
+  ] as unknown as KeyRec[];
+  eq(JSON.stringify(behaviorSetOf(recs, 0x30)),
+     JSON.stringify({ tap: 0x1d, hold: 0x1c, double: 0x1b, taphold: 0x1a }),
+     'behaviorSetOf full set');
+  eq(JSON.stringify(behaviorSetOf([{ kk: 0x22, rec: t03Record(0x22, 0x09, 0x07) }] as unknown as KeyRec[], 0x22)),
+     JSON.stringify({ tap: 0x07, hold: 0x09, double: null, taphold: null }),
+     'behaviorSetOf T03 pair');
+  // ops dispatch
+  const ops = behaviorSetOps(0x30, { tap: 0x1d, hold: 0x1c, double: 0x1b, taphold: 0x1a }, 0, 'Z multi');
+  eq(ops?.records.length, 2, 'full set → primary + full shadow');
+  eq(ops?.records[1][0], 0x82, 'shadow at kk+0x52');
+  eq(behaviorSetOps(0x30, { tap: 0x1d, hold: null, double: null, taphold: null }, 0, 'Z'), null,
+     'tap-only → null (plain KeyOp path)');
+  let threw = false;
+  try { behaviorSetOps(0x30, { tap: null, hold: 0x1c, double: null, taphold: null }, 0, 'bad'); }
+  catch { threw = true; }
+  eq(threw, true, 'chain violation throws');
+  // withSlot immutably sets one slot
+  const base: BehaviorSet = { tap: 0x1d, hold: null, double: null, taphold: null };
+  eq(JSON.stringify(withSlot(base, 'hold', 0x1c)),
+     JSON.stringify({ tap: 0x1d, hold: 0x1c, double: null, taphold: null }), 'withSlot sets hold');
+  eq(base.hold, null, 'withSlot does not mutate');
+  // hidPairOf against the catalog
+  const z = findAction('key-z') ?? ACTIONS.find((a) => a.label === 'Z')!;
+  eq(hidPairOf(buildRecord(0x30, z.body()))?.hid, 0x1d, 'hidPairOf catalog Z');
+}
+import {
+  t03Record, t10Primary, t10ShadowMini, t10ShadowFull,
+  behaviorSetOf, behaviorSetOps, withSlot, hidPairOf,
+} from '../src/lib/t10';
+import type { BehaviorSet } from '../src/lib/t10';
 void main();
