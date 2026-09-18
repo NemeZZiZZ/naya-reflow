@@ -53,7 +53,10 @@ export function opKey(o: Op): string {
     case 'keyset':
       return `keyset:${o.layer}:${o.kk}`;
     case 'settings':
-      return `settings:${o.path}`;
+      // Keyed by path + first payload byte (the ED target / 1011 layer):
+      // per-layer anims coexist, same-knob values dedup. fe/100a byte 0 is
+      // always 0, so timeout payloads still dedup to one op.
+      return `settings:${o.path}:${o.payload[0] ?? 0}`;
     case 'module':
       return `module:${o.slot}:${toHex(o.payload)}`;
   }

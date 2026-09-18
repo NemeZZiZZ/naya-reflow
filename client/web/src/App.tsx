@@ -356,7 +356,22 @@ export default function App() {
             />
           )}
 
-          {tab === "led" && <LedTab />}
+          {tab === "led" && (
+            <LedTab
+              layer={layer}
+              onLayer={setLayer}
+              keymap={keymap}
+              ledsByLayer={ledsByLayer}
+              ledmap={ledmap}
+              dirtyKks={dirtyKks}
+              draftRef={draftRef}
+              bumpDraft={bumpDraft}
+              log={log}
+              leftOn={leftOn}
+              customColors={customColors}
+              onSaveCustomColors={saveCustomColors}
+            />
+          )}
 
           {tab === "modules" && <ModulesTab />}
 

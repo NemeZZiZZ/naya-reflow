@@ -13,7 +13,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { keyIconName, shortLabel } from '../src/lib/key-icon-map';
 import { ACTIONS, buildRecord, findAction, matchAction } from '../src/lib/actions';
-import { Draft, opKey, opSection } from '../src/lib/draft';
+import { Draft, opKey, opSection, opSummary } from '../src/lib/draft';
 import type { KeySetOp } from '../src/lib/draft';
 import type { KeyRec, LedRec } from '../src/lib/naya';
 import { parseSnapshotFile, diffSnapshotToDraft } from '../src/lib/importers';
@@ -552,5 +552,17 @@ import {
   threw = false;
   try { animOp(0, 4); } catch { threw = true; }
   eq(threw, true, 'anim range guard');
+  // settings opKey carries the target byte: per-layer anims coexist while
+  // same-knob values dedup to the latest (fe/100a byte 0 is always 0).
+  {
+    const d = new Draft();
+    d.add(animOp(0, 1));
+    d.add(animOp(1, 2));
+    eq(d.size, 2, 'anims on different layers coexist');
+    d.add(maxBrtOp(90));
+    d.add(maxBrtOp(70));
+    eq(d.size, 3, 'same path+target deduped');
+    eq(opSummary(d.ops[2]).includes('70'), true, 'latest value queued');
+  }
 }
 void main();
