@@ -6,6 +6,7 @@ import type { ActionDef } from './actions';
 import { behaviorSetOps } from './t10';
 import type { BehaviorSet } from './t10';
 import type { Draft } from './draft';
+import type { SettingsOp } from './draft';
 import type { KeyRec, LedRec } from './naya';
 
 export interface SelKey {
@@ -65,6 +66,11 @@ export function queueFillLayer(
   for (const r of recs)
     draft.add({ kind: 'led', layer, kk: r.kk, h: color.h, s: color.s });
   return recs.length;
+}
+
+/** Thin draft.add wrapper for settings ops (symmetry with queue helpers). */
+export function queueSetting(draft: Draft, op: SettingsOp): void {
+  draft.add(op);
 }
 
 /** Queue a full T10/T03 behavior set for one key (device stores truth per

@@ -37,6 +37,7 @@ import { diffSnapshotToDraft, parseSnapshotFile } from "./lib/importers";
 import type { ActionDef } from "./lib/actions";
 import type { BehaviorSet } from "./lib/t10";
 import type { KeyRec, LedRec, Side } from "./lib/naya";
+import { timeoutsMs } from "./lib/naya";
 import type { EditorView } from "./components/ViewLayerTabs";
 
 export default function App() {
@@ -54,6 +55,7 @@ export default function App() {
   const [ledMode, setLedMode] = useState(true);
   const [pickedAction, setPickedAction] = useState<ActionDef | null>(null);
   const [panelColor, setPanelColor] = useState({ h: 180, s: 100 });
+  const [tappingTerm, setTappingTerm] = useState(200);
   const [colorDlg, setColorDlg] = useState(false);
   const [dlgColor, setDlgColor] = useState({ h: 180, s: 100 });
   const [flashOpen, setFlashOpen] = useState(false);
@@ -202,6 +204,18 @@ export default function App() {
     else log("inf", "import: device already matches the snapshot");
   }
 
+  // Live timeout read for the Behavior tab (left half only). Failures
+  // resolve null — the tab falls back to factory values, never a crash.
+  async function loadTimeouts() {
+    const ses = sesRef.current.get("left");
+    if (!ses) return null;
+    try {
+      return timeoutsMs(await ses.getTimeouts());
+    } catch {
+      return null;
+    }
+  }
+
   function queueActionForSelection() {
     if (!pickedAction) return;
     const { queued, skipped } = queueAction(
@@ -226,7 +240,7 @@ export default function App() {
     set: BehaviorSet,
     label: string,
   ) {
-    const r = queueBehaviorSet(draftRef.current, layer, kk, set, 200, label);
+    const r = queueBehaviorSet(draftRef.current, layer, kk, set, tappingTerm, label);
     bumpDraft();
     if (r.queued)
       log("inf", `queued behavior set L${layer} KK ${kk} → ${label}`);
@@ -375,7 +389,17 @@ export default function App() {
 
           {tab === "modules" && <ModulesTab />}
 
-          {tab === "behavior" && <BehaviorTab />}
+          {tab === "behavior" && (
+            <BehaviorTab
+              tappingTerm={tappingTerm}
+              onTappingTerm={setTappingTerm}
+              leftOn={leftOn}
+              loadTimeouts={loadTimeouts}
+              draftRef={draftRef}
+              bumpDraft={bumpDraft}
+              log={log}
+            />
+          )}
 
           {tab === "devices" && (
             <DevicesTab onDeviceInfo={() => setSheetOpen(true)} />

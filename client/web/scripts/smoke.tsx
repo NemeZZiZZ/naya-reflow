@@ -535,6 +535,7 @@ import {
   ANIM_NAMES, edTargetValue, animOp, scanModeOp, maxBrtOp, ledOverrideOp,
 } from '../src/lib/settings';
 import { FLAVORS, flavorById } from '../src/lib/flavors';
+import { queueSetting } from '../src/lib/queue';
 
 // 21. settings payload builders ([layer, effect] for 1011 per 3.0 spike verdict)
 {
@@ -575,5 +576,14 @@ import { FLAVORS, flavorById } from '../src/lib/flavors';
   eq(flavorById('tap-unless-interrupted')?.name, 'Tap–Unless Interrupted', 'flavorById longest id');
   eq(flavorById('fast'), undefined, 'unknown flavor → undefined');
   eq(new Set(FLAVORS.map((f) => f.id)).size, 4, 'flavor ids unique');
+}
+
+// 22b. queueSetting dedups per path
+{
+  const d = new Draft();
+  queueSetting(d, maxBrtOp(90));
+  queueSetting(d, maxBrtOp(70));
+  eq(d.size, 1, 'same path deduped');
+  eq(opSummary(d.ops[0]).includes('70'), true, 'latest value queued');
 }
 void main();
