@@ -26,6 +26,10 @@ export function useDraft({
       if (!m.has(r.kk)) m.set(r.kk, r.rec);
     for (const o of draftRef.current.ops)
       if (o.kind === 'key' && o.layer === layer) m.set(o.kk, o.record);
+    // Keyset preview = its primary record (T03/T10); the keycap renders the
+    // multi-behavior glyph via the existing describe pipeline.
+    for (const o of draftRef.current.ops)
+      if (o.kind === 'keyset' && o.layer === layer) m.set(o.kk, o.records[0]);
     return m;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [keysByLayer, layer, draftVer]);
@@ -44,7 +48,7 @@ export function useDraft({
   const dirtyKks = useMemo(() => {
     const s = new Set<number>();
     for (const o of draftRef.current.ops)
-      if ((o.kind === 'key' || o.kind === 'led') && o.layer === layer)
+      if ((o.kind === 'key' || o.kind === 'keyset' || o.kind === 'led') && o.layer === layer)
         s.add(o.kk);
     return s;
     // eslint-disable-next-line react-hooks/exhaustive-deps
