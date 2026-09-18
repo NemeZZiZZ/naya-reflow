@@ -9,9 +9,11 @@ import { Toaster } from "sonner";
 import Header from "./components/Header";
 import type { AppTab } from "./components/AppTabs";
 import Toolbar from "./components/Toolbar";
-import KeyboardCard from "./components/KeyboardCard";
-import LayoutTable from "./components/LayoutTable";
-import SelectionPanel from "./components/SelectionPanel";
+import BindingsTab from "./components/tabs/BindingsTab";
+import LedTab from "./components/tabs/LedTab";
+import ModulesTab from "./components/tabs/ModulesTab";
+import BehaviorTab from "./components/tabs/BehaviorTab";
+import DevicesTab from "./components/tabs/DevicesTab";
 import ColorDialog from "./components/ColorDialog";
 import LogPanel from "./components/LogPanel";
 import DeviceSheet from "./components/DeviceSheet";
@@ -91,7 +93,11 @@ export default function App() {
     log,
   });
   const { customColors, saveCustomColors } = useCustomColors();
-  const { kbBoxRef, kbStageRef, kbScale } = useKbFit(view);
+  // 'off' when the Bindings tab is hidden: the keyboard card unmounts on tab
+  // switch, and useKbFit must re-attach its observer when it comes back.
+  const { kbBoxRef, kbStageRef, kbScale } = useKbFit(
+    tab === "bindings" ? view : "off",
+  );
 
   const leftOn = halves.left.connected;
   const rightOn = halves.right.connected;
@@ -295,8 +301,8 @@ export default function App() {
             onDeviceInfo={() => setSheetOpen(true)}
           />
 
-          {view === "kb" && (
-            <KeyboardCard
+          {tab === "bindings" && (
+            <BindingsTab
               view={view}
               onView={setView}
               layer={layer}
@@ -312,40 +318,18 @@ export default function App() {
               keymap={keymap}
               ledmap={ledmap}
               selKks={selKks}
-              onSelect={(_pos, kk, add, all) =>
-                selection.onSelect(layer, kk, add, all)
-              }
+              onSelect={selection.onSelect}
               dirtyKks={dirtyKks}
-            />
-          )}
-
-          {view === "table" && (
-            <LayoutTable
-              view={view}
-              onView={setView}
-              layer={layer}
-              onLayer={setLayer}
-              leftOn={leftOn}
-              onDump={() => void dump()}
-              saveMenu={saveMenu}
               showRaw={showRaw}
               onShowRaw={setShowRaw}
               dumpStat={dumpStat}
               ledDumpStat={ledDumpStat}
               rows={mergedRows}
               sel={sel}
-              onToggleKk={(kk) => selection.toggleKk(layer, kk)}
-              onToggleAll={() =>
-                selection.toggleAllRowKks(layer, mergedRows.map((r) => r.kk))
-              }
-            />
-          )}
-
-          {sel.length > 0 && (
-            <SelectionPanel
-              sel={sel}
               onRemovePair={selection.removePair}
               onClear={() => setSel([])}
+              toggleKk={selection.toggleKk}
+              toggleAllRowKks={selection.toggleAllRowKks}
               pickedAction={pickedAction}
               onPickAction={setPickedAction}
               onQueueAction={queueActionForSelection}
@@ -360,8 +344,17 @@ export default function App() {
               onQueueColor={queueColorForSelection}
               onFillLayer={fillLayerWithColor}
               ledCount={ledsByLayer[layer]?.length ?? 0}
-              layer={layer}
             />
+          )}
+
+          {tab === "led" && <LedTab />}
+
+          {tab === "modules" && <ModulesTab />}
+
+          {tab === "behavior" && <BehaviorTab />}
+
+          {tab === "devices" && (
+            <DevicesTab onDeviceInfo={() => setSheetOpen(true)} />
           )}
 
           <ColorDialog
