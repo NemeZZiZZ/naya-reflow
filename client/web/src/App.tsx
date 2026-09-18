@@ -387,7 +387,14 @@ export default function App() {
             />
           )}
 
-          {tab === "modules" && <ModulesTab />}
+          {tab === "modules" && (
+            <ModulesTab
+              left={sesRef.current.get("left")}
+              halves={halves}
+              leftOn={leftOn}
+              log={log}
+            />
+          )}
 
           {tab === "behavior" && (
             <BehaviorTab
