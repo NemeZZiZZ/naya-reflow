@@ -110,11 +110,28 @@ export function behaviorSetOf(recs: KeyRec[], kk: number): BehaviorSet | null {
   return null; // non-key family (layer switch, special, …)
 }
 
+/** Plain T01 7B key record (S1 restore-proven downgraded shape). */
+export function plainRecord(kk: number, hid: number): Uint8Array {
+  return new Uint8Array([kk & 0xff, 0x01, 0x04, hid & 0xff, 0x00, 0x07, 0x00]);
+}
+
+/** Empty 3B filler record — the resting shape of unused slots. */
+export function fillerRecord(kk: number): Uint8Array {
+  return new Uint8Array([kk & 0xff, 0x00, 0x00]);
+}
+
+/** True if the layer cache still holds a T10 shadow record at KK+0x52. */
+export function hasT10Shadow(prevRecs: KeyRec[] | undefined, kk: number): boolean {
+  const sh = prevRecs?.find((x) => x.kk === kk + SHADOW_OFF);
+  return sh != null && sh.rec[1] === 0x10;
+}
+
 export function behaviorSetOps(
   kk: number,
   set: BehaviorSet,
   layer: number,
   label: string,
+  prevRecs?: KeyRec[],
 ): KeySetOp | null {
   if (set.tap == null) {
     if (set.hold != null || set.double != null || set.taphold != null)
@@ -125,13 +142,19 @@ export function behaviorSetOps(
     throw new Error('behavior chain: Double Tap required before Tap+Hold');
   if (set.double != null && set.hold == null)
     throw new Error('behavior chain: Hold required before Double Tap');
-  if (set.hold == null) return null; // tap-only → caller uses plain KeyOp
+  if (set.hold == null) return null; // tap-only → queueBehaviorSet downgrades
+  // Downgrade from a T10 set: the shadow slot must go back to its filler
+  // shape or behaviorSetOf would keep reporting the stale double/taphold.
+  const staleShadow =
+    set.double == null && set.taphold == null && hasT10Shadow(prevRecs, kk)
+      ? [fillerRecord(kk + SHADOW_OFF)]
+      : [];
   const records =
     set.taphold != null
-      ? [t10Primary(kk, set.hold, set.tap), t10ShadowFull(kk, set.taphold, set.double!)]
+      ? [t10Primary(kk, set.hold, set.tap), t10ShadowFull(kk, set.taphold, set.double!), TAIL_T10]
       : set.double != null
-        ? [t10Primary(kk, set.hold, set.tap), t10ShadowMini(kk, set.double)]
-        : [t03Record(kk, set.hold, set.tap)];
+        ? [t10Primary(kk, set.hold, set.tap), t10ShadowMini(kk, set.double), TAIL_T10]
+        : [t03Record(kk, set.hold, set.tap), ...staleShadow];
   return { kind: 'keyset', layer, kk, records, label };
 }
 

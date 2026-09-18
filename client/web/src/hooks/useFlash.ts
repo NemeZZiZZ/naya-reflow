@@ -8,8 +8,19 @@ import { opSummary } from '../lib/draft';
 import type { Draft } from '../lib/draft';
 import { concat, isWriteAck, toHex } from '../lib/naya';
 import type { NayaSession, Side } from '../lib/naya';
+import { parseCmdPath } from '../lib/settings';
 import type { LayerDump } from './useLayers';
 import type { LogFn } from './useLog';
+
+export type FlashResult = 'ok' | 'partial' | 'fail';
+export interface FlashState {
+  phase: 'idle' | 'running' | FlashResult;
+  done: number;
+  total: number;
+  message: string | null;
+}
+
+const IDLE: FlashState = { phase: 'idle', done: 0, total: 0, message: null };
 
 export function useFlash({
   sesRef,
@@ -27,13 +38,15 @@ export function useFlash({
   log: LogFn;
 }) {
   const [flashing, setFlashing] = useState(false);
+  const [flashState, setFlashState] = useState<FlashState>(IDLE);
 
-  const doFlashQueue = useCallback(async () => {
+  const doFlashQueue = useCallback(async (): Promise<FlashResult> => {
     const ses = sesRef.current.get('left') ?? null;
     const d = draftRef.current;
-    if (!ses || d.size === 0) return;
+    if (!ses || d.size === 0) return 'fail';
     busyRef.current = true;
     setFlashing(true);
+    setFlashState({ phase: 'running', done: 0, total: d.size, message: null });
     const total = d.size;
     let done = 0;
     try {
@@ -59,7 +72,7 @@ export function useFlash({
               );
           }
         } else if (o.kind === 'settings') {
-          const [t, c0, c1] = o.path.split('/').map((h) => parseInt(h, 16));
+          const { t, c0, c1 } = parseCmdPath(o.path);
           const f = await ses.cmd(t, c0, c1, o.payload);
           if (f.payload.length === 0 || f.payload[0] !== 0x00)
             throw new Error(`${o.path} write NACK: ${toHex(f.payload)}`);
@@ -81,6 +94,7 @@ export function useFlash({
           throw new Error('unknown op kind');
         }
         done++;
+        setFlashState({ phase: 'running', done, total, message: null });
       }
       bumpDraft(); // settings ops removed themselves above
       log('inf', `flash queue: ${done}/${total} written, re-reading…`);
@@ -95,20 +109,34 @@ export function useFlash({
           description: `${total} change(s) verified on device`,
         });
         log('inf', 'flash queue: all changes verified on device');
+        setFlashState({ phase: 'ok', done: total, total, message: null });
+        return 'ok';
       } else {
         toast.error('Flash partially verified', {
           description: `${dropped}/${total} confirmed — ${d.size} still queued`,
         });
         log('err', `flash queue: ${d.size} op(s) not reflected`);
+        setFlashState({
+          phase: 'partial', done: dropped, total,
+          message: `${dropped}/${total} confirmed — ${d.size} still queued`,
+        });
+        return 'partial';
       }
     } catch (e) {
-      toast.error('Flash failed', { description: (e as Error).message });
-      log('err', 'flash queue: ' + ((e as Error).stack ?? (e as Error).message));
+      const msg = (e as Error).message;
+      console.debug((e as Error).stack);
+      toast.error('Flash failed', { description: msg });
+      log('err', `flash queue: ${msg}`);
+      setFlashState({
+        phase: 'fail', done, total,
+        message: `${msg} — ${done}/${total} written before the error`,
+      });
+      return 'fail';
     } finally {
       busyRef.current = false;
       setFlashing(false);
     }
   }, [sesRef, busyRef, draftRef, dumpAll, bumpDraft, log]);
 
-  return { flashing, doFlashQueue };
+  return { flashing, flashState, doFlashQueue };
 }

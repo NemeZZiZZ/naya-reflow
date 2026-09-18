@@ -66,6 +66,7 @@ export default function LogPanel({
           .filter((l) => logCats[l.cat])
           .map((l) => (
             <div key={l.id} className={LOG_CLS[l.cls] ?? ""}>
+              <span className="text-muted-foreground/60">{l.t} </span>
               {l.msg}
             </div>
           ))}

@@ -106,6 +106,7 @@ export default function BindingsTab({
     kk: number,
     set: BehaviorSet,
     label: string,
+    prevRecs?: KeyRec[],
   ) => void;
   panelColor: HsColor;
   onPanelColor: (c: HsColor) => void;
@@ -181,7 +182,12 @@ export default function BindingsTab({
       toast.error("behavior chain: Tap is required first");
       return;
     }
-    onQueueBehaviorSet(layer, single, withSlot(set, s, null), `clear ${s}`);
+    // Downgrades (e.g. clearing Hold) may need shadow cleanup — pass the
+    // current layer cache so behaviorSetOps can see the stale T10 shadow.
+    onQueueBehaviorSet(
+      layer, single, withSlot(set, s, null), `clear ${s}`,
+      keysByLayer[layer],
+    );
   }
 
   const editor =
@@ -197,6 +203,11 @@ export default function BindingsTab({
           onClear={clearSlot}
           hidLabel={hidLabel}
         />
+        <div className="text-[11px] leading-snug text-muted-foreground">
+          Chain rule (wire format): Hold needs Tap, Double Tap needs Hold,
+          Tap+Hold needs Double Tap. Clearing back to Tap only rewrites the
+          key as a plain binding.
+        </div>
         {slot != null && (
           <ActionPalette
             onPick={pickForSlot}

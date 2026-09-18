@@ -10,9 +10,16 @@ export interface LogEntry {
   cls: string;
   cat: 'cdc' | 'info' | 'err';
   msg: string;
+  t: string;
 }
 
 export type LogFn = (cls: string, msg: string) => void;
+
+function stamp(): string {
+  const d = new Date();
+  const p = (n: number, w = 2) => String(n).padStart(w, '0');
+  return `${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}.${p(d.getMilliseconds(), 3)}`;
+}
 
 export function useLog() {
   const logId = useRef(0);
@@ -26,7 +33,7 @@ export function useLog() {
     const cat: LogEntry['cat'] =
       cls === 'tx' || cls === 'rx' ? 'cdc' : cls === 'err' ? 'err' : 'info';
     setLogs((prev) => {
-      const next = [...prev, { id, cls, cat, msg }];
+      const next = [...prev, { id, cls, cat, msg, t: stamp() }];
       return next.length > 400 ? next.slice(next.length - 400) : next;
     });
     requestAnimationFrame(() => {

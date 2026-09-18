@@ -509,10 +509,24 @@ eq(timeoutsMs(new Uint8Array([1, 2, 3])), null, 'timeoutsMs rejects short');
      'behaviorSetOf T03 pair');
   // ops dispatch
   const ops = behaviorSetOps(0x30, { tap: 0x1d, hold: 0x1c, double: 0x1b, taphold: 0x1a }, 0, 'Z multi');
-  eq(ops?.records.length, 2, 'full set → primary + full shadow');
+  eq(ops?.records.length, 3, 'full set → primary + full shadow + tail');
   eq(ops?.records[1][0], 0x82, 'shadow at kk+0x52');
+  eq(toHex(ops!.records[2]), '4b 02 00', 'T10 tail rides along (S1 writer)');
+  const miniOps = behaviorSetOps(0x30, { tap: 0x1d, hold: 0x1c, double: 0x1b, taphold: null }, 0, 'Z');
+  eq(miniOps?.records.length, 3, 'double set → primary + mini shadow + tail');
+  eq(toHex(miniOps!.records[2]), '4b 02 00', 'mini tail');
+  const prevShadow = [
+    { kk: 0x30, rec: t10Primary(0x30, 0x1c, 0x1d) },
+    { kk: 0x82, rec: t10ShadowFull(0x30, 0x1a, 0x1b) },
+  ] as unknown as KeyRec[];
+  const downOps = behaviorSetOps(0x30, { tap: 0x1d, hold: 0x1c, double: null, taphold: null }, 0, 'down', prevShadow);
+  eq(downOps?.records.length, 2, 'T03 downgrade from T10 → t03 + shadow filler');
+  eq(toHex(downOps!.records[1]), '82 00 00', 'stale shadow cleared to filler');
+  eq(behaviorSetOps(0x30, { tap: 0x1d, hold: 0x1c, double: null, taphold: null }, 0, 'plain')?.records.length, 1,
+     'T03 without prior shadow → single record');
+  eq(toHex(plainRecord(0x22, 0x07)), '22 01 04 07 00 07 00', 'plain T01 record (S1 restore shape)');
   eq(behaviorSetOps(0x30, { tap: 0x1d, hold: null, double: null, taphold: null }, 0, 'Z'), null,
-     'tap-only → null (plain KeyOp path)');
+     'tap-only → null (downgrade handled by queueBehaviorSet)');
   let threw = false;
   try { behaviorSetOps(0x30, { tap: null, hold: 0x1c, double: null, taphold: null }, 0, 'bad'); }
   catch { threw = true; }
@@ -529,13 +543,15 @@ eq(timeoutsMs(new Uint8Array([1, 2, 3])), null, 'timeoutsMs rejects short');
 import {
   t03Record, t10Primary, t10ShadowMini, t10ShadowFull,
   behaviorSetOf, behaviorSetOps, withSlot, hidPairOf,
+  plainRecord, fillerRecord, hasT10Shadow,
 } from '../src/lib/t10';
 import type { BehaviorSet } from '../src/lib/t10';
 import {
   ANIM_NAMES, edTargetValue, animOp, scanModeOp, maxBrtOp, ledOverrideOp,
+  parseCmdPath,
 } from '../src/lib/settings';
 import { FLAVORS, flavorById } from '../src/lib/flavors';
-import { queueSetting } from '../src/lib/queue';
+import { queueSetting, queueBehaviorSet } from '../src/lib/queue';
 import { queueModuleGesture } from '../src/lib/queue';
 import {
   GESTURE_NAMES, gestureName, parseModuleConfig, gesturePayload,
@@ -570,6 +586,17 @@ import {
     eq(d.size, 3, 'same path+target deduped');
     eq(opSummary(d.ops[2]).includes('70'), true, 'latest value queued');
   }
+  // parseCmdPath: the split('/') trap — '1011' is TWO bytes, not one number
+  eq(JSON.stringify(parseCmdPath('ed/1011')), '{"t":237,"c0":16,"c1":17}',
+     "parseCmdPath('ed/1011') → ed 10 11");
+  eq(JSON.stringify(parseCmdPath('fe/100a')), '{"t":254,"c0":16,"c1":10}',
+     "parseCmdPath('fe/100a') → fe 10 0a");
+  threw = false;
+  try { parseCmdPath('ed/101'); } catch { threw = true; }
+  eq(threw, true, 'parseCmdPath rejects a 3-digit body');
+  threw = false;
+  try { parseCmdPath('ed-1011'); } catch { threw = true; }
+  eq(threw, true, 'parseCmdPath rejects a non-slash path');
 }
 // 22a. Interrupt Flavor policy dictionary (Task 4.1; wire encoding OPEN,
 // pending the S1 flavor-diff verdict — display metadata only).
@@ -589,6 +616,29 @@ import {
   queueSetting(d, maxBrtOp(70));
   eq(d.size, 1, 'same path deduped');
   eq(opSummary(d.ops[0]).includes('70'), true, 'latest value queued');
+}
+
+// 22c. queueBehaviorSet tap-only downgrade → plain T01 (+ shadow cleanup)
+{
+  const d = new Draft();
+  const r1 = queueBehaviorSet(d, 0, 0x22, { tap: 0x07, hold: null, double: null, taphold: null }, 200, 'clear hold');
+  eq(r1.queued, true, 'tap-only downgrade queues');
+  eq(d.ops[0].kind, 'key', 'downgrade without shadow → plain key op');
+  eq(toHex((d.ops[0] as { record: Uint8Array }).record), '22 01 04 07 00 07 00',
+     'downgrade record = plain T01');
+  const prev = [
+    { kk: 0x22, rec: t10Primary(0x22, 0x09, 0x07) },
+    { kk: 0x74, rec: t10ShadowFull(0x22, 0x1a, 0x1b) },
+  ] as unknown as KeyRec[];
+  const r2 = queueBehaviorSet(d, 0, 0x22, { tap: 0x07, hold: null, double: null, taphold: null }, 200, 'clear all', prev);
+  eq(r2.queued, true, 'downgrade from T10 queues');
+  eq(d.ops[1].kind, 'keyset', 'downgrade with shadow → keyset op');
+  const recs = (d.ops[1] as { records: Uint8Array[] }).records;
+  eq(recs.length, 2, 'plain + filler records');
+  eq(toHex(recs[0]), '22 01 04 07 00 07 00', 'primary back to T01');
+  eq(toHex(recs[1]), '74 00 00', 'shadow back to filler');
+  eq(hasT10Shadow(prev, 0x22), true, 'hasT10Shadow detects stale shadow');
+  eq(hasT10Shadow(undefined, 0x22), false, 'hasT10Shadow without cache');
 }
 
 // 23. 30/100b module-config parser (Task 5.1). Fixture = S2 post-restore

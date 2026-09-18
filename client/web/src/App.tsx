@@ -87,7 +87,7 @@ export default function App() {
   });
   const draft = useDraft({ keysByLayer, ledsByLayer, layer });
   const { draftRef, bumpDraft, keymap, ledmap, dirtyKks, draftSize } = draft;
-  const { flashing, doFlashQueue } = useFlash({
+  const { flashing, flashState, doFlashQueue } = useFlash({
     sesRef,
     busyRef,
     draftRef,
@@ -239,11 +239,13 @@ export default function App() {
     kk: number,
     set: BehaviorSet,
     label: string,
+    prevRecs?: KeyRec[],
   ) {
-    const r = queueBehaviorSet(draftRef.current, layer, kk, set, tappingTerm, label);
+    const r = queueBehaviorSet(
+      draftRef.current, layer, kk, set, tappingTerm, label, prevRecs,
+    );
     bumpDraft();
-    if (r.queued)
-      log("inf", `queued behavior set L${layer} KK ${kk} → ${label}`);
+    if (r.queued) log("inf", `queued behavior set L${layer} KK ${kk} → ${label}`);
     else {
       log("err", `behavior set not queued: ${r.error}`);
       toast.error(r.error ?? "behavior set not queued");
@@ -460,6 +462,7 @@ export default function App() {
           onFlash={doFlashQueue}
           onChanged={bumpDraft}
           busy={flashing}
+          state={flashState}
         />
         <SettingsDialog
           open={settingsOpen}

@@ -3,7 +3,7 @@
 
 import { buildRecord } from './actions';
 import type { ActionDef } from './actions';
-import { behaviorSetOps } from './t10';
+import { behaviorSetOps, fillerRecord, hasT10Shadow, plainRecord, SHADOW_OFF } from './t10';
 import type { BehaviorSet } from './t10';
 import { gesturePayload } from './modules';
 import type { GestureBinding } from './modules';
@@ -79,7 +79,8 @@ export function queueSetting(draft: Draft, op: SettingsOp): void {
 /** Queue a full T10/T03 behavior set for one key (device stores truth per
  * set — editing any behavior rewrites all slots). `tappingTerm` stays an
  * independent setting (default 200ms); flavor policy is UI-only until the
- * S1 flavor-diff proves a wire encoding. */
+ * S1 flavor-diff proves a wire encoding. A tap-only result downgrades to the
+ * plain T01 record (plus shadow cleanup when the old set was a T10). */
 export function queueBehaviorSet(
   draft: Draft,
   layer: number,
@@ -87,10 +88,26 @@ export function queueBehaviorSet(
   set: BehaviorSet,
   _tappingTerm: number,
   label: string,
+  prevRecs?: KeyRec[],
 ): { queued: boolean; error?: string } {
   try {
-    const op = behaviorSetOps(kk, set, layer, label);
-    if (!op) return { queued: false, error: 'tap-only — use the plain action queue' };
+    const op = behaviorSetOps(kk, set, layer, label, prevRecs);
+    if (!op) {
+      if (set.tap == null)
+        return { queued: false, error: 'behavior chain: Tap is required first' };
+      if (hasT10Shadow(prevRecs, kk))
+        draft.add({
+          kind: 'keyset', layer, kk,
+          records: [plainRecord(kk, set.tap), fillerRecord(kk + SHADOW_OFF)],
+          label,
+        });
+      else
+        draft.add({
+          kind: 'key', layer, kk,
+          record: plainRecord(kk, set.tap), label,
+        });
+      return { queued: true };
+    }
     draft.add(op);
     return { queued: true };
   } catch (e) {

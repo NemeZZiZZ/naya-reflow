@@ -6,6 +6,20 @@ import type { SettingsOp } from './draft';
 
 export const ANIM_NAMES = ['Solid', 'Breathe', 'Swirl', 'Spectrum'] as const;
 
+/** Parse a settings-op path 'tt/c0c1' (e.g. 'ed/1011' → 0xed, 0x10, 0x11)
+ * into the three frame bytes. Guards the classic split('/') trap where
+ * '1011' parses as one 16-bit number instead of two bytes. */
+export function parseCmdPath(path: string): {
+  t: number;
+  c0: number;
+  c1: number;
+} {
+  const m = /^([0-9a-f]{2})\/([0-9a-f]{4})$/i.exec(path.trim());
+  if (!m) throw new Error(`bad settings path: ${path}`);
+  const v = parseInt(m[2], 16);
+  return { t: parseInt(m[1], 16), c0: (v >> 8) & 0xff, c1: v & 0xff };
+}
+
 export function edTargetValue(target: number, value: number): Uint8Array {
   return new Uint8Array([target & 0xff, value & 0xff]);
 }

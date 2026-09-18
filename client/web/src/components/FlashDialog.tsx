@@ -28,6 +28,7 @@ import {
   type Draft,
 } from '../lib/draft';
 import { X } from 'lucide-react';
+import type { FlashState } from '../hooks/useFlash';
 
 export default function FlashDialog({
   open,
@@ -36,13 +37,15 @@ export default function FlashDialog({
   onFlash,
   onChanged,
   busy,
+  state,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   draft: Draft;
-  onFlash: () => Promise<void>;
+  onFlash: () => Promise<'ok' | 'partial' | 'fail'>;
   onChanged: () => void;
   busy: boolean;
+  state: FlashState;
 }) {
   const [running, setRunning] = useState(false);
   const st = draft.stats();
@@ -57,12 +60,31 @@ export default function FlashDialog({
   async function confirm() {
     setRunning(true);
     try {
-      await onFlash();
-      onOpenChange(false);
+      const res = await onFlash();
+      if (res === 'ok') onOpenChange(false); // keep open on partial/fail
     } finally {
       setRunning(false);
     }
   }
+
+  const status =
+    state.phase === 'running'
+      ? `Writing ${state.done}/${state.total}…`
+      : state.phase === 'ok'
+        ? `Done — ${state.total}/${state.total} verified`
+        : state.phase === 'partial'
+          ? `Partial — ${state.message}`
+          : state.phase === 'fail'
+            ? `Failed — ${state.message}`
+            : null;
+  const statusCls =
+    state.phase === 'ok'
+      ? 'text-[#7ee2a8]'
+      : state.phase === 'fail'
+        ? 'text-[#ff9d9d]'
+        : state.phase === 'partial'
+          ? 'text-amber-300'
+          : 'text-muted-foreground';
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -121,6 +143,11 @@ export default function FlashDialog({
             </Accordion>
           )}
         </div>
+        {status && (
+          <div className={`text-sm tabular-nums ${statusCls}`} role="status">
+            {status}
+          </div>
+        )}
         <DialogFooter>
           <Button
             variant="outline"
