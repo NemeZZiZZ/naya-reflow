@@ -45,10 +45,14 @@ export function useFlash({
           const ack = await ses.writeKey(o.record, o.layer);
           if (!isWriteAck(ack, o.layer))
             throw new Error(`key write NACK: ${toHex(ack)}`);
-        } else {
+        } else if (o.kind === 'led') {
           const ack = await ses.writeLed(o.kk, o.h, o.s, o.layer);
           if (!isWriteAck(ack, o.layer))
             throw new Error(`led write NACK: ${toHex(ack)}`);
+        } else {
+          // keyset/settings/module executor lands with the 5-tab
+          // configurator; nothing produces these ops yet — never skip one.
+          throw new Error(`flash: no executor for op kind '${o.kind}' yet`);
         }
         done++;
       }

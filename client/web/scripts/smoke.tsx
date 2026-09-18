@@ -13,7 +13,8 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { keyIconName, shortLabel } from '../src/lib/key-icon-map';
 import { ACTIONS, buildRecord, matchAction } from '../src/lib/actions';
-import { Draft } from '../src/lib/draft';
+import { Draft, opKey, opSection } from '../src/lib/draft';
+import type { KeySetOp } from '../src/lib/draft';
 import type { KeyRec, LedRec } from '../src/lib/naya';
 import { parseSnapshotFile, diffSnapshotToDraft } from '../src/lib/importers';
 import type { SnapMaps } from '../src/lib/importers';
@@ -443,5 +444,34 @@ eq(timeoutsMs(new Uint8Array([1, 2, 3])), null, 'timeoutsMs rejects short');
     eq(r3.skippedLen, 1, 'length change skipped');
     eq('error' in parseSnapshotFile({ tool: 'nope' }) ? 'err' : 'ok', 'err', 'unknown tool rejected');
   }
+}
+
+// 19. draft op model v2 — sections, dedup, stats
+{
+  const d = new Draft();
+  d.add({ kind: 'settings', path: 'ed/1013', payload: new Uint8Array([0, 100]), label: 'max brt 100' });
+  d.add({ kind: 'settings', path: 'ed/1013', payload: new Uint8Array([0, 80]), label: 'max brt 80' });
+  eq(d.size, 1, 'settings dedup by path');
+  eq(d.ops[0].kind === 'settings' && d.ops[0].label, 'max brt 80', 'latest settings op wins');
+  eq(opSection(d.ops[0]), 'behavior', 'ed/1013 → behavior section');
+  eq(opSection({ kind: 'settings', path: 'ed/1011', payload: new Uint8Array([0, 1]), label: 'anim' }), 'led', 'ed/1011 → led section');
+  const ks: KeySetOp = {
+    kind: 'keyset', layer: 0, kk: 0x30,
+    records: [new Uint8Array(27), new Uint8Array(10)],
+    label: 'Z multi',
+  };
+  d.add(ks);
+  eq(opSection(ks), 'bindings', 'keyset → bindings section');
+  eq(d.stats().frames, 1 + 2, 'keyset frames = 1 settings + 2 records');
+  eq(opKey(ks), 'keyset:0:48', 'keyset opKey');
+  // keyset reconcile: satisfied only when EVERY record matches device
+  // (reconcile looks up device recs by kk === record byte 0)
+  const prim = Object.assign(new Uint8Array(27), { 0: 0x30 });
+  const shad = Object.assign(new Uint8Array(10), { 0: 0x82 });
+  const d2 = new Draft();
+  d2.add({ kind: 'keyset', layer: 0, kk: 0x30, records: [prim, shad], label: 'Z multi' });
+  const keysLive = [[{ kk: 0x30, rec: prim }, { kk: 0x82, rec: shad }]] as unknown as KeyRec[][];
+  eq(d2.reconcile(keysLive, [[]]), 1, 'reconcile drops satisfied keyset');
+  eq(d2.size, 0, 'queue empty after keyset reconcile');
 }
 void main();

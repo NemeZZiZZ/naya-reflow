@@ -43,7 +43,9 @@ export function useDraft({
 
   const dirtyKks = useMemo(() => {
     const s = new Set<number>();
-    for (const o of draftRef.current.ops) if (o.layer === layer) s.add(o.kk);
+    for (const o of draftRef.current.ops)
+      if ((o.kind === 'key' || o.kind === 'led') && o.layer === layer)
+        s.add(o.kk);
     return s;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [draftVer, layer]);
