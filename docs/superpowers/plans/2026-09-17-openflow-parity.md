@@ -16,7 +16,7 @@
 - Write ACKs echo the layer byte: always validate with `isWriteAck(ack, layer)` from `src/lib/naya.ts` — never a strict `00 00` compare.
 - LED writes use body `[00, layer, KK, H, S]` — `NayaSession.writeLed(kk, h, s, layer)` already does this; never hand-roll.
 - ED setting payloads are `[target, value]` (2 bytes) for `1012/1013/1014` (docs/cdc-protocol.md line 682). `ed/1011` (effect) encoding is resolved by Task 3.0 before use.
-- Every commit requires: `npm run build` exit 0 AND `node scripts/rolldown.smoke.mjs` exit 0 (run from `client/web`). Smoke count: 166 now → ~250 at plan end.
+- Every commit requires: `npm run build` exit 0 AND smoke exit 0, where smoke = `./node_modules/.bin/rolldown --config scripts/rolldown.smoke.mjs && node /tmp/smoke.cjs` (run from `client/web`; the .mjs is a rolldown config, NOT a runner — `node scripts/rolldown.smoke.mjs` is a no-op). Smoke count: 166 now → ~250 at plan end.
 - Commits stay LOCAL. Push only on explicit user request.
 - Macros are out of scope. No "remove unused module slot" checkbox.
 - Design language: single accent color, no gradients, no shadows, tabular numbers, Lucide icons; secondary actions in menus; behaviors are 4 plain rows — no OpenFlow-style bright cards.
