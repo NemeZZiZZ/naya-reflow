@@ -135,9 +135,28 @@ def main():
             return fail("precondition", "KK22 record", b"",
                         "note", "no KK22 record in dump0")
 
+        def restore_originals():
+            """Best-effort revert of every slot the spike touched (shadow slot
+            included — the mini shadow grew it 3B->10B, so KK22+tail alone
+            can't restore the dump byte-for-byte). No delete primitive exists;
+            a slot with no original record can only be reported, not reverted."""
+            for label, kk, _ in records:
+                if orig[kk] is None:
+                    print(f"  restore @{kk:#04x}: no original record —"
+                          f" cannot revert", flush=True)
+                    continue
+                f = ses.write_key(orig[kk], LAYER)
+                if not ack_ok(f, LAYER):
+                    print(f"  restore {label}: BAD ACK"
+                          f" {cdc.payload_of(f).hex(' ')}", flush=True)
+                    return False
+                print(f"  restored @{kk:#04x}: {orig[kk].hex(' ')}", flush=True)
+            return True
+
         for label, kk, rec in records:
             f = ses.write_key(rec, LAYER)
             if not ack_ok(f, LAYER):
+                restore_originals()
                 return fail(f"write {label}", "record", rec,
                             "ACK", cdc.payload_of(f))
             print(f"  wrote {label} @{kk:#04x}: ACK {cdc.payload_of(f).hex(' ')}",
@@ -147,24 +166,13 @@ def main():
         for label, kk, rec in records:
             live = find_record(dump1, kk)
             if live != rec:
+                restore_originals()
                 return fail(f"readback {label}", "want", rec,
                             "got", live if live is not None else b"")
         print("readback: primary/shadow/tail byte-identical")
 
-        # Restore every slot the spike touched (shadow slot included — the
-        # mini shadow grew it 3B->10B, so KK22+tail alone can't restore the
-        # dump byte-for-byte). No delete primitive exists; a slot with no
-        # original record can only be reported, not reverted.
-        for label, kk, _ in records:
-            if orig[kk] is None:
-                print(f"  restore @{kk:#04x}: no original record — cannot revert",
-                      flush=True)
-                continue
-            f = ses.write_key(orig[kk], LAYER)
-            if not ack_ok(f, LAYER):
-                return fail(f"restore {label}", "record", orig[kk],
-                            "ACK", cdc.payload_of(f))
-            print(f"  restored @{kk:#04x}: {orig[kk].hex(' ')}", flush=True)
+        if not restore_originals():
+            return fail("restore ACK", "note", "see restore lines above")
 
         dump2 = ses.read_layer(LAYER)
         if dump2 != dump0:
