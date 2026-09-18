@@ -184,13 +184,19 @@ v1.25.1 release asset in backup/firmware; tables verified against it).
   SPECTRUM (rainbow wave, space→Esc) → SOLID. Exactly the 4-entry
   asar animation registry; the registry is device-real (host only
   lacks a caller).
-- **ED 1011 SELECT LEDs EFFECT** (empty params): ACK `00`, no visible
-  effect (needs an effect-id param; encoding TBD). Probe scripted
-  2026-09-17 (`toolkit/naya-effect-spike.py`): candidate forms `[effect]`,
-  `[0, effect]` (1012/1013/1014 target convention), `[layer, effect]`
-  (distinct effect per layer); restore = SOLID + ED/100D cycle check.
-  **Live verdict PENDING** (controller-run) — until a form is proven, the
-  UI falls back to the ED/100D cycle button.
+- **ED 1011 SELECT LEDs EFFECT — live verdict 2026-09-18: form `[layer,
+  effect]` PROVEN** (`toolkit/naya-effect-spike.py --apply`): candidates
+  `[effect]` and `[0, effect]` ACK `00` with zero visible change; `[layer,
+  effect]` ([0,BREATHE] [1,SWIRL] [2,SPECTRUM]) blinked the left half and
+  follow-up `[0, BREATHE]` produced continuous L0 animation. All probes
+  ACK `00`; restore = SOLID per layer + ED/100D cycle check (engine alive).
+  Board returned to SOLID on all layers after the run.
+- **Base-half animation quality OPEN (2026-09-18):** L0 BREATHE runs in
+  coarse visible steps, not a smooth fade — while the left module's LED
+  animates smoothly. Same split as the brightness cap (base halves capped,
+  modules full). Suspect: base-half PWM/scan path degraded; module channel
+  independent. ED/100D-cycle BREATHE smoothness on base halves not
+  separately assessed.
 - **ED 1014 SET LED LAYER OVERRIDE** (empty / `01` / `02` / `00 01`):
   ACK `00` every time, no observable change (typing + backlight
   unchanged). Possibly working invisibly — all 3 layers' LED maps
@@ -295,8 +301,14 @@ Format: `[KK, 10, 18, c8,00, 03, 01,01,00, c8,00, A_HID,00,07,00, 00×4, B_HID,0
   + mini shadow @KK+0x52 + tail `4b 02 00` written via plain 30/1004 with
   layer-echo ACK checks, readback compare, then restore + full-dump verify.
   Dry-run green (scripts/smoke.py §21 pins the byte vectors); **live verdict
-  PENDING** (controller-run). Outcome, FAMILY_KEY byte and any tail-semantics
-  corrections get recorded here after the live run.
+  2026-09-18: SPIKE OK.** KK22 (was T01 `22 01 04 07 00 07 00`) accepted the
+  full set — primary 27B (hold=F tap=D) + mini shadow 10B @0x74 (double=B) +
+  tail `4b 02 00`, all ACK `00 00`, readback byte-identical, restore verified
+  (789B dump identical to pre-spike). Shadow slot KK+0x52 confirmed writable;
+  originals restored byte-for-byte (no delete primitive needed — all three
+  slots had prior records). FAMILY_KEY byte: primary T=0x10 accepted as-is.
+  Tail semantics: `4b 02 00` re-written idempotently; removal test
+  (delete all multi-keys → back to 00?) still open.
 
 ## T05 7-byte special records — family 04 decoded (LH4/RH4, 2026-09-16)
 Format: `[KK, 05, 04, ID, 00, 00, 00]` (T=05, 7B; describe shows `special <hex>`).
@@ -422,26 +434,34 @@ Full frames: `naya-archive/aux-left.txt`, `aux-right.txt`.
   still open (L1-only content, HID-like codes).
 - Client: `left dump100b`. NOTE: no 100b WRITE observed yet (stock flash used only 30/1004).
 
-### 30/100b module config — write format (spike 2026-09-17, live verdict PENDING)
+### 30/100b module config — write format (spike 2026-09-17, live verdict 2026-09-18: PROVEN)
 
 - Read path (proven): `30/100b` multipart, params `[part, layer]` → records
   `[SLOT, FAMILY, LEN, payload x LEN]` (universal byte2+3 rule, same parser as
   the keymap). L1 carries the content; L0/L2 are all-zero 3B records.
-- Write hypothesis under test (`toolkit/naya-modules-spike.py`): 30/1004-style
-  frame with **c1=`0x0b`** (write verb == read verb), params
-  `[00, SLOT] + record` — record is the full same-length replacement,
-  SLOT byte included (mirrors 30/1004's record-includes-KK convention).
-  ACK check: first payload byte `0x00`. Fallback candidate if 0x0b NACKs:
-  **c1=`0x0c`** (static map: 100C WRITE MODULE CONFIG DATA, never observed).
-- Same-length rule assumed (per the 30/1004 length-change caveat): the spike
-  swaps action bytes between two same-shape slots, never changes record length.
+- Write path (PROVEN live 2026-09-18, `toolkit/naya-modules-spike.py`):
+  30/1004-style frame with **c1=`0x0c`** (static map's 100C WRITE MODULE
+  CONFIG DATA), params **`[00, LAYER]` + full record**, record's own byte 0
+  selects the slot (mirrors 30/1004's record-includes-KK convention).
+  ACK = `00 <layer>` (layer-echo, same shape as 30/1004 writes).
+  Proven swap: L1 slot 0 `00 01 01 0a` → `00 01 01 32` (donor action bytes
+  from slot 2), readback byte-identical, restore verified (205B identical).
+- Dead end documented: **c1=`0x0b` parse-ACKs without applying** (ACK = 105B
+  slot-index echo `00 00 00 00 01 00 ... 27 00 00`, first byte `00`, but no
+  state change — same parse-ACK pattern as the ED dark-saga writes).
+- Addressing trap (bit us once): params `[00, SLOT]` are parsed as
+  `[00, layer]` — the 0x0c probe/restore pair landed in module-config **L0**
+  (slot 0 `00 00 00` → `00 01 01 0a`, 120→121B), caught by dump-compare and
+  reverted with `[00, 00] + 00 00 00` (L0 back to 120B factory zeros; the
+  3B→4B→3B round-trip applies cleanly, no same-length block for module slots).
+- Same-length rule still assumed for safety: the spike swaps action bytes
+  between two same-shape slots, never changes record length.
 - Behavior slots: 9 host gestures (see §"Host module-gesture map"):
   0 MOUSE_HORIZONTAL, 1 MOUSE_VERTICAL, 2 MOUSE_STATIC, 3 MOUSE_BUTTONS,
   4 MOUSE_SCROLL_VERTICAL, 5 STATIC_SCROLL_VERTICAL, 6 MOUSE_SCROLL_HORIZONTAL,
-  7 STATIC_SCROLL_HORIZONTAL, 8 STATIC_ZOOM. Blob slot↔gesture mapping
-  UNPROVEN until spike readback.
-- Live verdict: PENDING (controller-run). Exact working c1, ACK shape and slot
-  offsets get recorded here after the run; Task 5.1 consumes this section.
+  7 STATIC_SCROLL_HORIZONTAL, 8 STATIC_ZOOM. Blob slot↔gesture mapping:
+  slot byte == index into this table (LIVE-PROVEN by the slot-0/2 swap
+  readback). Task 5.1 consumes this section.
 
 ### Commit-token correction (supersedes stale-replay theory in part)
 - fe/100b payload == fe/100a params, byte-identical **across sessions/reboots/factory-restore**

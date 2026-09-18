@@ -14,8 +14,9 @@ host module-gesture map; read path = NayaSession.readModuleConfig):
 2. Print the slot map: offset + bytes + decoded gesture/action per record.
 3. Pick a slot; build a same-length payload with an equivalent action
    (swap two gestures' action bytes — same length guaranteed).
-4. --apply: write via 30/1004-style frame with c1=0x0b,
-   params [0, slot] + payload (payload = full record, SLOT byte included,
+4. --apply: write via 30/1004-style frame with c1=0x0c (static WRITE MODULE
+   CONFIG DATA; c1=0x0b parse-ACKs without applying),
+   params [0, layer] + payload (payload = full record, SLOT byte included,
    mirroring 30/1004's record-includes-KK convention); ACK check = first
    payload byte 0x00.
 5. Read back; compare byte-for-byte. 6. Restore original; verify blob.
@@ -34,9 +35,8 @@ cdc = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(cdc)
 
 C1_READ = 0x0B   # 30/100b MODULE CONFIG DATA (proven read)
-C1_WRITE = 0x0B  # spike hypothesis: write verb == read verb (brief-verbatim);
-                 # static map names 0x100C WRITE MODULE CONFIG DATA (never
-                 # observed) as the fallback candidate if 0x0b NACKs.
+C1_WRITE = 0x0C  # proven live 2026-09-18 (c1=0x0b parse-ACKs without
+                 # applying; static map names 0x100C WRITE MODULE CONFIG DATA).
 
 # Host module-gesture map (@0x100aedfe8, 9 behavior slots; static).
 # blob slot <-> gesture mapping itself is UNPROVEN until this spike's readback.
@@ -105,9 +105,11 @@ def build_swap_record(victim, donor):
     return victim[:3] + donor[3:]
 
 
-def build_write_params(slot, record):
-    """30/1004-style write params: [0x00, SLOT] + full record."""
-    return bytes([0x00, slot]) + record
+def build_write_params(layer, record):
+    """30/1004-style write params: [0x00, LAYER] + full record (the record's
+    own byte 0 selects the slot — proven live 2026-09-18: [00, SLOT] form
+    writes to module-config layer 0 instead)."""
+    return bytes([0x00, layer]) + record
 
 
 def fail(where, *evidence):
@@ -125,11 +127,16 @@ def main():
                          " all-zero records per docs/dumps)")
     ap.add_argument("--apply", action="store_true",
                     help="actually write (default: dry run)")
+    ap.add_argument("--c1", default="0c",
+                    help="write verb c1 hex (default 0c proven; 0b parse-ACKs"
+                         " without applying)")
     a = ap.parse_args()
+    global C1_WRITE
+    C1_WRITE = int(a.c1, 16)
 
     print(f"port={a.port} layer={a.layer} dry_run={not a.apply}")
     print(f"read: 30/10{C1_READ:02x} [part, layer] multipart;"
-          f" write: 30/10{C1_WRITE:02x} params [00, SLOT] + record"
+          f" write: 30/10{C1_WRITE:02x} params [00, LAYER] + record"
           f" (ACK first byte 00)")
     print(f"gesture vocabulary (9 slots, host map): "
           + ", ".join(f"{k}={v}" for k, v in GESTURES.items()))
@@ -166,7 +173,7 @@ def main():
             (same hardening as naya-t10-spike.py's restore_originals: a write
             that landed but diverged on readback must not leave the slot
             modified)."""
-            f = ses.cmd(0x30, 0x10, C1_WRITE, build_write_params(slot, victim))
+            f = ses.cmd(0x30, 0x10, C1_WRITE, build_write_params(a.layer, victim))
             ack = cdc.payload_of(f)
             if ack[:1] != b"\x00":
                 print(f"  restore slot {slot:#04x}: BAD ACK {ack.hex(' ')}",
@@ -175,7 +182,7 @@ def main():
             print(f"  restored slot {slot:#04x}: {victim.hex(' ')}", flush=True)
             return True
 
-        params = build_write_params(slot, new_rec)
+        params = build_write_params(a.layer, new_rec)
         f = ses.cmd(0x30, 0x10, C1_WRITE, params)
         ack = cdc.payload_of(f)
         print(f"  write ACK: {ack.hex(' ')}", flush=True)
@@ -187,8 +194,8 @@ def main():
         live = dict((r[0], r) for _, r in parse_slots(blob1)).get(slot)
         if live != new_rec:
             restore_slot()
-            return fail("readback", "want", new_rec,
-                        "got", live if live is not None else b"")
+            return fail("readback", ("want", new_rec),
+                        ("got", live if live is not None else b""))
         print(f"readback: slot {slot:#04x} byte-identical")
 
         if not restore_slot():
@@ -201,7 +208,7 @@ def main():
         print(f"restore verified: blob identical to initial ({len(blob2)}B)")
 
         print("SPIKE OK")
-        print(f"  write format: 30/10{C1_WRITE:02x} params [00, SLOT] + record;"
+        print(f"  write format: 30/10{C1_WRITE:02x} params [00, LAYER] + record;"
               f" slot @{off_v} len {len(new_rec)}B")
         return 0
     finally:

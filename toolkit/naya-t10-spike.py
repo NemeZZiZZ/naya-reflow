@@ -2,9 +2,11 @@
 """T10 full-set writer spike: prove the device accepts a 4-slot behavior
 write (primary + shadow + tail flag) via 30/1004 with readback verification.
 
-Usage: naya-t10-spike.py [--port /dev/cu.usbmodemXXXX] [--apply]
+Usage: naya-t10-spike.py [--port /dev/cu.usbmodemXXXX] [--apply] [--dump FILE]
 Dry-run by default: prints the plan, touches nothing.
 With --apply: writes to the device. Quit NayaFlow first.
+With --dump FILE: dump left layer 0 to FILE (read-only, no writes);
+  used for the S1-Step-3b Interrupt Flavor diff procedure.
 
 Plan (mirrors docs/cdc-protocol.md §"T10 27-byte multi-behavior records";
 byte layouts copied verbatim from Task 2.1's t10.ts formulas):
@@ -100,7 +102,21 @@ def main():
     ap.add_argument("--port", default=cdc.LEFT)
     ap.add_argument("--apply", action="store_true",
                     help="actually write (default: dry run)")
+    ap.add_argument("--dump", metavar="FILE",
+                    help="dump left layer 0 to FILE and exit (read-only)")
     a = ap.parse_args()
+
+    if a.dump:
+        ses = cdc.Session(a.port, cdc.DST_LEFT)
+        try:
+            ses.handshake()
+            blob = ses.read_layer(LAYER)
+            with open(a.dump, "wb") as fh:
+                fh.write(blob)
+            print(f"dumped L0: {len(blob)}B -> {a.dump}")
+            return 0
+        finally:
+            ses.close()
 
     records = build_set()
     print(f"port={a.port} layer={LAYER} dry_run={not a.apply}")
