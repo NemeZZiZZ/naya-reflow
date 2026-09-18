@@ -1,7 +1,9 @@
 // Pure mapping: describeRecord() string -> key-icon file base name (no asset
 // imports here, so node smoke tests stay bundler-free). Filenames live in
-// src/assets/key-icons/<name>.svg (extracted from NayaFlow renderer
-// dist/renderer/assets/icons/action/, recolored #fff -> currentColor).
+// src/assets/key-icons/<name>.svg — the full 860-glyph NayaFlow renderer set
+// (dist/renderer/assets/icons/action/, recolored #fff -> currentColor;
+// DONGLE/HOLD_LAYER_0 keep their two-tone gray fills). The action_code ->
+// file registry is vendored at src/assets/action-icons.json.
 // Returns null when no icon exists -> caller falls back to text legend.
 import { describeRecord } from './naya';
 

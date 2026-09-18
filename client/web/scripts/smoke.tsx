@@ -290,21 +290,30 @@ const iconDir = path.join(
   'src', 'assets', 'key-icons',
 );
 const diskFiles = new Set(fs.readdirSync(iconDir).filter((f) => f.endsWith('.svg')));
-  eq(diskFiles.size, 54, '54 icon files on disk');
+  eq(diskFiles.size, 860, '860 icon files on disk (full NayaFlow action set)');
 const tsSrc = fs.readFileSync(path.join(
   process.env.SMOKE_ROOT ?? process.cwd(),
   'src', 'lib', 'key-icons.ts',
 ), 'utf8');
 const imported = new Set([...tsSrc.matchAll(/key-icons\/([A-Z0-9_]+)\.svg\?raw/g)].map((m) => m[1] + '.svg'));
-  eq(imported.size, 54, '54 ?raw imports');
-eq([...imported].every((f) => diskFiles.has(f)) && [...diskFiles].every((f) => imported.has(f)) ? 'ok' : 'bad', 'ok', 'imports match disk');
+  eq(imported.size, 54, '54 ?raw imports (curated keycap subset)');
+eq([...imported].every((f) => diskFiles.has(f)) ? 'ok' : 'bad', 'ok', 'all ?raw imports exist on disk');
 let iconOk = true;
 for (const f of diskFiles) {
   const s = fs.readFileSync(path.join(iconDir, f), 'utf8');
-  if (!s.trimStart().startsWith('<svg') || !s.includes('viewBox="0 0 40 40"') ||
+  // Full set: svg root + some viewBox + no #fff + currentColor. 29 NayaFlow
+  // originals use non-40x40 viewBoxes (24/48/40x45…) — allowed here; the
+  // render-critical curated subset is pinned to 40x40 below.
+  if (!s.trimStart().startsWith('<svg') || !/viewBox="0 0 \d+ \d+"/.test(s) ||
       /#fff|#FFF|#ffffff/i.test(s) || !s.includes('currentColor')) { iconOk = false; break; }
 }
-eq(iconOk ? 'ok' : 'bad', 'ok', 'icons 40x40 + currentColor, no #fff');
+eq(iconOk ? 'ok' : 'bad', 'ok', 'icons svg + viewBox + currentColor, no #fff');
+let icon40Ok = true;
+for (const f of imported) {
+  const s = fs.readFileSync(path.join(iconDir, f), 'utf8');
+  if (!s.includes('viewBox="0 0 40 40"')) { icon40Ok = false; break; }
+}
+eq(icon40Ok ? 'ok' : 'bad', 'ok', 'curated keycap icons are 40x40');
 for (const d of ['Backspace', 'BT Device 3', 'Hold layer 2', 'MO layer 1', 'BT Clear', 'special 43 05 04 01 00 00 00']) {
   const nm = keyIconName(d);
   eq(nm !== null && diskFiles.has(nm + '.svg') ? 'ok' : 'bad', 'ok', 'mapped file exists: ' + d);

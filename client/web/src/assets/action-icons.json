@@ -1,0 +1,4302 @@
+{
+  "Z_JIS": {
+    "tags": [],
+    "icon_path": "assets/icons/action/Z_JIS.svg",
+    "scope": "internal"
+  },
+  "ZOOM_OUT": {
+    "tags": [],
+    "icon_path": "assets/icons/action/ZOOM_OUT.svg",
+    "scope": "internal"
+  },
+  "ZOOM_IN": {
+    "tags": [],
+    "icon_path": "assets/icons/action/ZOOM_IN.svg",
+    "scope": "internal"
+  },
+  "ZOOM": {
+    "tags": [],
+    "icon_path": "assets/icons/action/ZOOM.svg",
+    "scope": "internal"
+  },
+  "ZEN_MODE": {
+    "tags": [],
+    "icon_path": "assets/icons/action/ZEN_MODE.svg",
+    "scope": "internal"
+  },
+  "Z": {
+    "tags": [],
+    "icon_path": "assets/icons/action/Z.svg",
+    "scope": "internal"
+  },
+  "Y_JIS": {
+    "tags": [],
+    "icon_path": "assets/icons/action/Y_JIS.svg",
+    "scope": "internal"
+  },
+  "YEN_JIS": {
+    "tags": [],
+    "icon_path": "assets/icons/action/YEN_JIS.svg",
+    "scope": "internal"
+  },
+  "Y": {
+    "tags": [],
+    "icon_path": "assets/icons/action/Y.svg",
+    "scope": "internal"
+  },
+  "X_JIS": {
+    "tags": [],
+    "icon_path": "assets/icons/action/X_JIS.svg",
+    "scope": "internal"
+  },
+  "X": {
+    "tags": [],
+    "icon_path": "assets/icons/action/X.svg",
+    "scope": "internal"
+  },
+  "W_JIS": {
+    "tags": [],
+    "icon_path": "assets/icons/action/W_JIS.svg",
+    "scope": "internal"
+  },
+  "WRAP": {
+    "tags": [],
+    "icon_path": "assets/icons/action/WRAP.svg",
+    "scope": "internal"
+  },
+  "WO_JIS": {
+    "tags": [],
+    "icon_path": "assets/icons/action/WO_JIS.svg",
+    "scope": "internal"
+  },
+  "WIN_SHORTCUT": {
+    "tags": [],
+    "icon_path": "assets/icons/action/WIN_SHORTCUT.svg",
+    "scope": "internal"
+  },
+  "WIN_OS": {
+    "tags": [],
+    "icon_path": "assets/icons/action/WIN_OS.svg",
+    "scope": "internal"
+  },
+  "W": {
+    "tags": [],
+    "icon_path": "assets/icons/action/W.svg",
+    "scope": "internal"
+  },
+  "V_VOL": {
+    "tags": [],
+    "icon_path": "assets/icons/action/V_VOL.svg",
+    "scope": "internal"
+  },
+  "V_JIS": {
+    "tags": [],
+    "icon_path": "assets/icons/action/V_JIS.svg",
+    "scope": "internal"
+  },
+  "V_BRIGHTNESS": {
+    "tags": [],
+    "icon_path": "assets/icons/action/V_BRIGHTNESS.svg",
+    "scope": "internal"
+  },
+  "VS_CODE_SHORTCUT": {
+    "tags": [],
+    "icon_path": "assets/icons/action/VS_CODE_SHORTCUT.svg",
+    "scope": "internal"
+  },
+  "VERTICAL": {
+    "tags": [],
+    "icon_path": "assets/icons/action/VERTICAL.svg",
+    "scope": "internal"
+  },
+  "V": {
+    "tags": [],
+    "icon_path": "assets/icons/action/V.svg",
+    "scope": "internal"
+  },
+  "U_UMLAUT": {
+    "tags": [],
+    "icon_path": "assets/icons/action/U_UMLAUT.svg",
+    "scope": "internal"
+  },
+  "U_JIS": {
+    "tags": [],
+    "icon_path": "assets/icons/action/U_JIS.svg",
+    "scope": "internal"
+  },
+  "USB_DEVICE": {
+    "tags": [],
+    "icon_path": "assets/icons/action/USB_DEVICE.svg",
+    "scope": "internal"
+  },
+  "UP_SCREEN": {
+    "tags": [],
+    "icon_path": "assets/icons/action/UP_SCREEN.svg",
+    "scope": "internal"
+  },
+  "UP": {
+    "tags": [],
+    "icon_path": "assets/icons/action/UP.svg",
+    "scope": "internal"
+  },
+  "UNFOLD_SUB": {
+    "tags": [],
+    "icon_path": "assets/icons/action/UNFOLD_SUB.svg",
+    "scope": "internal"
+  },
+  "UNFOLD_REGION": {
+    "tags": [],
+    "icon_path": "assets/icons/action/UNFOLD_REGION.svg",
+    "scope": "internal"
+  },
+  "UNFOLD_ALL": {
+    "tags": [],
+    "icon_path": "assets/icons/action/UNFOLD_ALL.svg",
+    "scope": "internal"
+  },
+  "UNDO_CURSOR": {
+    "tags": [],
+    "icon_path": "assets/icons/action/UNDO_CURSOR.svg",
+    "scope": "internal"
+  },
+  "UNDO": {
+    "tags": [],
+    "icon_path": "assets/icons/action/UNDO.svg",
+    "scope": "internal"
+  },
+  "UNDERSCORE": {
+    "tags": [],
+    "icon_path": "assets/icons/action/UNDERSCORE.svg",
+    "scope": "internal"
+  },
+  "UNDERLINE": {
+    "tags": [],
+    "icon_path": "assets/icons/action/UNDERLINE.svg",
+    "scope": "internal"
+  },
+  "U": {
+    "tags": [],
+    "icon_path": "assets/icons/action/U.svg",
+    "scope": "internal"
+  },
+  "T_JIS": {
+    "tags": [],
+    "icon_path": "assets/icons/action/T_JIS.svg",
+    "scope": "internal"
+  },
+  "TUNE_MODE_R": {
+    "tags": [],
+    "icon_path": "assets/icons/action/TUNE_MODE_R.svg",
+    "scope": "internal"
+  },
+  "TUNE_MODE_L": {
+    "tags": [],
+    "icon_path": "assets/icons/action/TUNE_MODE_L.svg",
+    "scope": "internal"
+  },
+  "TUNE": {
+    "tags": [],
+    "icon_path": "assets/icons/action/TUNE.svg",
+    "scope": "internal"
+  },
+  "TRIM_WHITESPACE": {
+    "tags": [],
+    "icon_path": "assets/icons/action/TRIM_WHITESPACE.svg",
+    "scope": "internal"
+  },
+  "TRIGGER_MACRO_$ID": {
+    "tags": [],
+    "icon_path": "assets/icons/action/TRIGGER_MACRO_$ID.svg",
+    "scope": "internal"
+  },
+  "TRANSPARENT": {
+    "tags": [],
+    "icon_path": "assets/icons/action/TRANSPARENT.svg",
+    "scope": "internal"
+  },
+  "TRACK": {
+    "tags": [],
+    "icon_path": "assets/icons/action/TRACK.svg",
+    "scope": "internal"
+  },
+  "TO_LAYER_DELETED": {
+    "tags": [],
+    "icon_path": "assets/icons/action/TO_LAYER_DELETED.svg",
+    "scope": "internal"
+  },
+  "TO_LAYER_9": {
+    "tags": [],
+    "icon_path": "assets/icons/action/TO_LAYER_9.svg",
+    "scope": "internal"
+  },
+  "TO_LAYER_8": {
+    "tags": [],
+    "icon_path": "assets/icons/action/TO_LAYER_8.svg",
+    "scope": "internal"
+  },
+  "TO_LAYER_7": {
+    "tags": [],
+    "icon_path": "assets/icons/action/TO_LAYER_7.svg",
+    "scope": "internal"
+  },
+  "TO_LAYER_6": {
+    "tags": [],
+    "icon_path": "assets/icons/action/TO_LAYER_6.svg",
+    "scope": "internal"
+  },
+  "TO_LAYER_5": {
+    "tags": [],
+    "icon_path": "assets/icons/action/TO_LAYER_5.svg",
+    "scope": "internal"
+  },
+  "TO_LAYER_4": {
+    "tags": [],
+    "icon_path": "assets/icons/action/TO_LAYER_4.svg",
+    "scope": "internal"
+  },
+  "TO_LAYER_35": {
+    "tags": [],
+    "icon_path": "assets/icons/action/TO_LAYER_35.svg",
+    "scope": "internal"
+  },
+  "TO_LAYER_34": {
+    "tags": [],
+    "icon_path": "assets/icons/action/TO_LAYER_34.svg",
+    "scope": "internal"
+  },
+  "TO_LAYER_33": {
+    "tags": [],
+    "icon_path": "assets/icons/action/TO_LAYER_33.svg",
+    "scope": "internal"
+  },
+  "TO_LAYER_32": {
+    "tags": [],
+    "icon_path": "assets/icons/action/TO_LAYER_32.svg",
+    "scope": "internal"
+  },
+  "TO_LAYER_31": {
+    "tags": [],
+    "icon_path": "assets/icons/action/TO_LAYER_31.svg",
+    "scope": "internal"
+  },
+  "TO_LAYER_30": {
+    "tags": [],
+    "icon_path": "assets/icons/action/TO_LAYER_30.svg",
+    "scope": "internal"
+  },
+  "TO_LAYER_3": {
+    "tags": [],
+    "icon_path": "assets/icons/action/TO_LAYER_3.svg",
+    "scope": "internal"
+  },
+  "TO_LAYER_29": {
+    "tags": [],
+    "icon_path": "assets/icons/action/TO_LAYER_29.svg",
+    "scope": "internal"
+  },
+  "TO_LAYER_28": {
+    "tags": [],
+    "icon_path": "assets/icons/action/TO_LAYER_28.svg",
+    "scope": "internal"
+  },
+  "TO_LAYER_27": {
+    "tags": [],
+    "icon_path": "assets/icons/action/TO_LAYER_27.svg",
+    "scope": "internal"
+  },
+  "TO_LAYER_26": {
+    "tags": [],
+    "icon_path": "assets/icons/action/TO_LAYER_26.svg",
+    "scope": "internal"
+  },
+  "TO_LAYER_25": {
+    "tags": [],
+    "icon_path": "assets/icons/action/TO_LAYER_25.svg",
+    "scope": "internal"
+  },
+  "TO_LAYER_24": {
+    "tags": [],
+    "icon_path": "assets/icons/action/TO_LAYER_24.svg",
+    "scope": "internal"
+  },
+  "TO_LAYER_23": {
+    "tags": [],
+    "icon_path": "assets/icons/action/TO_LAYER_23.svg",
+    "scope": "internal"
+  },
+  "TO_LAYER_22": {
+    "tags": [],
+    "icon_path": "assets/icons/action/TO_LAYER_22.svg",
+    "scope": "internal"
+  },
+  "TO_LAYER_21": {
+    "tags": [],
+    "icon_path": "assets/icons/action/TO_LAYER_21.svg",
+    "scope": "internal"
+  },
+  "TO_LAYER_20": {
+    "tags": [],
+    "icon_path": "assets/icons/action/TO_LAYER_20.svg",
+    "scope": "internal"
+  },
+  "TO_LAYER_2": {
+    "tags": [],
+    "icon_path": "assets/icons/action/TO_LAYER_2.svg",
+    "scope": "internal"
+  },
+  "TO_LAYER_19": {
+    "tags": [],
+    "icon_path": "assets/icons/action/TO_LAYER_19.svg",
+    "scope": "internal"
+  },
+  "TO_LAYER_18": {
+    "tags": [],
+    "icon_path": "assets/icons/action/TO_LAYER_18.svg",
+    "scope": "internal"
+  },
+  "TO_LAYER_17": {
+    "tags": [],
+    "icon_path": "assets/icons/action/TO_LAYER_17.svg",
+    "scope": "internal"
+  },
+  "TO_LAYER_16": {
+    "tags": [],
+    "icon_path": "assets/icons/action/TO_LAYER_16.svg",
+    "scope": "internal"
+  },
+  "TO_LAYER_15": {
+    "tags": [],
+    "icon_path": "assets/icons/action/TO_LAYER_15.svg",
+    "scope": "internal"
+  },
+  "TO_LAYER_14": {
+    "tags": [],
+    "icon_path": "assets/icons/action/TO_LAYER_14.svg",
+    "scope": "internal"
+  },
+  "TO_LAYER_13": {
+    "tags": [],
+    "icon_path": "assets/icons/action/TO_LAYER_13.svg",
+    "scope": "internal"
+  },
+  "TO_LAYER_12": {
+    "tags": [],
+    "icon_path": "assets/icons/action/TO_LAYER_12.svg",
+    "scope": "internal"
+  },
+  "TO_LAYER_11": {
+    "tags": [],
+    "icon_path": "assets/icons/action/TO_LAYER_11.svg",
+    "scope": "internal"
+  },
+  "TO_LAYER_10": {
+    "tags": [],
+    "icon_path": "assets/icons/action/TO_LAYER_10.svg",
+    "scope": "internal"
+  },
+  "TO_LAYER_1": {
+    "tags": [],
+    "icon_path": "assets/icons/action/TO_LAYER_1.svg",
+    "scope": "internal"
+  },
+  "TO_LAYER_09": {
+    "tags": [],
+    "icon_path": "assets/icons/action/TO_LAYER_09.svg",
+    "scope": "internal"
+  },
+  "TO_LAYER_08": {
+    "tags": [],
+    "icon_path": "assets/icons/action/TO_LAYER_08.svg",
+    "scope": "internal"
+  },
+  "TO_LAYER_07": {
+    "tags": [],
+    "icon_path": "assets/icons/action/TO_LAYER_07.svg",
+    "scope": "internal"
+  },
+  "TO_LAYER_06": {
+    "tags": [],
+    "icon_path": "assets/icons/action/TO_LAYER_06.svg",
+    "scope": "internal"
+  },
+  "TO_LAYER_05": {
+    "tags": [],
+    "icon_path": "assets/icons/action/TO_LAYER_05.svg",
+    "scope": "internal"
+  },
+  "TO_LAYER_04": {
+    "tags": [],
+    "icon_path": "assets/icons/action/TO_LAYER_04.svg",
+    "scope": "internal"
+  },
+  "TO_LAYER_03": {
+    "tags": [],
+    "icon_path": "assets/icons/action/TO_LAYER_03.svg",
+    "scope": "internal"
+  },
+  "TO_LAYER_02": {
+    "tags": [],
+    "icon_path": "assets/icons/action/TO_LAYER_02.svg",
+    "scope": "internal"
+  },
+  "TO_LAYER_01": {
+    "tags": [],
+    "icon_path": "assets/icons/action/TO_LAYER_01.svg",
+    "scope": "internal"
+  },
+  "TO_LAYER_00": {
+    "tags": [],
+    "icon_path": "assets/icons/action/TO_LAYER_00.svg",
+    "scope": "internal"
+  },
+  "TO_LAYER_0": {
+    "tags": [],
+    "icon_path": "assets/icons/action/TO_LAYER_0.svg",
+    "scope": "internal"
+  },
+  "TO_LAYER_$ID": {
+    "tags": [],
+    "icon_path": "assets/icons/action/TO_LAYER_$ID.svg",
+    "scope": "internal"
+  },
+  "TOUCH": {
+    "tags": [],
+    "icon_path": "assets/icons/action/TOUCH.svg",
+    "scope": "internal"
+  },
+  "TOGGLE_TAB_FOCUS": {
+    "tags": [],
+    "icon_path": "assets/icons/action/TOGGLE_TAB_FOCUS.svg",
+    "scope": "internal"
+  },
+  "TOGGLE_SIDEBAR": {
+    "tags": [],
+    "icon_path": "assets/icons/action/TOGGLE_SIDEBAR.svg",
+    "scope": "internal"
+  },
+  "TOGGLE_LAYER_DELETED": {
+    "tags": [],
+    "icon_path": "assets/icons/action/TOGGLE_LAYER_DELETED.svg",
+    "scope": "internal"
+  },
+  "TOGGLE_LAYER_9": {
+    "tags": [],
+    "icon_path": "assets/icons/action/TOGGLE_LAYER_9.svg",
+    "scope": "internal"
+  },
+  "TOGGLE_LAYER_8": {
+    "tags": [],
+    "icon_path": "assets/icons/action/TOGGLE_LAYER_8.svg",
+    "scope": "internal"
+  },
+  "TOGGLE_LAYER_7": {
+    "tags": [],
+    "icon_path": "assets/icons/action/TOGGLE_LAYER_7.svg",
+    "scope": "internal"
+  },
+  "TOGGLE_LAYER_6": {
+    "tags": [],
+    "icon_path": "assets/icons/action/TOGGLE_LAYER_6.svg",
+    "scope": "internal"
+  },
+  "TOGGLE_LAYER_5": {
+    "tags": [],
+    "icon_path": "assets/icons/action/TOGGLE_LAYER_5.svg",
+    "scope": "internal"
+  },
+  "TOGGLE_LAYER_4": {
+    "tags": [],
+    "icon_path": "assets/icons/action/TOGGLE_LAYER_4.svg",
+    "scope": "internal"
+  },
+  "TOGGLE_LAYER_35": {
+    "tags": [],
+    "icon_path": "assets/icons/action/TOGGLE_LAYER_35.svg",
+    "scope": "internal"
+  },
+  "TOGGLE_LAYER_34": {
+    "tags": [],
+    "icon_path": "assets/icons/action/TOGGLE_LAYER_34.svg",
+    "scope": "internal"
+  },
+  "TOGGLE_LAYER_33": {
+    "tags": [],
+    "icon_path": "assets/icons/action/TOGGLE_LAYER_33.svg",
+    "scope": "internal"
+  },
+  "TOGGLE_LAYER_32": {
+    "tags": [],
+    "icon_path": "assets/icons/action/TOGGLE_LAYER_32.svg",
+    "scope": "internal"
+  },
+  "TOGGLE_LAYER_31": {
+    "tags": [],
+    "icon_path": "assets/icons/action/TOGGLE_LAYER_31.svg",
+    "scope": "internal"
+  },
+  "TOGGLE_LAYER_30": {
+    "tags": [],
+    "icon_path": "assets/icons/action/TOGGLE_LAYER_30.svg",
+    "scope": "internal"
+  },
+  "TOGGLE_LAYER_3": {
+    "tags": [],
+    "icon_path": "assets/icons/action/TOGGLE_LAYER_3.svg",
+    "scope": "internal"
+  },
+  "TOGGLE_LAYER_29": {
+    "tags": [],
+    "icon_path": "assets/icons/action/TOGGLE_LAYER_29.svg",
+    "scope": "internal"
+  },
+  "TOGGLE_LAYER_28": {
+    "tags": [],
+    "icon_path": "assets/icons/action/TOGGLE_LAYER_28.svg",
+    "scope": "internal"
+  },
+  "TOGGLE_LAYER_27": {
+    "tags": [],
+    "icon_path": "assets/icons/action/TOGGLE_LAYER_27.svg",
+    "scope": "internal"
+  },
+  "TOGGLE_LAYER_26": {
+    "tags": [],
+    "icon_path": "assets/icons/action/TOGGLE_LAYER_26.svg",
+    "scope": "internal"
+  },
+  "TOGGLE_LAYER_25": {
+    "tags": [],
+    "icon_path": "assets/icons/action/TOGGLE_LAYER_25.svg",
+    "scope": "internal"
+  },
+  "TOGGLE_LAYER_24": {
+    "tags": [],
+    "icon_path": "assets/icons/action/TOGGLE_LAYER_24.svg",
+    "scope": "internal"
+  },
+  "TOGGLE_LAYER_23": {
+    "tags": [],
+    "icon_path": "assets/icons/action/TOGGLE_LAYER_23.svg",
+    "scope": "internal"
+  },
+  "TOGGLE_LAYER_22": {
+    "tags": [],
+    "icon_path": "assets/icons/action/TOGGLE_LAYER_22.svg",
+    "scope": "internal"
+  },
+  "TOGGLE_LAYER_21": {
+    "tags": [],
+    "icon_path": "assets/icons/action/TOGGLE_LAYER_21.svg",
+    "scope": "internal"
+  },
+  "TOGGLE_LAYER_20": {
+    "tags": [],
+    "icon_path": "assets/icons/action/TOGGLE_LAYER_20.svg",
+    "scope": "internal"
+  },
+  "TOGGLE_LAYER_2": {
+    "tags": [],
+    "icon_path": "assets/icons/action/TOGGLE_LAYER_2.svg",
+    "scope": "internal"
+  },
+  "TOGGLE_LAYER_19": {
+    "tags": [],
+    "icon_path": "assets/icons/action/TOGGLE_LAYER_19.svg",
+    "scope": "internal"
+  },
+  "TOGGLE_LAYER_18": {
+    "tags": [],
+    "icon_path": "assets/icons/action/TOGGLE_LAYER_18.svg",
+    "scope": "internal"
+  },
+  "TOGGLE_LAYER_17": {
+    "tags": [],
+    "icon_path": "assets/icons/action/TOGGLE_LAYER_17.svg",
+    "scope": "internal"
+  },
+  "TOGGLE_LAYER_16": {
+    "tags": [],
+    "icon_path": "assets/icons/action/TOGGLE_LAYER_16.svg",
+    "scope": "internal"
+  },
+  "TOGGLE_LAYER_15": {
+    "tags": [],
+    "icon_path": "assets/icons/action/TOGGLE_LAYER_15.svg",
+    "scope": "internal"
+  },
+  "TOGGLE_LAYER_14": {
+    "tags": [],
+    "icon_path": "assets/icons/action/TOGGLE_LAYER_14.svg",
+    "scope": "internal"
+  },
+  "TOGGLE_LAYER_13": {
+    "tags": [],
+    "icon_path": "assets/icons/action/TOGGLE_LAYER_13.svg",
+    "scope": "internal"
+  },
+  "TOGGLE_LAYER_12": {
+    "tags": [],
+    "icon_path": "assets/icons/action/TOGGLE_LAYER_12.svg",
+    "scope": "internal"
+  },
+  "TOGGLE_LAYER_11": {
+    "tags": [],
+    "icon_path": "assets/icons/action/TOGGLE_LAYER_11.svg",
+    "scope": "internal"
+  },
+  "TOGGLE_LAYER_10": {
+    "tags": [],
+    "icon_path": "assets/icons/action/TOGGLE_LAYER_10.svg",
+    "scope": "internal"
+  },
+  "TOGGLE_LAYER_1": {
+    "tags": [],
+    "icon_path": "assets/icons/action/TOGGLE_LAYER_1.svg",
+    "scope": "internal"
+  },
+  "TOGGLE_LAYER_09": {
+    "tags": [],
+    "icon_path": "assets/icons/action/TOGGLE_LAYER_09.svg",
+    "scope": "internal"
+  },
+  "TOGGLE_LAYER_08": {
+    "tags": [],
+    "icon_path": "assets/icons/action/TOGGLE_LAYER_08.svg",
+    "scope": "internal"
+  },
+  "TOGGLE_LAYER_07": {
+    "tags": [],
+    "icon_path": "assets/icons/action/TOGGLE_LAYER_07.svg",
+    "scope": "internal"
+  },
+  "TOGGLE_LAYER_06": {
+    "tags": [],
+    "icon_path": "assets/icons/action/TOGGLE_LAYER_06.svg",
+    "scope": "internal"
+  },
+  "TOGGLE_LAYER_05": {
+    "tags": [],
+    "icon_path": "assets/icons/action/TOGGLE_LAYER_05.svg",
+    "scope": "internal"
+  },
+  "TOGGLE_LAYER_04": {
+    "tags": [],
+    "icon_path": "assets/icons/action/TOGGLE_LAYER_04.svg",
+    "scope": "internal"
+  },
+  "TOGGLE_LAYER_03": {
+    "tags": [],
+    "icon_path": "assets/icons/action/TOGGLE_LAYER_03.svg",
+    "scope": "internal"
+  },
+  "TOGGLE_LAYER_02": {
+    "tags": [],
+    "icon_path": "assets/icons/action/TOGGLE_LAYER_02.svg",
+    "scope": "internal"
+  },
+  "TOGGLE_LAYER_01": {
+    "tags": [],
+    "icon_path": "assets/icons/action/TOGGLE_LAYER_01.svg",
+    "scope": "internal"
+  },
+  "TOGGLE_LAYER_00": {
+    "tags": [],
+    "icon_path": "assets/icons/action/TOGGLE_LAYER_00.svg",
+    "scope": "internal"
+  },
+  "TOGGLE_LAYER_0": {
+    "tags": [],
+    "icon_path": "assets/icons/action/TOGGLE_LAYER_0.svg",
+    "scope": "internal"
+  },
+  "TOGGLE_LAYER_$ID": {
+    "tags": [],
+    "icon_path": "assets/icons/action/TOGGLE_LAYER_$ID.svg",
+    "scope": "internal"
+  },
+  "TOGGLE_FULLSCREEN": {
+    "tags": [],
+    "icon_path": "assets/icons/action/TOGGLE_FULLSCREEN.svg",
+    "scope": "internal"
+  },
+  "TOGGLE_DYNAMIC_LAYER": {
+    "tags": [],
+    "icon_path": "assets/icons/action/TOGGLE_DYNAMIC_LAYER.svg",
+    "scope": "internal"
+  },
+  "TOGGLE_BREAKPOINT": {
+    "tags": [],
+    "icon_path": "assets/icons/action/TOGGLE_BREAKPOINT.svg",
+    "scope": "internal"
+  },
+  "TILDE_JIS": {
+    "tags": [],
+    "icon_path": "assets/icons/action/TILDE_JIS.svg",
+    "scope": "internal"
+  },
+  "TILDE2": {
+    "tags": [],
+    "icon_path": "assets/icons/action/TILDE2.svg",
+    "scope": "internal"
+  },
+  "TILDE": {
+    "tags": [],
+    "icon_path": "assets/icons/action/TILDE.svg",
+    "scope": "internal"
+  },
+  "TERMINAL_SCROLL_UP_2": {
+    "tags": [],
+    "icon_path": "assets/icons/action/TERMINAL_SCROLL_UP_2.svg",
+    "scope": "internal"
+  },
+  "TERMINAL_SCROLL_UP_1": {
+    "tags": [],
+    "icon_path": "assets/icons/action/TERMINAL_SCROLL_UP_1.svg",
+    "scope": "internal"
+  },
+  "TERMINAL_SCROLL_START": {
+    "tags": [],
+    "icon_path": "assets/icons/action/TERMINAL_SCROLL_START.svg",
+    "scope": "internal"
+  },
+  "TERMINAL_SCROLL_END": {
+    "tags": [],
+    "icon_path": "assets/icons/action/TERMINAL_SCROLL_END.svg",
+    "scope": "internal"
+  },
+  "TERMINAL_SCROLL_DOWN_2": {
+    "tags": [],
+    "icon_path": "assets/icons/action/TERMINAL_SCROLL_DOWN_2.svg",
+    "scope": "internal"
+  },
+  "TERMINAL_SCROLL_DOWN_1": {
+    "tags": [],
+    "icon_path": "assets/icons/action/TERMINAL_SCROLL_DOWN_1.svg",
+    "scope": "internal"
+  },
+  "TERMINAL": {
+    "tags": [],
+    "icon_path": "assets/icons/action/TERMINAL.svg",
+    "scope": "internal"
+  },
+  "TASK_VIEW": {
+    "tags": [],
+    "icon_path": "assets/icons/action/TASK_VIEW.svg",
+    "scope": "internal"
+  },
+  "TAB": {
+    "tags": [],
+    "icon_path": "assets/icons/action/TAB.svg",
+    "scope": "internal"
+  },
+  "T": {
+    "tags": [],
+    "icon_path": "assets/icons/action/T.svg",
+    "scope": "internal"
+  },
+  "S_JIS": {
+    "tags": [],
+    "icon_path": "assets/icons/action/S_JIS.svg",
+    "scope": "internal"
+  },
+  "SYSTEM_MONITOR": {
+    "tags": [],
+    "icon_path": "assets/icons/action/SYSTEM_MONITOR.svg",
+    "scope": "internal"
+  },
+  "SUGGESTION": {
+    "tags": [],
+    "icon_path": "assets/icons/action/SUGGESTION.svg",
+    "scope": "internal"
+  },
+  "SUGGESTED_ACTION": {
+    "tags": [],
+    "icon_path": "assets/icons/action/SUGGESTED_ACTION.svg",
+    "scope": "internal"
+  },
+  "STRIKETHROUGH": {
+    "tags": [],
+    "icon_path": "assets/icons/action/STRIKETHROUGH.svg",
+    "scope": "internal"
+  },
+  "STOP": {
+    "tags": [],
+    "icon_path": "assets/icons/action/STOP.svg",
+    "scope": "internal"
+  },
+  "STICKY_LAYER_DELETED": {
+    "tags": [],
+    "icon_path": "assets/icons/action/STICKY_LAYER_DELETED.svg",
+    "scope": "internal"
+  },
+  "STICKY_LAYER_9": {
+    "tags": [],
+    "icon_path": "assets/icons/action/STICKY_LAYER_9.svg",
+    "scope": "internal"
+  },
+  "STICKY_LAYER_8": {
+    "tags": [],
+    "icon_path": "assets/icons/action/STICKY_LAYER_8.svg",
+    "scope": "internal"
+  },
+  "STICKY_LAYER_7": {
+    "tags": [],
+    "icon_path": "assets/icons/action/STICKY_LAYER_7.svg",
+    "scope": "internal"
+  },
+  "STICKY_LAYER_6": {
+    "tags": [],
+    "icon_path": "assets/icons/action/STICKY_LAYER_6.svg",
+    "scope": "internal"
+  },
+  "STICKY_LAYER_5": {
+    "tags": [],
+    "icon_path": "assets/icons/action/STICKY_LAYER_5.svg",
+    "scope": "internal"
+  },
+  "STICKY_LAYER_4": {
+    "tags": [],
+    "icon_path": "assets/icons/action/STICKY_LAYER_4.svg",
+    "scope": "internal"
+  },
+  "STICKY_LAYER_35": {
+    "tags": [],
+    "icon_path": "assets/icons/action/STICKY_LAYER_35.svg",
+    "scope": "internal"
+  },
+  "STICKY_LAYER_34": {
+    "tags": [],
+    "icon_path": "assets/icons/action/STICKY_LAYER_34.svg",
+    "scope": "internal"
+  },
+  "STICKY_LAYER_33": {
+    "tags": [],
+    "icon_path": "assets/icons/action/STICKY_LAYER_33.svg",
+    "scope": "internal"
+  },
+  "STICKY_LAYER_32": {
+    "tags": [],
+    "icon_path": "assets/icons/action/STICKY_LAYER_32.svg",
+    "scope": "internal"
+  },
+  "STICKY_LAYER_31": {
+    "tags": [],
+    "icon_path": "assets/icons/action/STICKY_LAYER_31.svg",
+    "scope": "internal"
+  },
+  "STICKY_LAYER_30": {
+    "tags": [],
+    "icon_path": "assets/icons/action/STICKY_LAYER_30.svg",
+    "scope": "internal"
+  },
+  "STICKY_LAYER_3": {
+    "tags": [],
+    "icon_path": "assets/icons/action/STICKY_LAYER_3.svg",
+    "scope": "internal"
+  },
+  "STICKY_LAYER_29": {
+    "tags": [],
+    "icon_path": "assets/icons/action/STICKY_LAYER_29.svg",
+    "scope": "internal"
+  },
+  "STICKY_LAYER_28": {
+    "tags": [],
+    "icon_path": "assets/icons/action/STICKY_LAYER_28.svg",
+    "scope": "internal"
+  },
+  "STICKY_LAYER_27": {
+    "tags": [],
+    "icon_path": "assets/icons/action/STICKY_LAYER_27.svg",
+    "scope": "internal"
+  },
+  "STICKY_LAYER_26": {
+    "tags": [],
+    "icon_path": "assets/icons/action/STICKY_LAYER_26.svg",
+    "scope": "internal"
+  },
+  "STICKY_LAYER_25": {
+    "tags": [],
+    "icon_path": "assets/icons/action/STICKY_LAYER_25.svg",
+    "scope": "internal"
+  },
+  "STICKY_LAYER_24": {
+    "tags": [],
+    "icon_path": "assets/icons/action/STICKY_LAYER_24.svg",
+    "scope": "internal"
+  },
+  "STICKY_LAYER_23": {
+    "tags": [],
+    "icon_path": "assets/icons/action/STICKY_LAYER_23.svg",
+    "scope": "internal"
+  },
+  "STICKY_LAYER_22": {
+    "tags": [],
+    "icon_path": "assets/icons/action/STICKY_LAYER_22.svg",
+    "scope": "internal"
+  },
+  "STICKY_LAYER_21": {
+    "tags": [],
+    "icon_path": "assets/icons/action/STICKY_LAYER_21.svg",
+    "scope": "internal"
+  },
+  "STICKY_LAYER_20": {
+    "tags": [],
+    "icon_path": "assets/icons/action/STICKY_LAYER_20.svg",
+    "scope": "internal"
+  },
+  "STICKY_LAYER_2": {
+    "tags": [],
+    "icon_path": "assets/icons/action/STICKY_LAYER_2.svg",
+    "scope": "internal"
+  },
+  "STICKY_LAYER_19": {
+    "tags": [],
+    "icon_path": "assets/icons/action/STICKY_LAYER_19.svg",
+    "scope": "internal"
+  },
+  "STICKY_LAYER_18": {
+    "tags": [],
+    "icon_path": "assets/icons/action/STICKY_LAYER_18.svg",
+    "scope": "internal"
+  },
+  "STICKY_LAYER_17": {
+    "tags": [],
+    "icon_path": "assets/icons/action/STICKY_LAYER_17.svg",
+    "scope": "internal"
+  },
+  "STICKY_LAYER_16": {
+    "tags": [],
+    "icon_path": "assets/icons/action/STICKY_LAYER_16.svg",
+    "scope": "internal"
+  },
+  "STICKY_LAYER_15": {
+    "tags": [],
+    "icon_path": "assets/icons/action/STICKY_LAYER_15.svg",
+    "scope": "internal"
+  },
+  "STICKY_LAYER_14": {
+    "tags": [],
+    "icon_path": "assets/icons/action/STICKY_LAYER_14.svg",
+    "scope": "internal"
+  },
+  "STICKY_LAYER_13": {
+    "tags": [],
+    "icon_path": "assets/icons/action/STICKY_LAYER_13.svg",
+    "scope": "internal"
+  },
+  "STICKY_LAYER_12": {
+    "tags": [],
+    "icon_path": "assets/icons/action/STICKY_LAYER_12.svg",
+    "scope": "internal"
+  },
+  "STICKY_LAYER_11": {
+    "tags": [],
+    "icon_path": "assets/icons/action/STICKY_LAYER_11.svg",
+    "scope": "internal"
+  },
+  "STICKY_LAYER_10": {
+    "tags": [],
+    "icon_path": "assets/icons/action/STICKY_LAYER_10.svg",
+    "scope": "internal"
+  },
+  "STICKY_LAYER_1": {
+    "tags": [],
+    "icon_path": "assets/icons/action/STICKY_LAYER_1.svg",
+    "scope": "internal"
+  },
+  "STICKY_LAYER_09": {
+    "tags": [],
+    "icon_path": "assets/icons/action/STICKY_LAYER_09.svg",
+    "scope": "internal"
+  },
+  "STICKY_LAYER_08": {
+    "tags": [],
+    "icon_path": "assets/icons/action/STICKY_LAYER_08.svg",
+    "scope": "internal"
+  },
+  "STICKY_LAYER_07": {
+    "tags": [],
+    "icon_path": "assets/icons/action/STICKY_LAYER_07.svg",
+    "scope": "internal"
+  },
+  "STICKY_LAYER_06": {
+    "tags": [],
+    "icon_path": "assets/icons/action/STICKY_LAYER_06.svg",
+    "scope": "internal"
+  },
+  "STICKY_LAYER_05": {
+    "tags": [],
+    "icon_path": "assets/icons/action/STICKY_LAYER_05.svg",
+    "scope": "internal"
+  },
+  "STICKY_LAYER_04": {
+    "tags": [],
+    "icon_path": "assets/icons/action/STICKY_LAYER_04.svg",
+    "scope": "internal"
+  },
+  "STICKY_LAYER_03": {
+    "tags": [],
+    "icon_path": "assets/icons/action/STICKY_LAYER_03.svg",
+    "scope": "internal"
+  },
+  "STICKY_LAYER_02": {
+    "tags": [],
+    "icon_path": "assets/icons/action/STICKY_LAYER_02.svg",
+    "scope": "internal"
+  },
+  "STICKY_LAYER_01": {
+    "tags": [],
+    "icon_path": "assets/icons/action/STICKY_LAYER_01.svg",
+    "scope": "internal"
+  },
+  "STICKY_LAYER_00": {
+    "tags": [],
+    "icon_path": "assets/icons/action/STICKY_LAYER_00.svg",
+    "scope": "internal"
+  },
+  "STICKY_LAYER_0": {
+    "tags": [],
+    "icon_path": "assets/icons/action/STICKY_LAYER_0.svg",
+    "scope": "internal"
+  },
+  "STICKY_LAYER_$ID": {
+    "tags": [],
+    "icon_path": "assets/icons/action/STICKY_LAYER_$ID.svg",
+    "scope": "internal"
+  },
+  "STICKY_DYNAMIC_LAYER": {
+    "tags": [],
+    "icon_path": "assets/icons/action/STICKY_DYNAMIC_LAYER.svg",
+    "scope": "internal"
+  },
+  "STEP_OVER": {
+    "tags": [],
+    "icon_path": "assets/icons/action/STEP_OVER.svg",
+    "scope": "internal"
+  },
+  "STEP_OUT": {
+    "tags": [],
+    "icon_path": "assets/icons/action/STEP_OUT.svg",
+    "scope": "internal"
+  },
+  "STEP_INTO": {
+    "tags": [],
+    "icon_path": "assets/icons/action/STEP_INTO.svg",
+    "scope": "internal"
+  },
+  "STATIC_TAB": {
+    "tags": [],
+    "icon_path": "assets/icons/action/STATIC_TAB.svg",
+    "scope": "internal"
+  },
+  "SPLIT_EDITOR": {
+    "tags": [],
+    "icon_path": "assets/icons/action/SPLIT_EDITOR.svg",
+    "scope": "internal"
+  },
+  "SPACE": {
+    "tags": [],
+    "icon_path": "assets/icons/action/SPACE.svg",
+    "scope": "internal"
+  },
+  "SLEEP": {
+    "tags": [],
+    "icon_path": "assets/icons/action/SLEEP.svg",
+    "scope": "internal"
+  },
+  "SLASH_JIS": {
+    "tags": [],
+    "icon_path": "assets/icons/action/SLASH_JIS.svg",
+    "scope": "internal"
+  },
+  "SLASH": {
+    "tags": [],
+    "icon_path": "assets/icons/action/SLASH.svg",
+    "scope": "internal"
+  },
+  "SINGLE_QUOTE_JIS": {
+    "tags": [],
+    "icon_path": "assets/icons/action/SINGLE_QUOTE_JIS.svg",
+    "scope": "internal"
+  },
+  "SINGLE_QUOTE": {
+    "tags": [],
+    "icon_path": "assets/icons/action/SINGLE_QUOTE.svg",
+    "scope": "internal"
+  },
+  "SIDE_DEFINITION": {
+    "tags": [],
+    "icon_path": "assets/icons/action/SIDE_DEFINITION.svg",
+    "scope": "internal"
+  },
+  "SHUTDOWN": {
+    "tags": [],
+    "icon_path": "assets/icons/action/SHUTDOWN.svg",
+    "scope": "internal"
+  },
+  "SHRINK_SELECTION": {
+    "tags": [],
+    "icon_path": "assets/icons/action/SHRINK_SELECTION.svg",
+    "scope": "internal"
+  },
+  "SHOW_SYMBOLS": {
+    "tags": [],
+    "icon_path": "assets/icons/action/SHOW_SYMBOLS.svg",
+    "scope": "internal"
+  },
+  "SHOW_SOURCE_CONTROL": {
+    "tags": [],
+    "icon_path": "assets/icons/action/SHOW_SOURCE_CONTROL.svg",
+    "scope": "internal"
+  },
+  "SHOW_SEARCH": {
+    "tags": [],
+    "icon_path": "assets/icons/action/SHOW_SEARCH.svg",
+    "scope": "internal"
+  },
+  "SHOW_REFERENCES": {
+    "tags": [],
+    "icon_path": "assets/icons/action/SHOW_REFERENCES.svg",
+    "scope": "internal"
+  },
+  "SHOW_PROBLEMS": {
+    "tags": [],
+    "icon_path": "assets/icons/action/SHOW_PROBLEMS.svg",
+    "scope": "internal"
+  },
+  "SHOW_PASSWORD": {
+    "tags": [],
+    "icon_path": "assets/icons/action/SHOW_PASSWORD.svg",
+    "scope": "internal"
+  },
+  "SHOW_HOVER": {
+    "tags": [],
+    "icon_path": "assets/icons/action/SHOW_HOVER.svg",
+    "scope": "internal"
+  },
+  "SHOW_FILE": {
+    "tags": [],
+    "icon_path": "assets/icons/action/SHOW_FILE.svg",
+    "scope": "internal"
+  },
+  "SHOW_EXTENSIONS": {
+    "tags": [],
+    "icon_path": "assets/icons/action/SHOW_EXTENSIONS.svg",
+    "scope": "internal"
+  },
+  "SHOW_EXPLORER": {
+    "tags": [],
+    "icon_path": "assets/icons/action/SHOW_EXPLORER.svg",
+    "scope": "internal"
+  },
+  "SHOW_DESKTOP": {
+    "tags": [],
+    "icon_path": "assets/icons/action/SHOW_DESKTOP.svg",
+    "scope": "internal"
+  },
+  "SHOW_DEBUG": {
+    "tags": [],
+    "icon_path": "assets/icons/action/SHOW_DEBUG.svg",
+    "scope": "internal"
+  },
+  "SHOW_AT": {
+    "tags": [],
+    "icon_path": "assets/icons/action/SHOW_AT.svg",
+    "scope": "internal"
+  },
+  "SETTINGS": {
+    "tags": [],
+    "icon_path": "assets/icons/action/SETTINGS.svg",
+    "scope": "internal"
+  },
+  "SEMICOLON_JIS": {
+    "tags": [],
+    "icon_path": "assets/icons/action/SEMICOLON_JIS.svg",
+    "scope": "internal"
+  },
+  "SEMICOLON": {
+    "tags": [],
+    "icon_path": "assets/icons/action/SEMICOLON.svg",
+    "scope": "internal"
+  },
+  "SELECT_TEXT_START": {
+    "tags": [],
+    "icon_path": "assets/icons/action/SELECT_TEXT_START.svg",
+    "scope": "internal"
+  },
+  "SELECT_TEXT_END": {
+    "tags": [],
+    "icon_path": "assets/icons/action/SELECT_TEXT_END.svg",
+    "scope": "internal"
+  },
+  "SELECT_PREV_WORD": {
+    "tags": [],
+    "icon_path": "assets/icons/action/SELECT_PREV_WORD.svg",
+    "scope": "internal"
+  },
+  "SELECT_PREV_PARAGRAPH": {
+    "tags": [],
+    "icon_path": "assets/icons/action/SELECT_PREV_PARAGRAPH.svg",
+    "scope": "internal"
+  },
+  "SELECT_PREV_PAGE": {
+    "tags": [],
+    "icon_path": "assets/icons/action/SELECT_PREV_PAGE.svg",
+    "scope": "internal"
+  },
+  "SELECT_PREV_LINE": {
+    "tags": [],
+    "icon_path": "assets/icons/action/SELECT_PREV_LINE.svg",
+    "scope": "internal"
+  },
+  "SELECT_PREV_CHAR": {
+    "tags": [],
+    "icon_path": "assets/icons/action/SELECT_PREV_CHAR.svg",
+    "scope": "internal"
+  },
+  "SELECT_NEXT_WORD": {
+    "tags": [],
+    "icon_path": "assets/icons/action/SELECT_NEXT_WORD.svg",
+    "scope": "internal"
+  },
+  "SELECT_NEXT_PARAGRAPH": {
+    "tags": [],
+    "icon_path": "assets/icons/action/SELECT_NEXT_PARAGRAPH.svg",
+    "scope": "internal"
+  },
+  "SELECT_NEXT_PAGE": {
+    "tags": [],
+    "icon_path": "assets/icons/action/SELECT_NEXT_PAGE.svg",
+    "scope": "internal"
+  },
+  "SELECT_NEXT_LINE": {
+    "tags": [],
+    "icon_path": "assets/icons/action/SELECT_NEXT_LINE.svg",
+    "scope": "internal"
+  },
+  "SELECT_NEXT_CHAR": {
+    "tags": [],
+    "icon_path": "assets/icons/action/SELECT_NEXT_CHAR.svg",
+    "scope": "internal"
+  },
+  "SELECT_LINE_START": {
+    "tags": [],
+    "icon_path": "assets/icons/action/SELECT_LINE_START.svg",
+    "scope": "internal"
+  },
+  "SELECT_LINE_END": {
+    "tags": [],
+    "icon_path": "assets/icons/action/SELECT_LINE_END.svg",
+    "scope": "internal"
+  },
+  "SELECT_LINE": {
+    "tags": [],
+    "icon_path": "assets/icons/action/SELECT_LINE.svg",
+    "scope": "internal"
+  },
+  "SELECT_FIND_MATCHES": {
+    "tags": [],
+    "icon_path": "assets/icons/action/SELECT_FIND_MATCHES.svg",
+    "scope": "internal"
+  },
+  "SELECT_ALL_WORD_OCCURRENCES": {
+    "tags": [],
+    "icon_path": "assets/icons/action/SELECT_ALL_WORD_OCCURRENCES.svg",
+    "scope": "internal"
+  },
+  "SELECT_ALL_TEXT": {
+    "tags": [],
+    "icon_path": "assets/icons/action/SELECT_ALL_TEXT.svg",
+    "scope": "internal"
+  },
+  "SELECT_ALL_OCCURRENCES": {
+    "tags": [],
+    "icon_path": "assets/icons/action/SELECT_ALL_OCCURRENCES.svg",
+    "scope": "internal"
+  },
+  "SELECT_ALL": {
+    "tags": [],
+    "icon_path": "assets/icons/action/SELECT_ALL.svg",
+    "scope": "internal"
+  },
+  "SEARCH_DETAILS": {
+    "tags": [],
+    "icon_path": "assets/icons/action/SEARCH_DETAILS.svg",
+    "scope": "internal"
+  },
+  "SCROLL_VERTICAL": {
+    "tags": [],
+    "icon_path": "assets/icons/action/SCROLL_VERTICAL.svg",
+    "scope": "internal"
+  },
+  "SCROLL_UP": {
+    "tags": [],
+    "icon_path": "assets/icons/action/SCROLL_UP.svg",
+    "scope": "internal"
+  },
+  "SCROLL_RIGHT": {
+    "tags": [],
+    "icon_path": "assets/icons/action/SCROLL_RIGHT.svg",
+    "scope": "internal"
+  },
+  "SCROLL_MODE_R": {
+    "tags": [],
+    "icon_path": "assets/icons/action/SCROLL_MODE_R.svg",
+    "scope": "internal"
+  },
+  "SCROLL_MODE_L": {
+    "tags": [],
+    "icon_path": "assets/icons/action/SCROLL_MODE_L.svg",
+    "scope": "internal"
+  },
+  "SCROLL_MODE": {
+    "tags": [],
+    "icon_path": "assets/icons/action/SCROLL_MODE.svg",
+    "scope": "internal"
+  },
+  "SCROLL_LEFT": {
+    "tags": [],
+    "icon_path": "assets/icons/action/SCROLL_LEFT.svg",
+    "scope": "internal"
+  },
+  "SCROLL_HORIZONTAL": {
+    "tags": [],
+    "icon_path": "assets/icons/action/SCROLL_HORIZONTAL.svg",
+    "scope": "internal"
+  },
+  "SCROLL_DOWN": {
+    "tags": [],
+    "icon_path": "assets/icons/action/SCROLL_DOWN.svg",
+    "scope": "internal"
+  },
+  "SCROLL_DIRECTION_R": {
+    "tags": [],
+    "icon_path": "assets/icons/action/SCROLL_DIRECTION_R.svg",
+    "scope": "internal"
+  },
+  "SCROLL_DIRECTION_L": {
+    "tags": [],
+    "icon_path": "assets/icons/action/SCROLL_DIRECTION_L.svg",
+    "scope": "internal"
+  },
+  "SCROLLLOCK": {
+    "tags": [],
+    "icon_path": "assets/icons/action/SCROLLLOCK.svg",
+    "scope": "internal"
+  },
+  "SCREENSHOT_SECTION": {
+    "tags": [],
+    "icon_path": "assets/icons/action/SCREENSHOT_SECTION.svg",
+    "scope": "internal"
+  },
+  "SCREENSHOT_DIALOG": {
+    "tags": [],
+    "icon_path": "assets/icons/action/SCREENSHOT_DIALOG.svg",
+    "scope": "internal"
+  },
+  "SCREENSHOT": {
+    "tags": [],
+    "icon_path": "assets/icons/action/SCREENSHOT.svg",
+    "scope": "internal"
+  },
+  "SAVE_AS": {
+    "tags": [],
+    "icon_path": "assets/icons/action/SAVE_AS.svg",
+    "scope": "internal"
+  },
+  "SAVE": {
+    "tags": [],
+    "icon_path": "assets/icons/action/SAVE.svg",
+    "scope": "internal"
+  },
+  "S": {
+    "tags": [],
+    "icon_path": "assets/icons/action/S.svg",
+    "scope": "internal"
+  },
+  "R_JIS": {
+    "tags": [],
+    "icon_path": "assets/icons/action/R_JIS.svg",
+    "scope": "internal"
+  },
+  "RWIN_JIS": {
+    "tags": [],
+    "icon_path": "assets/icons/action/RWIN_JIS.svg",
+    "scope": "internal"
+  },
+  "RWIN": {
+    "tags": [],
+    "icon_path": "assets/icons/action/RWIN.svg",
+    "scope": "internal"
+  },
+  "RSHFT_JIS": {
+    "tags": [],
+    "icon_path": "assets/icons/action/RSHFT_JIS.svg",
+    "scope": "internal"
+  },
+  "RSHFT": {
+    "tags": [],
+    "icon_path": "assets/icons/action/RSHFT.svg",
+    "scope": "internal"
+  },
+  "RO_JIS": {
+    "tags": [],
+    "icon_path": "assets/icons/action/RO_JIS.svg",
+    "scope": "internal"
+  },
+  "ROPT_JIS": {
+    "tags": [],
+    "icon_path": "assets/icons/action/ROPT_JIS.svg",
+    "scope": "internal"
+  },
+  "ROPT": {
+    "tags": [],
+    "icon_path": "assets/icons/action/ROPT.svg",
+    "scope": "internal"
+  },
+  "RIGHT_PARENTHESIS_JIS": {
+    "tags": [],
+    "icon_path": "assets/icons/action/RIGHT_PARENTHESIS_JIS.svg",
+    "scope": "internal"
+  },
+  "RIGHT_PARENTHESIS": {
+    "tags": [],
+    "icon_path": "assets/icons/action/RIGHT_PARENTHESIS.svg",
+    "scope": "internal"
+  },
+  "RIGHT_DESKTOP": {
+    "tags": [],
+    "icon_path": "assets/icons/action/RIGHT_DESKTOP.svg",
+    "scope": "internal"
+  },
+  "RIGHT_BRACKET_JIS": {
+    "tags": [],
+    "icon_path": "assets/icons/action/RIGHT_BRACKET_JIS.svg",
+    "scope": "internal"
+  },
+  "RIGHT_BRACKET": {
+    "tags": [],
+    "icon_path": "assets/icons/action/RIGHT_BRACKET.svg",
+    "scope": "internal"
+  },
+  "RIGHT_BRACE_JIS": {
+    "tags": [],
+    "icon_path": "assets/icons/action/RIGHT_BRACE_JIS.svg",
+    "scope": "internal"
+  },
+  "RIGHT_BRACE": {
+    "tags": [],
+    "icon_path": "assets/icons/action/RIGHT_BRACE.svg",
+    "scope": "internal"
+  },
+  "RIGHT": {
+    "tags": [],
+    "icon_path": "assets/icons/action/RIGHT.svg",
+    "scope": "internal"
+  },
+  "RGUI_JIS": {
+    "tags": [],
+    "icon_path": "assets/icons/action/RGUI_JIS.svg",
+    "scope": "internal"
+  },
+  "RGUI": {
+    "tags": [],
+    "icon_path": "assets/icons/action/RGUI.svg",
+    "scope": "internal"
+  },
+  "RF_DEVICE": {
+    "tags": [],
+    "icon_path": "assets/icons/action/RF_DEVICE.svg",
+    "scope": "internal"
+  },
+  "RETURN_LAYER": {
+    "tags": [],
+    "icon_path": "assets/icons/action/RETURN_LAYER.svg",
+    "scope": "internal"
+  },
+  "RETURN": {
+    "tags": [],
+    "icon_path": "assets/icons/action/RETURN.svg",
+    "scope": "internal"
+  },
+  "RESTART": {
+    "tags": [],
+    "icon_path": "assets/icons/action/RESTART.svg",
+    "scope": "internal"
+  },
+  "RENAME": {
+    "tags": [],
+    "icon_path": "assets/icons/action/RENAME.svg",
+    "scope": "internal"
+  },
+  "REMOVE_COMMENT": {
+    "tags": [],
+    "icon_path": "assets/icons/action/REMOVE_COMMENT.svg",
+    "scope": "internal"
+  },
+  "REFRESH_WINDOW": {
+    "tags": [],
+    "icon_path": "assets/icons/action/REFRESH_WINDOW.svg",
+    "scope": "internal"
+  },
+  "REFRESH_TAB": {
+    "tags": [],
+    "icon_path": "assets/icons/action/REFRESH_TAB.svg",
+    "scope": "internal"
+  },
+  "REFRESH_FILE": {
+    "tags": [],
+    "icon_path": "assets/icons/action/REFRESH_FILE.svg",
+    "scope": "internal"
+  },
+  "REDO": {
+    "tags": [],
+    "icon_path": "assets/icons/action/REDO.svg",
+    "scope": "internal"
+  },
+  "RECENT_TAB": {
+    "tags": [],
+    "icon_path": "assets/icons/action/RECENT_TAB.svg",
+    "scope": "internal"
+  },
+  "RCTRL_MAC_JIS": {
+    "tags": [],
+    "icon_path": "assets/icons/action/RCTRL_MAC_JIS.svg",
+    "scope": "internal"
+  },
+  "RCTRL_MAC": {
+    "tags": [],
+    "icon_path": "assets/icons/action/RCTRL_MAC.svg",
+    "scope": "internal"
+  },
+  "RCTRL_JIS": {
+    "tags": [],
+    "icon_path": "assets/icons/action/RCTRL_JIS.svg",
+    "scope": "internal"
+  },
+  "RCTRL": {
+    "tags": [],
+    "icon_path": "assets/icons/action/RCTRL.svg",
+    "scope": "internal"
+  },
+  "RCMD_JIS": {
+    "tags": [],
+    "icon_path": "assets/icons/action/RCMD_JIS.svg",
+    "scope": "internal"
+  },
+  "RCMD": {
+    "tags": [],
+    "icon_path": "assets/icons/action/RCMD.svg",
+    "scope": "internal"
+  },
+  "RALT_JIS": {
+    "tags": [],
+    "icon_path": "assets/icons/action/RALT_JIS.svg",
+    "scope": "internal"
+  },
+  "RALT": {
+    "tags": [],
+    "icon_path": "assets/icons/action/RALT.svg",
+    "scope": "internal"
+  },
+  "R": {
+    "tags": [],
+    "icon_path": "assets/icons/action/R.svg",
+    "scope": "internal"
+  },
+  "Q_JIS": {
+    "tags": [],
+    "icon_path": "assets/icons/action/Q_JIS.svg",
+    "scope": "internal"
+  },
+  "QUICK_FIX": {
+    "tags": [],
+    "icon_path": "assets/icons/action/QUICK_FIX.svg",
+    "scope": "internal"
+  },
+  "QUESTION_JIS": {
+    "tags": [],
+    "icon_path": "assets/icons/action/QUESTION_JIS.svg",
+    "scope": "internal"
+  },
+  "QUESTION": {
+    "tags": [],
+    "icon_path": "assets/icons/action/QUESTION.svg",
+    "scope": "internal"
+  },
+  "Q": {
+    "tags": [],
+    "icon_path": "assets/icons/action/Q.svg",
+    "scope": "internal"
+  },
+  "P_JIS": {
+    "tags": [],
+    "icon_path": "assets/icons/action/P_JIS.svg",
+    "scope": "internal"
+  },
+  "PRINTSCREEN": {
+    "tags": [],
+    "icon_path": "assets/icons/action/PRINTSCREEN.svg",
+    "scope": "internal"
+  },
+  "PRINT": {
+    "tags": [],
+    "icon_path": "assets/icons/action/PRINT.svg",
+    "scope": "internal"
+  },
+  "PREV_WORD": {
+    "tags": [],
+    "icon_path": "assets/icons/action/PREV_WORD.svg",
+    "scope": "internal"
+  },
+  "PREV_WINDOW_ORDER": {
+    "tags": [],
+    "icon_path": "assets/icons/action/PREV_WINDOW_ORDER.svg",
+    "scope": "internal"
+  },
+  "PREV_WINDOW": {
+    "tags": [],
+    "icon_path": "assets/icons/action/PREV_WINDOW.svg",
+    "scope": "internal"
+  },
+  "PREV_TAB": {
+    "tags": [],
+    "icon_path": "assets/icons/action/PREV_TAB.svg",
+    "scope": "internal"
+  },
+  "PREV_SCREEN": {
+    "tags": [],
+    "icon_path": "assets/icons/action/PREV_SCREEN.svg",
+    "scope": "internal"
+  },
+  "PREV_PROBLEM": {
+    "tags": [],
+    "icon_path": "assets/icons/action/PREV_PROBLEM.svg",
+    "scope": "internal"
+  },
+  "PREV_PARAGRAPH": {
+    "tags": [],
+    "icon_path": "assets/icons/action/PREV_PARAGRAPH.svg",
+    "scope": "internal"
+  },
+  "PREV_FILE": {
+    "tags": [],
+    "icon_path": "assets/icons/action/PREV_FILE.svg",
+    "scope": "internal"
+  },
+  "PREV_EDITOR": {
+    "tags": [],
+    "icon_path": "assets/icons/action/PREV_EDITOR.svg",
+    "scope": "internal"
+  },
+  "PREV_APP": {
+    "tags": [],
+    "icon_path": "assets/icons/action/PREV_APP.svg",
+    "scope": "internal"
+  },
+  "PLUS_JIS": {
+    "tags": [],
+    "icon_path": "assets/icons/action/PLUS_JIS.svg",
+    "scope": "internal"
+  },
+  "PLUS": {
+    "tags": [],
+    "icon_path": "assets/icons/action/PLUS.svg",
+    "scope": "internal"
+  },
+  "PLAY": {
+    "tags": [],
+    "icon_path": "assets/icons/action/PLAY.svg",
+    "scope": "internal"
+  },
+  "PLACEHOLDER": {
+    "tags": [],
+    "icon_path": "assets/icons/action/PLACEHOLDER.svg",
+    "scope": "internal"
+  },
+  "PIPE2": {
+    "tags": [],
+    "icon_path": "assets/icons/action/PIPE2.svg",
+    "scope": "internal"
+  },
+  "PIPE": {
+    "tags": [],
+    "icon_path": "assets/icons/action/PIPE.svg",
+    "scope": "internal"
+  },
+  "PG_UP": {
+    "tags": [],
+    "icon_path": "assets/icons/action/PG_UP.svg",
+    "scope": "internal"
+  },
+  "PG_DN": {
+    "tags": [],
+    "icon_path": "assets/icons/action/PG_DN.svg",
+    "scope": "internal"
+  },
+  "PERIOD_JIS": {
+    "tags": [],
+    "icon_path": "assets/icons/action/PERIOD_JIS.svg",
+    "scope": "internal"
+  },
+  "PERIOD": {
+    "tags": [],
+    "icon_path": "assets/icons/action/PERIOD.svg",
+    "scope": "internal"
+  },
+  "PERCENT_JIS": {
+    "tags": [],
+    "icon_path": "assets/icons/action/PERCENT_JIS.svg",
+    "scope": "internal"
+  },
+  "PERCENT": {
+    "tags": [],
+    "icon_path": "assets/icons/action/PERCENT.svg",
+    "scope": "internal"
+  },
+  "PEEK_DEFINITION": {
+    "tags": [],
+    "icon_path": "assets/icons/action/PEEK_DEFINITION.svg",
+    "scope": "internal"
+  },
+  "PAUSE_BREAK": {
+    "tags": [],
+    "icon_path": "assets/icons/action/PAUSE_BREAK.svg",
+    "scope": "internal"
+  },
+  "PASTE_TERMINAL": {
+    "tags": [],
+    "icon_path": "assets/icons/action/PASTE_TERMINAL.svg",
+    "scope": "internal"
+  },
+  "PASTE_PLAIN": {
+    "tags": [],
+    "icon_path": "assets/icons/action/PASTE_PLAIN.svg",
+    "scope": "internal"
+  },
+  "PASTE": {
+    "tags": [],
+    "icon_path": "assets/icons/action/PASTE.svg",
+    "scope": "internal"
+  },
+  "PARAMETER_HINTS": {
+    "tags": [],
+    "icon_path": "assets/icons/action/PARAMETER_HINTS.svg",
+    "scope": "internal"
+  },
+  "P": {
+    "tags": [],
+    "icon_path": "assets/icons/action/P.svg",
+    "scope": "internal"
+  },
+  "O_UMLAUT": {
+    "tags": [],
+    "icon_path": "assets/icons/action/O_UMLAUT.svg",
+    "scope": "internal"
+  },
+  "O_JIS": {
+    "tags": [],
+    "icon_path": "assets/icons/action/O_JIS.svg",
+    "scope": "internal"
+  },
+  "OUTPUT": {
+    "tags": [],
+    "icon_path": "assets/icons/action/OUTPUT.svg",
+    "scope": "internal"
+  },
+  "OUTDENT_LINE": {
+    "tags": [],
+    "icon_path": "assets/icons/action/OUTDENT_LINE.svg",
+    "scope": "internal"
+  },
+  "OPEN_WINDOW": {
+    "tags": [],
+    "icon_path": "assets/icons/action/OPEN_WINDOW.svg",
+    "scope": "internal"
+  },
+  "OPEN_TERMINAL": {
+    "tags": [],
+    "icon_path": "assets/icons/action/OPEN_TERMINAL.svg",
+    "scope": "internal"
+  },
+  "OPEN_MARKDOWN": {
+    "tags": [],
+    "icon_path": "assets/icons/action/OPEN_MARKDOWN.svg",
+    "scope": "internal"
+  },
+  "OPEN_FOLDER": {
+    "tags": [],
+    "icon_path": "assets/icons/action/OPEN_FOLDER.svg",
+    "scope": "internal"
+  },
+  "OPEN_FILE": {
+    "tags": [],
+    "icon_path": "assets/icons/action/OPEN_FILE.svg",
+    "scope": "internal"
+  },
+  "OPEN_CONTEXT": {
+    "tags": [],
+    "icon_path": "assets/icons/action/OPEN_CONTEXT.svg",
+    "scope": "internal"
+  },
+  "O": {
+    "tags": [],
+    "icon_path": "assets/icons/action/O.svg",
+    "scope": "internal"
+  },
+  "N_JIS": {
+    "tags": [],
+    "icon_path": "assets/icons/action/N_JIS.svg",
+    "scope": "internal"
+  },
+  "NUMBER_9_JIS": {
+    "tags": [],
+    "icon_path": "assets/icons/action/NUMBER_9_JIS.svg",
+    "scope": "internal"
+  },
+  "NUMBER_9": {
+    "tags": [],
+    "icon_path": "assets/icons/action/NUMBER_9.svg",
+    "scope": "internal"
+  },
+  "NUMBER_8_JIS": {
+    "tags": [],
+    "icon_path": "assets/icons/action/NUMBER_8_JIS.svg",
+    "scope": "internal"
+  },
+  "NUMBER_8": {
+    "tags": [],
+    "icon_path": "assets/icons/action/NUMBER_8.svg",
+    "scope": "internal"
+  },
+  "NUMBER_7_JIS": {
+    "tags": [],
+    "icon_path": "assets/icons/action/NUMBER_7_JIS.svg",
+    "scope": "internal"
+  },
+  "NUMBER_7": {
+    "tags": [],
+    "icon_path": "assets/icons/action/NUMBER_7.svg",
+    "scope": "internal"
+  },
+  "NUMBER_6_JIS": {
+    "tags": [],
+    "icon_path": "assets/icons/action/NUMBER_6_JIS.svg",
+    "scope": "internal"
+  },
+  "NUMBER_6": {
+    "tags": [],
+    "icon_path": "assets/icons/action/NUMBER_6.svg",
+    "scope": "internal"
+  },
+  "NUMBER_5_JIS": {
+    "tags": [],
+    "icon_path": "assets/icons/action/NUMBER_5_JIS.svg",
+    "scope": "internal"
+  },
+  "NUMBER_5": {
+    "tags": [],
+    "icon_path": "assets/icons/action/NUMBER_5.svg",
+    "scope": "internal"
+  },
+  "NUMBER_4_JIS": {
+    "tags": [],
+    "icon_path": "assets/icons/action/NUMBER_4_JIS.svg",
+    "scope": "internal"
+  },
+  "NUMBER_4": {
+    "tags": [],
+    "icon_path": "assets/icons/action/NUMBER_4.svg",
+    "scope": "internal"
+  },
+  "NUMBER_3_JIS": {
+    "tags": [],
+    "icon_path": "assets/icons/action/NUMBER_3_JIS.svg",
+    "scope": "internal"
+  },
+  "NUMBER_3": {
+    "tags": [],
+    "icon_path": "assets/icons/action/NUMBER_3.svg",
+    "scope": "internal"
+  },
+  "NUMBER_2_JIS": {
+    "tags": [],
+    "icon_path": "assets/icons/action/NUMBER_2_JIS.svg",
+    "scope": "internal"
+  },
+  "NUMBER_2": {
+    "tags": [],
+    "icon_path": "assets/icons/action/NUMBER_2.svg",
+    "scope": "internal"
+  },
+  "NUMBER_1_JIS": {
+    "tags": [],
+    "icon_path": "assets/icons/action/NUMBER_1_JIS.svg",
+    "scope": "internal"
+  },
+  "NUMBER_1": {
+    "tags": [],
+    "icon_path": "assets/icons/action/NUMBER_1.svg",
+    "scope": "internal"
+  },
+  "NUMBER_0_JIS": {
+    "tags": [],
+    "icon_path": "assets/icons/action/NUMBER_0_JIS.svg",
+    "scope": "internal"
+  },
+  "NUMBER_0": {
+    "tags": [],
+    "icon_path": "assets/icons/action/NUMBER_0.svg",
+    "scope": "internal"
+  },
+  "NON_US_HASH": {
+    "tags": [],
+    "icon_path": "assets/icons/action/NON_US_HASH.svg",
+    "scope": "internal"
+  },
+  "NON_US_BACKSLASH": {
+    "tags": [],
+    "icon_path": "assets/icons/action/NON_US_BACKSLASH.svg",
+    "scope": "internal"
+  },
+  "NEXT_WORD": {
+    "tags": [],
+    "icon_path": "assets/icons/action/NEXT_WORD.svg",
+    "scope": "internal"
+  },
+  "NEXT_WINDOW_ORDER": {
+    "tags": [],
+    "icon_path": "assets/icons/action/NEXT_WINDOW_ORDER.svg",
+    "scope": "internal"
+  },
+  "NEXT_WINDOW": {
+    "tags": [],
+    "icon_path": "assets/icons/action/NEXT_WINDOW.svg",
+    "scope": "internal"
+  },
+  "NEXT_TAB": {
+    "tags": [],
+    "icon_path": "assets/icons/action/NEXT_TAB.svg",
+    "scope": "internal"
+  },
+  "NEXT_SCREEN": {
+    "tags": [],
+    "icon_path": "assets/icons/action/NEXT_SCREEN.svg",
+    "scope": "internal"
+  },
+  "NEXT_PROBLEM": {
+    "tags": [],
+    "icon_path": "assets/icons/action/NEXT_PROBLEM.svg",
+    "scope": "internal"
+  },
+  "NEXT_PARAGRAPH": {
+    "tags": [],
+    "icon_path": "assets/icons/action/NEXT_PARAGRAPH.svg",
+    "scope": "internal"
+  },
+  "NEXT_FILE": {
+    "tags": [],
+    "icon_path": "assets/icons/action/NEXT_FILE.svg",
+    "scope": "internal"
+  },
+  "NEXT_EDITOR": {
+    "tags": [],
+    "icon_path": "assets/icons/action/NEXT_EDITOR.svg",
+    "scope": "internal"
+  },
+  "NEXT_APP": {
+    "tags": [],
+    "icon_path": "assets/icons/action/NEXT_APP.svg",
+    "scope": "internal"
+  },
+  "NEW_WINDOW": {
+    "tags": [],
+    "icon_path": "assets/icons/action/NEW_WINDOW.svg",
+    "scope": "internal"
+  },
+  "NEW_TERMINAL": {
+    "tags": [],
+    "icon_path": "assets/icons/action/NEW_TERMINAL.svg",
+    "scope": "internal"
+  },
+  "NEW_TAB": {
+    "tags": [],
+    "icon_path": "assets/icons/action/NEW_TAB.svg",
+    "scope": "internal"
+  },
+  "NEW_FOLDER_SELECTION": {
+    "tags": [],
+    "icon_path": "assets/icons/action/NEW_FOLDER_SELECTION.svg",
+    "scope": "internal"
+  },
+  "NEW_FOLDER": {
+    "tags": [],
+    "icon_path": "assets/icons/action/NEW_FOLDER.svg",
+    "scope": "internal"
+  },
+  "NEW_FILE": {
+    "tags": [],
+    "icon_path": "assets/icons/action/NEW_FILE.svg",
+    "scope": "internal"
+  },
+  "NAYA": {
+    "tags": [],
+    "icon_path": "assets/icons/action/NAYA.svg",
+    "scope": "internal"
+  },
+  "N": {
+    "tags": [],
+    "icon_path": "assets/icons/action/N.svg",
+    "scope": "internal"
+  },
+  "M_JIS": {
+    "tags": [],
+    "icon_path": "assets/icons/action/M_JIS.svg",
+    "scope": "internal"
+  },
+  "MUHENKAN": {
+    "tags": [],
+    "icon_path": "assets/icons/action/MUHENKAN.svg",
+    "scope": "internal"
+  },
+  "MO_LAYER_9": {
+    "tags": [],
+    "icon_path": "assets/icons/action/MO_LAYER_9.svg",
+    "scope": "internal"
+  },
+  "MO_LAYER_8": {
+    "tags": [],
+    "icon_path": "assets/icons/action/MO_LAYER_8.svg",
+    "scope": "internal"
+  },
+  "MO_LAYER_7": {
+    "tags": [],
+    "icon_path": "assets/icons/action/MO_LAYER_7.svg",
+    "scope": "internal"
+  },
+  "MO_LAYER_6": {
+    "tags": [],
+    "icon_path": "assets/icons/action/MO_LAYER_6.svg",
+    "scope": "internal"
+  },
+  "MO_LAYER_5": {
+    "tags": [],
+    "icon_path": "assets/icons/action/MO_LAYER_5.svg",
+    "scope": "internal"
+  },
+  "MO_LAYER_4": {
+    "tags": [],
+    "icon_path": "assets/icons/action/MO_LAYER_4.svg",
+    "scope": "internal"
+  },
+  "MO_LAYER_35": {
+    "tags": [],
+    "icon_path": "assets/icons/action/MO_LAYER_35.svg",
+    "scope": "internal"
+  },
+  "MO_LAYER_34": {
+    "tags": [],
+    "icon_path": "assets/icons/action/MO_LAYER_34.svg",
+    "scope": "internal"
+  },
+  "MO_LAYER_33": {
+    "tags": [],
+    "icon_path": "assets/icons/action/MO_LAYER_33.svg",
+    "scope": "internal"
+  },
+  "MO_LAYER_32": {
+    "tags": [],
+    "icon_path": "assets/icons/action/MO_LAYER_32.svg",
+    "scope": "internal"
+  },
+  "MO_LAYER_31": {
+    "tags": [],
+    "icon_path": "assets/icons/action/MO_LAYER_31.svg",
+    "scope": "internal"
+  },
+  "MO_LAYER_30": {
+    "tags": [],
+    "icon_path": "assets/icons/action/MO_LAYER_30.svg",
+    "scope": "internal"
+  },
+  "MO_LAYER_3": {
+    "tags": [],
+    "icon_path": "assets/icons/action/MO_LAYER_3.svg",
+    "scope": "internal"
+  },
+  "MO_LAYER_29": {
+    "tags": [],
+    "icon_path": "assets/icons/action/MO_LAYER_29.svg",
+    "scope": "internal"
+  },
+  "MO_LAYER_28": {
+    "tags": [],
+    "icon_path": "assets/icons/action/MO_LAYER_28.svg",
+    "scope": "internal"
+  },
+  "MO_LAYER_27": {
+    "tags": [],
+    "icon_path": "assets/icons/action/MO_LAYER_27.svg",
+    "scope": "internal"
+  },
+  "MO_LAYER_26": {
+    "tags": [],
+    "icon_path": "assets/icons/action/MO_LAYER_26.svg",
+    "scope": "internal"
+  },
+  "MO_LAYER_25": {
+    "tags": [],
+    "icon_path": "assets/icons/action/MO_LAYER_25.svg",
+    "scope": "internal"
+  },
+  "MO_LAYER_24": {
+    "tags": [],
+    "icon_path": "assets/icons/action/MO_LAYER_24.svg",
+    "scope": "internal"
+  },
+  "MO_LAYER_23": {
+    "tags": [],
+    "icon_path": "assets/icons/action/MO_LAYER_23.svg",
+    "scope": "internal"
+  },
+  "MO_LAYER_22": {
+    "tags": [],
+    "icon_path": "assets/icons/action/MO_LAYER_22.svg",
+    "scope": "internal"
+  },
+  "MO_LAYER_21": {
+    "tags": [],
+    "icon_path": "assets/icons/action/MO_LAYER_21.svg",
+    "scope": "internal"
+  },
+  "MO_LAYER_20": {
+    "tags": [],
+    "icon_path": "assets/icons/action/MO_LAYER_20.svg",
+    "scope": "internal"
+  },
+  "MO_LAYER_2": {
+    "tags": [],
+    "icon_path": "assets/icons/action/MO_LAYER_2.svg",
+    "scope": "internal"
+  },
+  "MO_LAYER_19": {
+    "tags": [],
+    "icon_path": "assets/icons/action/MO_LAYER_19.svg",
+    "scope": "internal"
+  },
+  "MO_LAYER_18": {
+    "tags": [],
+    "icon_path": "assets/icons/action/MO_LAYER_18.svg",
+    "scope": "internal"
+  },
+  "MO_LAYER_17": {
+    "tags": [],
+    "icon_path": "assets/icons/action/MO_LAYER_17.svg",
+    "scope": "internal"
+  },
+  "MO_LAYER_16": {
+    "tags": [],
+    "icon_path": "assets/icons/action/MO_LAYER_16.svg",
+    "scope": "internal"
+  },
+  "MO_LAYER_15": {
+    "tags": [],
+    "icon_path": "assets/icons/action/MO_LAYER_15.svg",
+    "scope": "internal"
+  },
+  "MO_LAYER_14": {
+    "tags": [],
+    "icon_path": "assets/icons/action/MO_LAYER_14.svg",
+    "scope": "internal"
+  },
+  "MO_LAYER_13": {
+    "tags": [],
+    "icon_path": "assets/icons/action/MO_LAYER_13.svg",
+    "scope": "internal"
+  },
+  "MO_LAYER_12": {
+    "tags": [],
+    "icon_path": "assets/icons/action/MO_LAYER_12.svg",
+    "scope": "internal"
+  },
+  "MO_LAYER_11": {
+    "tags": [],
+    "icon_path": "assets/icons/action/MO_LAYER_11.svg",
+    "scope": "internal"
+  },
+  "MO_LAYER_10": {
+    "tags": [],
+    "icon_path": "assets/icons/action/MO_LAYER_10.svg",
+    "scope": "internal"
+  },
+  "MO_LAYER_1": {
+    "tags": [],
+    "icon_path": "assets/icons/action/MO_LAYER_1.svg",
+    "scope": "internal"
+  },
+  "MO_LAYER_09": {
+    "tags": [],
+    "icon_path": "assets/icons/action/MO_LAYER_09.svg",
+    "scope": "internal"
+  },
+  "MO_LAYER_08": {
+    "tags": [],
+    "icon_path": "assets/icons/action/MO_LAYER_08.svg",
+    "scope": "internal"
+  },
+  "MO_LAYER_07": {
+    "tags": [],
+    "icon_path": "assets/icons/action/MO_LAYER_07.svg",
+    "scope": "internal"
+  },
+  "MO_LAYER_06": {
+    "tags": [],
+    "icon_path": "assets/icons/action/MO_LAYER_06.svg",
+    "scope": "internal"
+  },
+  "MO_LAYER_05": {
+    "tags": [],
+    "icon_path": "assets/icons/action/MO_LAYER_05.svg",
+    "scope": "internal"
+  },
+  "MO_LAYER_04": {
+    "tags": [],
+    "icon_path": "assets/icons/action/MO_LAYER_04.svg",
+    "scope": "internal"
+  },
+  "MO_LAYER_03": {
+    "tags": [],
+    "icon_path": "assets/icons/action/MO_LAYER_03.svg",
+    "scope": "internal"
+  },
+  "MO_LAYER_02": {
+    "tags": [],
+    "icon_path": "assets/icons/action/MO_LAYER_02.svg",
+    "scope": "internal"
+  },
+  "MO_LAYER_01": {
+    "tags": [],
+    "icon_path": "assets/icons/action/MO_LAYER_01.svg",
+    "scope": "internal"
+  },
+  "MO_LAYER_00": {
+    "tags": [],
+    "icon_path": "assets/icons/action/MO_LAYER_00.svg",
+    "scope": "internal"
+  },
+  "MO_LAYER_0": {
+    "tags": [],
+    "icon_path": "assets/icons/action/MO_LAYER_0.svg",
+    "scope": "internal"
+  },
+  "MO_LAYER_$ID": {
+    "tags": [],
+    "icon_path": "assets/icons/action/MO_LAYER_$ID.svg",
+    "scope": "internal"
+  },
+  "MOVE_SELECT_FIND_MATCHES": {
+    "tags": [],
+    "icon_path": "assets/icons/action/MOVE_SELECT_FIND_MATCHES.svg",
+    "scope": "internal"
+  },
+  "MOVE_LINE_UP": {
+    "tags": [],
+    "icon_path": "assets/icons/action/MOVE_LINE_UP.svg",
+    "scope": "internal"
+  },
+  "MOVE_LINE_DOWN": {
+    "tags": [],
+    "icon_path": "assets/icons/action/MOVE_LINE_DOWN.svg",
+    "scope": "internal"
+  },
+  "MOVE_EDITOR_RIGHT": {
+    "tags": [],
+    "icon_path": "assets/icons/action/MOVE_EDITOR_RIGHT.svg",
+    "scope": "internal"
+  },
+  "MOVE_EDITOR_LEFT": {
+    "tags": [],
+    "icon_path": "assets/icons/action/MOVE_EDITOR_LEFT.svg",
+    "scope": "internal"
+  },
+  "MOVE_EDITOR_GROUP_RIGHT": {
+    "tags": [],
+    "icon_path": "assets/icons/action/MOVE_EDITOR_GROUP_RIGHT.svg",
+    "scope": "internal"
+  },
+  "MOVE_EDITOR_GROUP_LEFT": {
+    "tags": [],
+    "icon_path": "assets/icons/action/MOVE_EDITOR_GROUP_LEFT.svg",
+    "scope": "internal"
+  },
+  "MOUSE_VERTICAL": {
+    "tags": [],
+    "icon_path": "assets/icons/action/MOUSE_VERTICAL.svg",
+    "scope": "internal"
+  },
+  "MOUSE_UP": {
+    "tags": [],
+    "icon_path": "assets/icons/action/MOUSE_UP.svg",
+    "scope": "internal"
+  },
+  "MOUSE_RIGHT": {
+    "tags": [],
+    "icon_path": "assets/icons/action/MOUSE_RIGHT.svg",
+    "scope": "internal"
+  },
+  "MOUSE_LEFT": {
+    "tags": [],
+    "icon_path": "assets/icons/action/MOUSE_LEFT.svg",
+    "scope": "internal"
+  },
+  "MOUSE_HORIZONTAL": {
+    "tags": [],
+    "icon_path": "assets/icons/action/MOUSE_HORIZONTAL.svg",
+    "scope": "internal"
+  },
+  "MOUSE_DOWN": {
+    "tags": [],
+    "icon_path": "assets/icons/action/MOUSE_DOWN.svg",
+    "scope": "internal"
+  },
+  "MODULE_GEN": {
+    "tags": [],
+    "icon_path": "assets/icons/action/MODULE_GEN.svg",
+    "scope": "internal"
+  },
+  "MODULE_FORCE_CHARGE": {
+    "tags": [],
+    "icon_path": "assets/icons/action/MODULE_FORCE_CHARGE.svg",
+    "scope": "internal"
+  },
+  "MODULES": {
+    "tags": [],
+    "icon_path": "assets/icons/action/MODULES.svg",
+    "scope": "internal"
+  },
+  "MINUS_JIS": {
+    "tags": [],
+    "icon_path": "assets/icons/action/MINUS_JIS.svg",
+    "scope": "internal"
+  },
+  "MINUS": {
+    "tags": [],
+    "icon_path": "assets/icons/action/MINUS.svg",
+    "scope": "internal"
+  },
+  "MINIMIZE_ALL": {
+    "tags": [],
+    "icon_path": "assets/icons/action/MINIMIZE_ALL.svg",
+    "scope": "internal"
+  },
+  "MINIMIZE": {
+    "tags": [],
+    "icon_path": "assets/icons/action/MINIMIZE.svg",
+    "scope": "internal"
+  },
+  "MB9": {
+    "tags": [],
+    "icon_path": "assets/icons/action/MB9.svg",
+    "scope": "internal"
+  },
+  "MB8": {
+    "tags": [],
+    "icon_path": "assets/icons/action/MB8.svg",
+    "scope": "internal"
+  },
+  "MB7": {
+    "tags": [],
+    "icon_path": "assets/icons/action/MB7.svg",
+    "scope": "internal"
+  },
+  "MB6": {
+    "tags": [],
+    "icon_path": "assets/icons/action/MB6.svg",
+    "scope": "internal"
+  },
+  "MB5": {
+    "tags": [],
+    "icon_path": "assets/icons/action/MB5.svg",
+    "scope": "internal"
+  },
+  "MB4": {
+    "tags": [],
+    "icon_path": "assets/icons/action/MB4.svg",
+    "scope": "internal"
+  },
+  "MB3": {
+    "tags": [],
+    "icon_path": "assets/icons/action/MB3.svg",
+    "scope": "internal"
+  },
+  "MB2": {
+    "tags": [],
+    "icon_path": "assets/icons/action/MB2.svg",
+    "scope": "internal"
+  },
+  "MB12": {
+    "tags": [],
+    "icon_path": "assets/icons/action/MB12.svg",
+    "scope": "internal"
+  },
+  "MB11": {
+    "tags": [],
+    "icon_path": "assets/icons/action/MB11.svg",
+    "scope": "internal"
+  },
+  "MB10": {
+    "tags": [],
+    "icon_path": "assets/icons/action/MB10.svg",
+    "scope": "internal"
+  },
+  "MB1": {
+    "tags": [],
+    "icon_path": "assets/icons/action/MB1.svg",
+    "scope": "internal"
+  },
+  "MAXIMIZE": {
+    "tags": [],
+    "icon_path": "assets/icons/action/MAXIMIZE.svg",
+    "scope": "internal"
+  },
+  "MARKDOWN_SIDE": {
+    "tags": [],
+    "icon_path": "assets/icons/action/MARKDOWN_SIDE.svg",
+    "scope": "internal"
+  },
+  "MAC_SHORTCUT": {
+    "tags": [],
+    "icon_path": "assets/icons/action/MAC_SHORTCUT.svg",
+    "scope": "internal"
+  },
+  "MAC_OS": {
+    "tags": [],
+    "icon_path": "assets/icons/action/MAC_OS.svg",
+    "scope": "internal"
+  },
+  "MAC_FORWARD_DELETE_JIS": {
+    "tags": [],
+    "icon_path": "assets/icons/action/MAC_FORWARD_DELETE_JIS.svg",
+    "scope": "internal"
+  },
+  "MAC_FORWARD_DELETE": {
+    "tags": [],
+    "icon_path": "assets/icons/action/MAC_FORWARD_DELETE.svg",
+    "scope": "internal"
+  },
+  "MAC_DELETE_JIS": {
+    "tags": [],
+    "icon_path": "assets/icons/action/MAC_DELETE_JIS.svg",
+    "scope": "internal"
+  },
+  "MAC_DELETE": {
+    "tags": [],
+    "icon_path": "assets/icons/action/MAC_DELETE.svg",
+    "scope": "internal"
+  },
+  "M": {
+    "tags": [],
+    "icon_path": "assets/icons/action/M.svg",
+    "scope": "internal"
+  },
+  "L_JIS": {
+    "tags": [],
+    "icon_path": "assets/icons/action/L_JIS.svg",
+    "scope": "internal"
+  },
+  "LWIN": {
+    "tags": [],
+    "icon_path": "assets/icons/action/LWIN.svg",
+    "scope": "internal"
+  },
+  "LSHFT": {
+    "tags": [],
+    "icon_path": "assets/icons/action/LSHFT.svg",
+    "scope": "internal"
+  },
+  "LOPT": {
+    "tags": [],
+    "icon_path": "assets/icons/action/LOPT.svg",
+    "scope": "internal"
+  },
+  "LOG_OUT": {
+    "tags": [],
+    "icon_path": "assets/icons/action/LOG_OUT.svg",
+    "scope": "internal"
+  },
+  "LOCK_SCREEN": {
+    "tags": [],
+    "icon_path": "assets/icons/action/LOCK_SCREEN.svg",
+    "scope": "internal"
+  },
+  "LINE_START": {
+    "tags": [],
+    "icon_path": "assets/icons/action/LINE_START.svg",
+    "scope": "internal"
+  },
+  "LINE_SCROLL_UP_2": {
+    "tags": [],
+    "icon_path": "assets/icons/action/LINE_SCROLL_UP_2.svg",
+    "scope": "internal"
+  },
+  "LINE_SCROLL_UP": {
+    "tags": [],
+    "icon_path": "assets/icons/action/LINE_SCROLL_UP.svg",
+    "scope": "internal"
+  },
+  "LINE_SCROLL_DOWN_2": {
+    "tags": [],
+    "icon_path": "assets/icons/action/LINE_SCROLL_DOWN_2.svg",
+    "scope": "internal"
+  },
+  "LINE_SCROLL_DOWN": {
+    "tags": [],
+    "icon_path": "assets/icons/action/LINE_SCROLL_DOWN.svg",
+    "scope": "internal"
+  },
+  "LINE_END": {
+    "tags": [],
+    "icon_path": "assets/icons/action/LINE_END.svg",
+    "scope": "internal"
+  },
+  "LGUI": {
+    "tags": [],
+    "icon_path": "assets/icons/action/LGUI.svg",
+    "scope": "internal"
+  },
+  "LESS_THAN_JIS": {
+    "tags": [],
+    "icon_path": "assets/icons/action/LESS_THAN_JIS.svg",
+    "scope": "internal"
+  },
+  "LESS_THAN": {
+    "tags": [],
+    "icon_path": "assets/icons/action/LESS_THAN.svg",
+    "scope": "internal"
+  },
+  "LEFT_PARENTHESIS_JIS": {
+    "tags": [],
+    "icon_path": "assets/icons/action/LEFT_PARENTHESIS_JIS.svg",
+    "scope": "internal"
+  },
+  "LEFT_PARENTHESIS": {
+    "tags": [],
+    "icon_path": "assets/icons/action/LEFT_PARENTHESIS.svg",
+    "scope": "internal"
+  },
+  "LEFT_DESKTOP": {
+    "tags": [],
+    "icon_path": "assets/icons/action/LEFT_DESKTOP.svg",
+    "scope": "internal"
+  },
+  "LEFT_BRACKET_JIS": {
+    "tags": [],
+    "icon_path": "assets/icons/action/LEFT_BRACKET_JIS.svg",
+    "scope": "internal"
+  },
+  "LEFT_BRACKET": {
+    "tags": [],
+    "icon_path": "assets/icons/action/LEFT_BRACKET.svg",
+    "scope": "internal"
+  },
+  "LEFT_BRACE_JIS": {
+    "tags": [],
+    "icon_path": "assets/icons/action/LEFT_BRACE_JIS.svg",
+    "scope": "internal"
+  },
+  "LEFT_BRACE": {
+    "tags": [],
+    "icon_path": "assets/icons/action/LEFT_BRACE.svg",
+    "scope": "internal"
+  },
+  "LEFT": {
+    "tags": [],
+    "icon_path": "assets/icons/action/LEFT.svg",
+    "scope": "internal"
+  },
+  "LED_YELLOW": {
+    "tags": [],
+    "icon_path": "assets/icons/action/LED_YELLOW.svg",
+    "scope": "internal"
+  },
+  "LED_WHITE": {
+    "tags": [],
+    "icon_path": "assets/icons/action/LED_WHITE.svg",
+    "scope": "internal"
+  },
+  "LED_SWIRL": {
+    "tags": [],
+    "icon_path": "assets/icons/action/LED_SWIRL.svg",
+    "scope": "internal"
+  },
+  "LED_SPEED_UP": {
+    "tags": [],
+    "icon_path": "assets/icons/action/LED_SPEED_UP.svg",
+    "scope": "internal"
+  },
+  "LED_SPEED_DOWN": {
+    "tags": [],
+    "icon_path": "assets/icons/action/LED_SPEED_DOWN.svg",
+    "scope": "internal"
+  },
+  "LED_SPEC": {
+    "tags": [],
+    "icon_path": "assets/icons/action/LED_SPEC.svg",
+    "scope": "internal"
+  },
+  "LED_SOLID": {
+    "tags": [],
+    "icon_path": "assets/icons/action/LED_SOLID.svg",
+    "scope": "internal"
+  },
+  "LED_RED": {
+    "tags": [],
+    "icon_path": "assets/icons/action/LED_RED.svg",
+    "scope": "internal"
+  },
+  "LED_PINK": {
+    "tags": [],
+    "icon_path": "assets/icons/action/LED_PINK.svg",
+    "scope": "internal"
+  },
+  "LED_ORANGE": {
+    "tags": [],
+    "icon_path": "assets/icons/action/LED_ORANGE.svg",
+    "scope": "internal"
+  },
+  "LED_ON_OFF": {
+    "tags": [],
+    "icon_path": "assets/icons/action/LED_ON_OFF.svg",
+    "scope": "internal"
+  },
+  "LED_MAGENTA": {
+    "tags": [],
+    "icon_path": "assets/icons/action/LED_MAGENTA.svg",
+    "scope": "internal"
+  },
+  "LED_GREEN": {
+    "tags": [],
+    "icon_path": "assets/icons/action/LED_GREEN.svg",
+    "scope": "internal"
+  },
+  "LED_GEN_2": {
+    "tags": [],
+    "icon_path": "assets/icons/action/LED_GEN_2.svg",
+    "scope": "internal"
+  },
+  "LED_GEN": {
+    "tags": [],
+    "icon_path": "assets/icons/action/LED_GEN.svg",
+    "scope": "internal"
+  },
+  "LED_EFFECT": {
+    "tags": [],
+    "icon_path": "assets/icons/action/LED_EFFECT.svg",
+    "scope": "internal"
+  },
+  "LED_CYAN": {
+    "tags": [],
+    "icon_path": "assets/icons/action/LED_CYAN.svg",
+    "scope": "internal"
+  },
+  "LED_BRIGHTNESS_UP": {
+    "tags": [],
+    "icon_path": "assets/icons/action/LED_BRIGHTNESS_UP.svg",
+    "scope": "internal"
+  },
+  "LED_BRIGHTNESS_DOWN": {
+    "tags": [],
+    "icon_path": "assets/icons/action/LED_BRIGHTNESS_DOWN.svg",
+    "scope": "internal"
+  },
+  "LED_BRIGHTNESS": {
+    "tags": [],
+    "icon_path": "assets/icons/action/LED_BRIGHTNESS.svg",
+    "scope": "internal"
+  },
+  "LED_BREATHE": {
+    "tags": [],
+    "icon_path": "assets/icons/action/LED_BREATHE.svg",
+    "scope": "internal"
+  },
+  "LED_BLUE": {
+    "tags": [],
+    "icon_path": "assets/icons/action/LED_BLUE.svg",
+    "scope": "internal"
+  },
+  "LCTRL_MAC": {
+    "tags": [],
+    "icon_path": "assets/icons/action/LCTRL_MAC.svg",
+    "scope": "internal"
+  },
+  "LCTRL": {
+    "tags": [],
+    "icon_path": "assets/icons/action/LCTRL.svg",
+    "scope": "internal"
+  },
+  "LCMD": {
+    "tags": [],
+    "icon_path": "assets/icons/action/LCMD.svg",
+    "scope": "internal"
+  },
+  "LAYERS": {
+    "tags": [],
+    "icon_path": "assets/icons/action/LAYERS.svg",
+    "scope": "internal"
+  },
+  "LANGUAGE": {
+    "tags": [],
+    "icon_path": "assets/icons/action/LANGUAGE.svg",
+    "scope": "internal"
+  },
+  "LANG9": {
+    "tags": [],
+    "icon_path": "assets/icons/action/LANG9.svg",
+    "scope": "internal"
+  },
+  "LANG8": {
+    "tags": [],
+    "icon_path": "assets/icons/action/LANG8.svg",
+    "scope": "internal"
+  },
+  "LANG7": {
+    "tags": [],
+    "icon_path": "assets/icons/action/LANG7.svg",
+    "scope": "internal"
+  },
+  "LANG6": {
+    "tags": [],
+    "icon_path": "assets/icons/action/LANG6.svg",
+    "scope": "internal"
+  },
+  "LANG5": {
+    "tags": [],
+    "icon_path": "assets/icons/action/LANG5.svg",
+    "scope": "internal"
+  },
+  "LANG4": {
+    "tags": [],
+    "icon_path": "assets/icons/action/LANG4.svg",
+    "scope": "internal"
+  },
+  "LANG3": {
+    "tags": [],
+    "icon_path": "assets/icons/action/LANG3.svg",
+    "scope": "internal"
+  },
+  "LANG2": {
+    "tags": [],
+    "icon_path": "assets/icons/action/LANG2.svg",
+    "scope": "internal"
+  },
+  "LANG1": {
+    "tags": [],
+    "icon_path": "assets/icons/action/LANG1.svg",
+    "scope": "internal"
+  },
+  "LALT": {
+    "tags": [],
+    "icon_path": "assets/icons/action/LALT.svg",
+    "scope": "internal"
+  },
+  "L": {
+    "tags": [],
+    "icon_path": "assets/icons/action/L.svg",
+    "scope": "internal"
+  },
+  "K_JIS": {
+    "tags": [],
+    "icon_path": "assets/icons/action/K_JIS.svg",
+    "scope": "internal"
+  },
+  "K_APP": {
+    "tags": [],
+    "icon_path": "assets/icons/action/K_APP.svg",
+    "scope": "internal"
+  },
+  "KP_RPAR": {
+    "tags": [],
+    "icon_path": "assets/icons/action/KP_RPAR.svg",
+    "scope": "internal"
+  },
+  "KP_PLUS": {
+    "tags": [],
+    "icon_path": "assets/icons/action/KP_PLUS.svg",
+    "scope": "internal"
+  },
+  "KP_NUMLOCK": {
+    "tags": [],
+    "icon_path": "assets/icons/action/KP_NUMLOCK.svg",
+    "scope": "internal"
+  },
+  "KP_NUMBER_9": {
+    "tags": [],
+    "icon_path": "assets/icons/action/KP_NUMBER_9.svg",
+    "scope": "internal"
+  },
+  "KP_NUMBER_8": {
+    "tags": [],
+    "icon_path": "assets/icons/action/KP_NUMBER_8.svg",
+    "scope": "internal"
+  },
+  "KP_NUMBER_7": {
+    "tags": [],
+    "icon_path": "assets/icons/action/KP_NUMBER_7.svg",
+    "scope": "internal"
+  },
+  "KP_NUMBER_6": {
+    "tags": [],
+    "icon_path": "assets/icons/action/KP_NUMBER_6.svg",
+    "scope": "internal"
+  },
+  "KP_NUMBER_5": {
+    "tags": [],
+    "icon_path": "assets/icons/action/KP_NUMBER_5.svg",
+    "scope": "internal"
+  },
+  "KP_NUMBER_4": {
+    "tags": [],
+    "icon_path": "assets/icons/action/KP_NUMBER_4.svg",
+    "scope": "internal"
+  },
+  "KP_NUMBER_3": {
+    "tags": [],
+    "icon_path": "assets/icons/action/KP_NUMBER_3.svg",
+    "scope": "internal"
+  },
+  "KP_NUMBER_2": {
+    "tags": [],
+    "icon_path": "assets/icons/action/KP_NUMBER_2.svg",
+    "scope": "internal"
+  },
+  "KP_NUMBER_1": {
+    "tags": [],
+    "icon_path": "assets/icons/action/KP_NUMBER_1.svg",
+    "scope": "internal"
+  },
+  "KP_NUMBER_0": {
+    "tags": [],
+    "icon_path": "assets/icons/action/KP_NUMBER_0.svg",
+    "scope": "internal"
+  },
+  "KP_MULTIPLY": {
+    "tags": [],
+    "icon_path": "assets/icons/action/KP_MULTIPLY.svg",
+    "scope": "internal"
+  },
+  "KP_MINUS": {
+    "tags": [],
+    "icon_path": "assets/icons/action/KP_MINUS.svg",
+    "scope": "internal"
+  },
+  "KP_LPAR": {
+    "tags": [],
+    "icon_path": "assets/icons/action/KP_LPAR.svg",
+    "scope": "internal"
+  },
+  "KP_EQUAL": {
+    "tags": [],
+    "icon_path": "assets/icons/action/KP_EQUAL.svg",
+    "scope": "internal"
+  },
+  "KP_DOT": {
+    "tags": [],
+    "icon_path": "assets/icons/action/KP_DOT.svg",
+    "scope": "internal"
+  },
+  "KP_DIVIDE": {
+    "tags": [],
+    "icon_path": "assets/icons/action/KP_DIVIDE.svg",
+    "scope": "internal"
+  },
+  "KP_COMMA": {
+    "tags": [],
+    "icon_path": "assets/icons/action/KP_COMMA.svg",
+    "scope": "internal"
+  },
+  "KATAKANA": {
+    "tags": [],
+    "icon_path": "assets/icons/action/KATAKANA.svg",
+    "scope": "internal"
+  },
+  "KANA": {
+    "tags": [],
+    "icon_path": "assets/icons/action/KANA.svg",
+    "scope": "internal"
+  },
+  "K": {
+    "tags": [],
+    "icon_path": "assets/icons/action/K.svg",
+    "scope": "internal"
+  },
+  "J_JIS": {
+    "tags": [],
+    "icon_path": "assets/icons/action/J_JIS.svg",
+    "scope": "internal"
+  },
+  "JUMP_TO_BRACKET": {
+    "tags": [],
+    "icon_path": "assets/icons/action/JUMP_TO_BRACKET.svg",
+    "scope": "internal"
+  },
+  "J": {
+    "tags": [],
+    "icon_path": "assets/icons/action/J.svg",
+    "scope": "internal"
+  },
+  "Integration": {
+    "tags": [],
+    "icon_path": "assets/icons/action/Integration.svg",
+    "scope": "internal"
+  },
+  "I_JIS": {
+    "tags": [],
+    "icon_path": "assets/icons/action/I_JIS.svg",
+    "scope": "internal"
+  },
+  "ITALIC": {
+    "tags": [],
+    "icon_path": "assets/icons/action/ITALIC.svg",
+    "scope": "internal"
+  },
+  "INTEGRATION_BLUEPRINT": {
+    "tags": [],
+    "icon_path": "assets/icons/action/INTEGRATION_BLUEPRINT.svg",
+    "scope": "internal"
+  },
+  "INTEGRATIONS": {
+    "tags": [],
+    "icon_path": "assets/icons/action/INTEGRATIONS.svg",
+    "scope": "internal"
+  },
+  "INT6": {
+    "tags": [],
+    "icon_path": "assets/icons/action/INT6.svg",
+    "scope": "internal"
+  },
+  "INT5": {
+    "tags": [],
+    "icon_path": "assets/icons/action/INT5.svg",
+    "scope": "internal"
+  },
+  "INT4": {
+    "tags": [],
+    "icon_path": "assets/icons/action/INT4.svg",
+    "scope": "internal"
+  },
+  "INT3": {
+    "tags": [],
+    "icon_path": "assets/icons/action/INT3.svg",
+    "scope": "internal"
+  },
+  "INT2": {
+    "tags": [],
+    "icon_path": "assets/icons/action/INT2.svg",
+    "scope": "internal"
+  },
+  "INT1": {
+    "tags": [],
+    "icon_path": "assets/icons/action/INT1.svg",
+    "scope": "internal"
+  },
+  "INSER_CURSOR_END": {
+    "tags": [],
+    "icon_path": "assets/icons/action/INSER_CURSOR_END.svg",
+    "scope": "internal"
+  },
+  "INSER_CURSOR_BELOW": {
+    "tags": [],
+    "icon_path": "assets/icons/action/INSER_CURSOR_BELOW.svg",
+    "scope": "internal"
+  },
+  "INSER_CURSOR_ABOVE": {
+    "tags": [],
+    "icon_path": "assets/icons/action/INSER_CURSOR_ABOVE.svg",
+    "scope": "internal"
+  },
+  "INSER_CURSOR": {
+    "tags": [],
+    "icon_path": "assets/icons/action/INSER_CURSOR.svg",
+    "scope": "internal"
+  },
+  "INSERT_LINE_UP": {
+    "tags": [],
+    "icon_path": "assets/icons/action/INSERT_LINE_UP.svg",
+    "scope": "internal"
+  },
+  "INSERT_LINE_DOWN": {
+    "tags": [],
+    "icon_path": "assets/icons/action/INSERT_LINE_DOWN.svg",
+    "scope": "internal"
+  },
+  "INSERT_JIS": {
+    "tags": [],
+    "icon_path": "assets/icons/action/INSERT_JIS.svg",
+    "scope": "internal"
+  },
+  "INSERT_CURSOR_END": {
+    "tags": [],
+    "icon_path": "assets/icons/action/INSERT_CURSOR_END.svg",
+    "scope": "internal"
+  },
+  "INSERT_CURSOR_BELOW": {
+    "tags": [],
+    "icon_path": "assets/icons/action/INSERT_CURSOR_BELOW.svg",
+    "scope": "internal"
+  },
+  "INSERT_CURSOR_ABOVE": {
+    "tags": [],
+    "icon_path": "assets/icons/action/INSERT_CURSOR_ABOVE.svg",
+    "scope": "internal"
+  },
+  "INSERT_CURSOR": {
+    "tags": [],
+    "icon_path": "assets/icons/action/INSERT_CURSOR.svg",
+    "scope": "internal"
+  },
+  "INSERT": {
+    "tags": [],
+    "icon_path": "assets/icons/action/INSERT.svg",
+    "scope": "internal"
+  },
+  "INDENT_LINE": {
+    "tags": [],
+    "icon_path": "assets/icons/action/INDENT_LINE.svg",
+    "scope": "internal"
+  },
+  "I": {
+    "tags": [],
+    "icon_path": "assets/icons/action/I.svg",
+    "scope": "internal"
+  },
+  "H_JIS": {
+    "tags": [],
+    "icon_path": "assets/icons/action/H_JIS.svg",
+    "scope": "internal"
+  },
+  "HORIZONTAL": {
+    "tags": [],
+    "icon_path": "assets/icons/action/HORIZONTAL.svg",
+    "scope": "internal"
+  },
+  "HOME": {
+    "tags": [],
+    "icon_path": "assets/icons/action/HOME.svg",
+    "scope": "internal"
+  },
+  "HOLD_LAYER_DELETED": {
+    "tags": [],
+    "icon_path": "assets/icons/action/HOLD_LAYER_DELETED.svg",
+    "scope": "internal"
+  },
+  "HOLD_LAYER_9": {
+    "tags": [],
+    "icon_path": "assets/icons/action/HOLD_LAYER_9.svg",
+    "scope": "internal"
+  },
+  "HOLD_LAYER_8": {
+    "tags": [],
+    "icon_path": "assets/icons/action/HOLD_LAYER_8.svg",
+    "scope": "internal"
+  },
+  "HOLD_LAYER_7": {
+    "tags": [],
+    "icon_path": "assets/icons/action/HOLD_LAYER_7.svg",
+    "scope": "internal"
+  },
+  "HOLD_LAYER_6": {
+    "tags": [],
+    "icon_path": "assets/icons/action/HOLD_LAYER_6.svg",
+    "scope": "internal"
+  },
+  "HOLD_LAYER_5": {
+    "tags": [],
+    "icon_path": "assets/icons/action/HOLD_LAYER_5.svg",
+    "scope": "internal"
+  },
+  "HOLD_LAYER_4": {
+    "tags": [],
+    "icon_path": "assets/icons/action/HOLD_LAYER_4.svg",
+    "scope": "internal"
+  },
+  "HOLD_LAYER_35": {
+    "tags": [],
+    "icon_path": "assets/icons/action/HOLD_LAYER_35.svg",
+    "scope": "internal"
+  },
+  "HOLD_LAYER_34": {
+    "tags": [],
+    "icon_path": "assets/icons/action/HOLD_LAYER_34.svg",
+    "scope": "internal"
+  },
+  "HOLD_LAYER_33": {
+    "tags": [],
+    "icon_path": "assets/icons/action/HOLD_LAYER_33.svg",
+    "scope": "internal"
+  },
+  "HOLD_LAYER_32": {
+    "tags": [],
+    "icon_path": "assets/icons/action/HOLD_LAYER_32.svg",
+    "scope": "internal"
+  },
+  "HOLD_LAYER_31": {
+    "tags": [],
+    "icon_path": "assets/icons/action/HOLD_LAYER_31.svg",
+    "scope": "internal"
+  },
+  "HOLD_LAYER_30": {
+    "tags": [],
+    "icon_path": "assets/icons/action/HOLD_LAYER_30.svg",
+    "scope": "internal"
+  },
+  "HOLD_LAYER_3": {
+    "tags": [],
+    "icon_path": "assets/icons/action/HOLD_LAYER_3.svg",
+    "scope": "internal"
+  },
+  "HOLD_LAYER_29": {
+    "tags": [],
+    "icon_path": "assets/icons/action/HOLD_LAYER_29.svg",
+    "scope": "internal"
+  },
+  "HOLD_LAYER_28": {
+    "tags": [],
+    "icon_path": "assets/icons/action/HOLD_LAYER_28.svg",
+    "scope": "internal"
+  },
+  "HOLD_LAYER_27": {
+    "tags": [],
+    "icon_path": "assets/icons/action/HOLD_LAYER_27.svg",
+    "scope": "internal"
+  },
+  "HOLD_LAYER_26": {
+    "tags": [],
+    "icon_path": "assets/icons/action/HOLD_LAYER_26.svg",
+    "scope": "internal"
+  },
+  "HOLD_LAYER_25": {
+    "tags": [],
+    "icon_path": "assets/icons/action/HOLD_LAYER_25.svg",
+    "scope": "internal"
+  },
+  "HOLD_LAYER_24": {
+    "tags": [],
+    "icon_path": "assets/icons/action/HOLD_LAYER_24.svg",
+    "scope": "internal"
+  },
+  "HOLD_LAYER_23": {
+    "tags": [],
+    "icon_path": "assets/icons/action/HOLD_LAYER_23.svg",
+    "scope": "internal"
+  },
+  "HOLD_LAYER_22": {
+    "tags": [],
+    "icon_path": "assets/icons/action/HOLD_LAYER_22.svg",
+    "scope": "internal"
+  },
+  "HOLD_LAYER_21": {
+    "tags": [],
+    "icon_path": "assets/icons/action/HOLD_LAYER_21.svg",
+    "scope": "internal"
+  },
+  "HOLD_LAYER_20": {
+    "tags": [],
+    "icon_path": "assets/icons/action/HOLD_LAYER_20.svg",
+    "scope": "internal"
+  },
+  "HOLD_LAYER_2": {
+    "tags": [],
+    "icon_path": "assets/icons/action/HOLD_LAYER_2.svg",
+    "scope": "internal"
+  },
+  "HOLD_LAYER_19": {
+    "tags": [],
+    "icon_path": "assets/icons/action/HOLD_LAYER_19.svg",
+    "scope": "internal"
+  },
+  "HOLD_LAYER_18": {
+    "tags": [],
+    "icon_path": "assets/icons/action/HOLD_LAYER_18.svg",
+    "scope": "internal"
+  },
+  "HOLD_LAYER_17": {
+    "tags": [],
+    "icon_path": "assets/icons/action/HOLD_LAYER_17.svg",
+    "scope": "internal"
+  },
+  "HOLD_LAYER_16": {
+    "tags": [],
+    "icon_path": "assets/icons/action/HOLD_LAYER_16.svg",
+    "scope": "internal"
+  },
+  "HOLD_LAYER_15": {
+    "tags": [],
+    "icon_path": "assets/icons/action/HOLD_LAYER_15.svg",
+    "scope": "internal"
+  },
+  "HOLD_LAYER_14": {
+    "tags": [],
+    "icon_path": "assets/icons/action/HOLD_LAYER_14.svg",
+    "scope": "internal"
+  },
+  "HOLD_LAYER_13": {
+    "tags": [],
+    "icon_path": "assets/icons/action/HOLD_LAYER_13.svg",
+    "scope": "internal"
+  },
+  "HOLD_LAYER_12": {
+    "tags": [],
+    "icon_path": "assets/icons/action/HOLD_LAYER_12.svg",
+    "scope": "internal"
+  },
+  "HOLD_LAYER_11": {
+    "tags": [],
+    "icon_path": "assets/icons/action/HOLD_LAYER_11.svg",
+    "scope": "internal"
+  },
+  "HOLD_LAYER_10": {
+    "tags": [],
+    "icon_path": "assets/icons/action/HOLD_LAYER_10.svg",
+    "scope": "internal"
+  },
+  "HOLD_LAYER_1": {
+    "tags": [],
+    "icon_path": "assets/icons/action/HOLD_LAYER_1.svg",
+    "scope": "internal"
+  },
+  "HOLD_LAYER_0": {
+    "tags": [],
+    "icon_path": "assets/icons/action/HOLD_LAYER_0.svg",
+    "scope": "internal"
+  },
+  "HOLD_LAYER_$ID": {
+    "tags": [],
+    "icon_path": "assets/icons/action/HOLD_LAYER_$ID.svg",
+    "scope": "internal"
+  },
+  "HOLD_DYNAMIC_LAYER": {
+    "tags": [],
+    "icon_path": "assets/icons/action/HOLD_DYNAMIC_LAYER.svg",
+    "scope": "internal"
+  },
+  "HOLD_CONFIGURATION_R_BLUEPRINT": {
+    "tags": [],
+    "icon_path": "assets/icons/action/HOLD_CONFIGURATION_R_BLUEPRINT.svg",
+    "scope": "internal"
+  },
+  "HOLD_CONFIGURATION_L_BLUEPRINT": {
+    "tags": [],
+    "icon_path": "assets/icons/action/HOLD_CONFIGURATION_L_BLUEPRINT.svg",
+    "scope": "internal"
+  },
+  "HOLD_CONFIGURATION_BLUEPRINT": {
+    "tags": [],
+    "icon_path": "assets/icons/action/HOLD_CONFIGURATION_BLUEPRINT.svg",
+    "scope": "internal"
+  },
+  "HIRA_KATA": {
+    "tags": [],
+    "icon_path": "assets/icons/action/HIRA_KATA.svg",
+    "scope": "internal"
+  },
+  "HIRAGANA": {
+    "tags": [],
+    "icon_path": "assets/icons/action/HIRAGANA.svg",
+    "scope": "internal"
+  },
+  "HIDE_WINDOWS": {
+    "tags": [],
+    "icon_path": "assets/icons/action/HIDE_WINDOWS.svg",
+    "scope": "internal"
+  },
+  "HIDE_WINDOW": {
+    "tags": [],
+    "icon_path": "assets/icons/action/HIDE_WINDOW.svg",
+    "scope": "internal"
+  },
+  "HENKAN": {
+    "tags": [],
+    "icon_path": "assets/icons/action/HENKAN.svg",
+    "scope": "internal"
+  },
+  "HASH_JIS": {
+    "tags": [],
+    "icon_path": "assets/icons/action/HASH_JIS.svg",
+    "scope": "internal"
+  },
+  "HASH": {
+    "tags": [],
+    "icon_path": "assets/icons/action/HASH.svg",
+    "scope": "internal"
+  },
+  "HANKAKU_ZENKAKU": {
+    "tags": [],
+    "icon_path": "assets/icons/action/HANKAKU_ZENKAKU.svg",
+    "scope": "internal"
+  },
+  "H": {
+    "tags": [],
+    "icon_path": "assets/icons/action/H.svg",
+    "scope": "internal"
+  },
+  "G_JIS": {
+    "tags": [],
+    "icon_path": "assets/icons/action/G_JIS.svg",
+    "scope": "internal"
+  },
+  "GREATER_THAN_JIS": {
+    "tags": [],
+    "icon_path": "assets/icons/action/GREATER_THAN_JIS.svg",
+    "scope": "internal"
+  },
+  "GREATER_THAN": {
+    "tags": [],
+    "icon_path": "assets/icons/action/GREATER_THAN.svg",
+    "scope": "internal"
+  },
+  "GRAVE_SOLO_JIS": {
+    "tags": [],
+    "icon_path": "assets/icons/action/GRAVE_SOLO_JIS.svg",
+    "scope": "internal"
+  },
+  "GRAVE": {
+    "tags": [],
+    "icon_path": "assets/icons/action/GRAVE.svg",
+    "scope": "internal"
+  },
+  "GO_TO_LINE": {
+    "tags": [],
+    "icon_path": "assets/icons/action/GO_TO_LINE.svg",
+    "scope": "internal"
+  },
+  "GO_TO_DEFINITION": {
+    "tags": [],
+    "icon_path": "assets/icons/action/GO_TO_DEFINITION.svg",
+    "scope": "internal"
+  },
+  "GO_LAYER_DELETED": {
+    "tags": [],
+    "icon_path": "assets/icons/action/GO_LAYER_DELETED.svg",
+    "scope": "internal"
+  },
+  "GO_FOLDER": {
+    "tags": [],
+    "icon_path": "assets/icons/action/GO_FOLDER.svg",
+    "scope": "internal"
+  },
+  "G": {
+    "tags": [],
+    "icon_path": "assets/icons/action/G.svg",
+    "scope": "internal"
+  },
+  "F_JIS": {
+    "tags": [],
+    "icon_path": "assets/icons/action/F_JIS.svg",
+    "scope": "internal"
+  },
+  "FULLSCREEN": {
+    "tags": [],
+    "icon_path": "assets/icons/action/FULLSCREEN.svg",
+    "scope": "internal"
+  },
+  "FORWARD_DELETE_JIS": {
+    "tags": [],
+    "icon_path": "assets/icons/action/FORWARD_DELETE_JIS.svg",
+    "scope": "internal"
+  },
+  "FORWARD": {
+    "tags": [],
+    "icon_path": "assets/icons/action/FORWARD.svg",
+    "scope": "internal"
+  },
+  "FORMAT_SELECTION": {
+    "tags": [],
+    "icon_path": "assets/icons/action/FORMAT_SELECTION.svg",
+    "scope": "internal"
+  },
+  "FORMAT": {
+    "tags": [],
+    "icon_path": "assets/icons/action/FORMAT.svg",
+    "scope": "internal"
+  },
+  "FORCE_SHUTDOWN": {
+    "tags": [],
+    "icon_path": "assets/icons/action/FORCE_SHUTDOWN.svg",
+    "scope": "internal"
+  },
+  "FORCE_RESTART": {
+    "tags": [],
+    "icon_path": "assets/icons/action/FORCE_RESTART.svg",
+    "scope": "internal"
+  },
+  "FORCE_LOG_OUT": {
+    "tags": [],
+    "icon_path": "assets/icons/action/FORCE_LOG_OUT.svg",
+    "scope": "internal"
+  },
+  "FORCE_CLOSE_APPLICATION": {
+    "tags": [],
+    "icon_path": "assets/icons/action/FORCE_CLOSE_APPLICATION.svg",
+    "scope": "internal"
+  },
+  "FOLD_SUB": {
+    "tags": [],
+    "icon_path": "assets/icons/action/FOLD_SUB.svg",
+    "scope": "internal"
+  },
+  "FOLD_REGION": {
+    "tags": [],
+    "icon_path": "assets/icons/action/FOLD_REGION.svg",
+    "scope": "internal"
+  },
+  "FOLD_ALL": {
+    "tags": [],
+    "icon_path": "assets/icons/action/FOLD_ALL.svg",
+    "scope": "internal"
+  },
+  "FLOAT": {
+    "tags": [],
+    "icon_path": "assets/icons/action/FLOAT.svg",
+    "scope": "internal"
+  },
+  "FIND_WORD": {
+    "tags": [],
+    "icon_path": "assets/icons/action/FIND_WORD.svg",
+    "scope": "internal"
+  },
+  "FIND_SELECTION": {
+    "tags": [],
+    "icon_path": "assets/icons/action/FIND_SELECTION.svg",
+    "scope": "internal"
+  },
+  "FIND_REPLACE": {
+    "tags": [],
+    "icon_path": "assets/icons/action/FIND_REPLACE.svg",
+    "scope": "internal"
+  },
+  "FIND_REGEX": {
+    "tags": [],
+    "icon_path": "assets/icons/action/FIND_REGEX.svg",
+    "scope": "internal"
+  },
+  "FIND_PREV": {
+    "tags": [],
+    "icon_path": "assets/icons/action/FIND_PREV.svg",
+    "scope": "internal"
+  },
+  "FIND_NEXT": {
+    "tags": [],
+    "icon_path": "assets/icons/action/FIND_NEXT.svg",
+    "scope": "internal"
+  },
+  "FIND_FOLDER": {
+    "tags": [],
+    "icon_path": "assets/icons/action/FIND_FOLDER.svg",
+    "scope": "internal"
+  },
+  "FIND_FILE": {
+    "tags": [],
+    "icon_path": "assets/icons/action/FIND_FILE.svg",
+    "scope": "internal"
+  },
+  "FIND_CASE": {
+    "tags": [],
+    "icon_path": "assets/icons/action/FIND_CASE.svg",
+    "scope": "internal"
+  },
+  "FIND": {
+    "tags": [],
+    "icon_path": "assets/icons/action/FIND.svg",
+    "scope": "internal"
+  },
+  "F9": {
+    "tags": [],
+    "icon_path": "assets/icons/action/F9.svg",
+    "scope": "internal"
+  },
+  "F8": {
+    "tags": [],
+    "icon_path": "assets/icons/action/F8.svg",
+    "scope": "internal"
+  },
+  "F7": {
+    "tags": [],
+    "icon_path": "assets/icons/action/F7.svg",
+    "scope": "internal"
+  },
+  "F6": {
+    "tags": [],
+    "icon_path": "assets/icons/action/F6.svg",
+    "scope": "internal"
+  },
+  "F5": {
+    "tags": [],
+    "icon_path": "assets/icons/action/F5.svg",
+    "scope": "internal"
+  },
+  "F4": {
+    "tags": [],
+    "icon_path": "assets/icons/action/F4.svg",
+    "scope": "internal"
+  },
+  "F3": {
+    "tags": [],
+    "icon_path": "assets/icons/action/F3.svg",
+    "scope": "internal"
+  },
+  "F24": {
+    "tags": [],
+    "icon_path": "assets/icons/action/F24.svg",
+    "scope": "internal"
+  },
+  "F23": {
+    "tags": [],
+    "icon_path": "assets/icons/action/F23.svg",
+    "scope": "internal"
+  },
+  "F22": {
+    "tags": [],
+    "icon_path": "assets/icons/action/F22.svg",
+    "scope": "internal"
+  },
+  "F21": {
+    "tags": [],
+    "icon_path": "assets/icons/action/F21.svg",
+    "scope": "internal"
+  },
+  "F20": {
+    "tags": [],
+    "icon_path": "assets/icons/action/F20.svg",
+    "scope": "internal"
+  },
+  "F2": {
+    "tags": [],
+    "icon_path": "assets/icons/action/F2.svg",
+    "scope": "internal"
+  },
+  "F19": {
+    "tags": [],
+    "icon_path": "assets/icons/action/F19.svg",
+    "scope": "internal"
+  },
+  "F18": {
+    "tags": [],
+    "icon_path": "assets/icons/action/F18.svg",
+    "scope": "internal"
+  },
+  "F17": {
+    "tags": [],
+    "icon_path": "assets/icons/action/F17.svg",
+    "scope": "internal"
+  },
+  "F16": {
+    "tags": [],
+    "icon_path": "assets/icons/action/F16.svg",
+    "scope": "internal"
+  },
+  "F15": {
+    "tags": [],
+    "icon_path": "assets/icons/action/F15.svg",
+    "scope": "internal"
+  },
+  "F14": {
+    "tags": [],
+    "icon_path": "assets/icons/action/F14.svg",
+    "scope": "internal"
+  },
+  "F13": {
+    "tags": [],
+    "icon_path": "assets/icons/action/F13.svg",
+    "scope": "internal"
+  },
+  "F12": {
+    "tags": [],
+    "icon_path": "assets/icons/action/F12.svg",
+    "scope": "internal"
+  },
+  "F11": {
+    "tags": [],
+    "icon_path": "assets/icons/action/F11.svg",
+    "scope": "internal"
+  },
+  "F10": {
+    "tags": [],
+    "icon_path": "assets/icons/action/F10.svg",
+    "scope": "internal"
+  },
+  "F1": {
+    "tags": [],
+    "icon_path": "assets/icons/action/F1.svg",
+    "scope": "internal"
+  },
+  "F": {
+    "tags": [],
+    "icon_path": "assets/icons/action/F.svg",
+    "scope": "internal"
+  },
+  "E_JIS": {
+    "tags": [],
+    "icon_path": "assets/icons/action/E_JIS.svg",
+    "scope": "internal"
+  },
+  "EXTENDED": {
+    "tags": [],
+    "icon_path": "assets/icons/action/EXTENDED.svg",
+    "scope": "internal"
+  },
+  "EXPOSE_APPLICATION": {
+    "tags": [],
+    "icon_path": "assets/icons/action/EXPOSE_APPLICATION.svg",
+    "scope": "internal"
+  },
+  "EXPAND_SELECTION": {
+    "tags": [],
+    "icon_path": "assets/icons/action/EXPAND_SELECTION.svg",
+    "scope": "internal"
+  },
+  "EXPAND_FOLDER": {
+    "tags": [],
+    "icon_path": "assets/icons/action/EXPAND_FOLDER.svg",
+    "scope": "internal"
+  },
+  "EXCLAMATION_JIS": {
+    "tags": [],
+    "icon_path": "assets/icons/action/EXCLAMATION_JIS.svg",
+    "scope": "internal"
+  },
+  "EXCLAMATION": {
+    "tags": [],
+    "icon_path": "assets/icons/action/EXCLAMATION.svg",
+    "scope": "internal"
+  },
+  "ESC_JIS": {
+    "tags": [],
+    "icon_path": "assets/icons/action/ESC_JIS.svg",
+    "scope": "internal"
+  },
+  "ESC": {
+    "tags": [],
+    "icon_path": "assets/icons/action/ESC.svg",
+    "scope": "internal"
+  },
+  "EQUAL_JIS": {
+    "tags": [],
+    "icon_path": "assets/icons/action/EQUAL_JIS.svg",
+    "scope": "internal"
+  },
+  "EQUAL": {
+    "tags": [],
+    "icon_path": "assets/icons/action/EQUAL.svg",
+    "scope": "internal"
+  },
+  "END": {
+    "tags": [],
+    "icon_path": "assets/icons/action/END.svg",
+    "scope": "internal"
+  },
+  "EISU": {
+    "tags": [],
+    "icon_path": "assets/icons/action/EISU.svg",
+    "scope": "internal"
+  },
+  "EDITOR_LAYOUT": {
+    "tags": [],
+    "icon_path": "assets/icons/action/EDITOR_LAYOUT.svg",
+    "scope": "internal"
+  },
+  "EDITOR_HISTORY": {
+    "tags": [],
+    "icon_path": "assets/icons/action/EDITOR_HISTORY.svg",
+    "scope": "internal"
+  },
+  "EDITOR_3": {
+    "tags": [],
+    "icon_path": "assets/icons/action/EDITOR_3.svg",
+    "scope": "internal"
+  },
+  "EDITOR_2": {
+    "tags": [],
+    "icon_path": "assets/icons/action/EDITOR_2.svg",
+    "scope": "internal"
+  },
+  "EDITOR_1": {
+    "tags": [],
+    "icon_path": "assets/icons/action/EDITOR_1.svg",
+    "scope": "internal"
+  },
+  "E": {
+    "tags": [],
+    "icon_path": "assets/icons/action/E.svg",
+    "scope": "internal"
+  },
+  "D_JIS": {
+    "tags": [],
+    "icon_path": "assets/icons/action/D_JIS.svg",
+    "scope": "internal"
+  },
+  "DOWN_SCREEN": {
+    "tags": [],
+    "icon_path": "assets/icons/action/DOWN_SCREEN.svg",
+    "scope": "internal"
+  },
+  "DOWN": {
+    "tags": [],
+    "icon_path": "assets/icons/action/DOWN.svg",
+    "scope": "internal"
+  },
+  "DOUBLE_QUOTES_JIS": {
+    "tags": [],
+    "icon_path": "assets/icons/action/DOUBLE_QUOTES_JIS.svg",
+    "scope": "internal"
+  },
+  "DOUBLE_QUOTES": {
+    "tags": [],
+    "icon_path": "assets/icons/action/DOUBLE_QUOTES.svg",
+    "scope": "internal"
+  },
+  "DONGLE": {
+    "tags": [],
+    "icon_path": "assets/icons/action/DONGLE.svg",
+    "scope": "internal"
+  },
+  "DOMINANT_TUNE": {
+    "tags": [],
+    "icon_path": "assets/icons/action/DOMINANT_TUNE.svg",
+    "scope": "internal"
+  },
+  "DOMINANT_TRACK": {
+    "tags": [],
+    "icon_path": "assets/icons/action/DOMINANT_TRACK.svg",
+    "scope": "internal"
+  },
+  "DOMINANT_TOUCH": {
+    "tags": [],
+    "icon_path": "assets/icons/action/DOMINANT_TOUCH.svg",
+    "scope": "internal"
+  },
+  "DOMINANT_R": {
+    "tags": [],
+    "icon_path": "assets/icons/action/DOMINANT_R.svg",
+    "scope": "internal"
+  },
+  "DOMINANT_L": {
+    "tags": [],
+    "icon_path": "assets/icons/action/DOMINANT_L.svg",
+    "scope": "internal"
+  },
+  "DOMINANT_FLOAT": {
+    "tags": [],
+    "icon_path": "assets/icons/action/DOMINANT_FLOAT.svg",
+    "scope": "internal"
+  },
+  "DOMINANT_ALL": {
+    "tags": [],
+    "icon_path": "assets/icons/action/DOMINANT_ALL.svg",
+    "scope": "internal"
+  },
+  "DOLLAR_JIS": {
+    "tags": [],
+    "icon_path": "assets/icons/action/DOLLAR_JIS.svg",
+    "scope": "internal"
+  },
+  "DOLLAR": {
+    "tags": [],
+    "icon_path": "assets/icons/action/DOLLAR.svg",
+    "scope": "internal"
+  },
+  "DOC_START": {
+    "tags": [],
+    "icon_path": "assets/icons/action/DOC_START.svg",
+    "scope": "internal"
+  },
+  "DOC_END": {
+    "tags": [],
+    "icon_path": "assets/icons/action/DOC_END.svg",
+    "scope": "internal"
+  },
+  "DISPLAY_SLEEP": {
+    "tags": [],
+    "icon_path": "assets/icons/action/DISPLAY_SLEEP.svg",
+    "scope": "internal"
+  },
+  "DISPLAY_PROPERTIES": {
+    "tags": [],
+    "icon_path": "assets/icons/action/DISPLAY_PROPERTIES.svg",
+    "scope": "internal"
+  },
+  "DISPLAY_PREFERENCES": {
+    "tags": [],
+    "icon_path": "assets/icons/action/DISPLAY_PREFERENCES.svg",
+    "scope": "internal"
+  },
+  "DISABLE": {
+    "tags": [],
+    "icon_path": "assets/icons/action/DISABLE.svg",
+    "scope": "internal"
+  },
+  "DELETE_WORD": {
+    "tags": [],
+    "icon_path": "assets/icons/action/DELETE_WORD.svg",
+    "scope": "internal"
+  },
+  "DELETE_LINE": {
+    "tags": [],
+    "icon_path": "assets/icons/action/DELETE_LINE.svg",
+    "scope": "internal"
+  },
+  "DELETE_JIS": {
+    "tags": [],
+    "icon_path": "assets/icons/action/DELETE_JIS.svg",
+    "scope": "internal"
+  },
+  "DELETE_FOREVER": {
+    "tags": [],
+    "icon_path": "assets/icons/action/DELETE_FOREVER.svg",
+    "scope": "internal"
+  },
+  "DELETE": {
+    "tags": [],
+    "icon_path": "assets/icons/action/DELETE.svg",
+    "scope": "internal"
+  },
+  "D": {
+    "tags": [],
+    "icon_path": "assets/icons/action/D.svg",
+    "scope": "internal"
+  },
+  "C_VOL_UP": {
+    "tags": [],
+    "icon_path": "assets/icons/action/C_VOL_UP.svg",
+    "scope": "internal"
+  },
+  "C_VOL_DOWN": {
+    "tags": [],
+    "icon_path": "assets/icons/action/C_VOL_DOWN.svg",
+    "scope": "internal"
+  },
+  "C_REWIND": {
+    "tags": [],
+    "icon_path": "assets/icons/action/C_REWIND.svg",
+    "scope": "internal"
+  },
+  "C_PREVIOUS": {
+    "tags": [],
+    "icon_path": "assets/icons/action/C_PREVIOUS.svg",
+    "scope": "internal"
+  },
+  "C_POWER": {
+    "tags": [],
+    "icon_path": "assets/icons/action/C_POWER.svg",
+    "scope": "internal"
+  },
+  "C_PLAY_PAUSE": {
+    "tags": [],
+    "icon_path": "assets/icons/action/C_PLAY_PAUSE.svg",
+    "scope": "internal"
+  },
+  "C_NEXT": {
+    "tags": [],
+    "icon_path": "assets/icons/action/C_NEXT.svg",
+    "scope": "internal"
+  },
+  "C_MUTE": {
+    "tags": [],
+    "icon_path": "assets/icons/action/C_MUTE.svg",
+    "scope": "internal"
+  },
+  "C_JIS": {
+    "tags": [],
+    "icon_path": "assets/icons/action/C_JIS.svg",
+    "scope": "internal"
+  },
+  "C_FAST_FORWARD": {
+    "tags": [],
+    "icon_path": "assets/icons/action/C_FAST_FORWARD.svg",
+    "scope": "internal"
+  },
+  "C_BRIGHTNESS_INC": {
+    "tags": [],
+    "icon_path": "assets/icons/action/C_BRIGHTNESS_INC.svg",
+    "scope": "internal"
+  },
+  "C_BRIGHTNESS_DEC": {
+    "tags": [],
+    "icon_path": "assets/icons/action/C_BRIGHTNESS_DEC.svg",
+    "scope": "internal"
+  },
+  "CYCLE_WINDOW_ORDER": {
+    "tags": [],
+    "icon_path": "assets/icons/action/CYCLE_WINDOW_ORDER.svg",
+    "scope": "internal"
+  },
+  "CYCLE_WINDOWS_ORDER": {
+    "tags": [],
+    "icon_path": "assets/icons/action/CYCLE_WINDOWS_ORDER.svg",
+    "scope": "internal"
+  },
+  "CYCLE_WINDOWS": {
+    "tags": [],
+    "icon_path": "assets/icons/action/CYCLE_WINDOWS.svg",
+    "scope": "internal"
+  },
+  "CYCLE_SCREENS": {
+    "tags": [],
+    "icon_path": "assets/icons/action/CYCLE_SCREENS.svg",
+    "scope": "internal"
+  },
+  "CYCLE_HISTORY": {
+    "tags": [],
+    "icon_path": "assets/icons/action/CYCLE_HISTORY.svg",
+    "scope": "internal"
+  },
+  "CYCLE_DESKTOPS": {
+    "tags": [],
+    "icon_path": "assets/icons/action/CYCLE_DESKTOPS.svg",
+    "scope": "internal"
+  },
+  "CYCLE_APPS_ALT": {
+    "tags": [],
+    "icon_path": "assets/icons/action/CYCLE_APPS_ALT.svg",
+    "scope": "internal"
+  },
+  "CYCLE_APPS": {
+    "tags": [],
+    "icon_path": "assets/icons/action/CYCLE_APPS.svg",
+    "scope": "internal"
+  },
+  "CUT_LINE": {
+    "tags": [],
+    "icon_path": "assets/icons/action/CUT_LINE.svg",
+    "scope": "internal"
+  },
+  "CUT": {
+    "tags": [],
+    "icon_path": "assets/icons/action/CUT.svg",
+    "scope": "internal"
+  },
+  "CUSTOM": {
+    "tags": [],
+    "icon_path": "assets/icons/action/CUSTOM.svg",
+    "scope": "internal"
+  },
+  "COPY_PATH": {
+    "tags": [],
+    "icon_path": "assets/icons/action/COPY_PATH.svg",
+    "scope": "internal"
+  },
+  "COPY_LINE_UP": {
+    "tags": [],
+    "icon_path": "assets/icons/action/COPY_LINE_UP.svg",
+    "scope": "internal"
+  },
+  "COPY_LINE_DOWN": {
+    "tags": [],
+    "icon_path": "assets/icons/action/COPY_LINE_DOWN.svg",
+    "scope": "internal"
+  },
+  "COPY_LINE": {
+    "tags": [],
+    "icon_path": "assets/icons/action/COPY_LINE.svg",
+    "scope": "internal"
+  },
+  "COPY": {
+    "tags": [],
+    "icon_path": "assets/icons/action/COPY.svg",
+    "scope": "internal"
+  },
+  "CONFIGURATION_R_BLUEPRINT": {
+    "tags": [],
+    "icon_path": "assets/icons/action/CONFIGURATION_R_BLUEPRINT.svg",
+    "scope": "internal"
+  },
+  "CONFIGURATION_L_BLUEPRINT": {
+    "tags": [],
+    "icon_path": "assets/icons/action/CONFIGURATION_L_BLUEPRINT.svg",
+    "scope": "internal"
+  },
+  "CONFIGURATION_BLUEPRINT": {
+    "tags": [],
+    "icon_path": "assets/icons/action/CONFIGURATION_BLUEPRINT.svg",
+    "scope": "internal"
+  },
+  "COMMENT": {
+    "tags": [],
+    "icon_path": "assets/icons/action/COMMENT.svg",
+    "scope": "internal"
+  },
+  "COMMA_JIS": {
+    "tags": [],
+    "icon_path": "assets/icons/action/COMMA_JIS.svg",
+    "scope": "internal"
+  },
+  "COMMAND_PALETTE": {
+    "tags": [],
+    "icon_path": "assets/icons/action/COMMAND_PALETTE.svg",
+    "scope": "internal"
+  },
+  "COMMA": {
+    "tags": [],
+    "icon_path": "assets/icons/action/COMMA.svg",
+    "scope": "internal"
+  },
+  "COLON_JIS": {
+    "tags": [],
+    "icon_path": "assets/icons/action/COLON_JIS.svg",
+    "scope": "internal"
+  },
+  "COLON": {
+    "tags": [],
+    "icon_path": "assets/icons/action/COLON.svg",
+    "scope": "internal"
+  },
+  "CLOSE_WINDOW": {
+    "tags": [],
+    "icon_path": "assets/icons/action/CLOSE_WINDOW.svg",
+    "scope": "internal"
+  },
+  "CLOSE_TABS": {
+    "tags": [],
+    "icon_path": "assets/icons/action/CLOSE_TABS.svg",
+    "scope": "internal"
+  },
+  "CLOSE_TAB": {
+    "tags": [],
+    "icon_path": "assets/icons/action/CLOSE_TAB.svg",
+    "scope": "internal"
+  },
+  "CLOSE_FOLDERS": {
+    "tags": [],
+    "icon_path": "assets/icons/action/CLOSE_FOLDERS.svg",
+    "scope": "internal"
+  },
+  "CLOSE_FOLDER": {
+    "tags": [],
+    "icon_path": "assets/icons/action/CLOSE_FOLDER.svg",
+    "scope": "internal"
+  },
+  "CLOSE_FILE": {
+    "tags": [],
+    "icon_path": "assets/icons/action/CLOSE_FILE.svg",
+    "scope": "internal"
+  },
+  "CLOSE_DESKTOP": {
+    "tags": [],
+    "icon_path": "assets/icons/action/CLOSE_DESKTOP.svg",
+    "scope": "internal"
+  },
+  "CLOSE_APPLICATION": {
+    "tags": [],
+    "icon_path": "assets/icons/action/CLOSE_APPLICATION.svg",
+    "scope": "internal"
+  },
+  "CLOSE_ALL_WINDOWS": {
+    "tags": [],
+    "icon_path": "assets/icons/action/CLOSE_ALL_WINDOWS.svg",
+    "scope": "internal"
+  },
+  "CHEAT_SHEET": {
+    "tags": [],
+    "icon_path": "assets/icons/action/CHEAT_SHEET.svg",
+    "scope": "internal"
+  },
+  "CHARACTER_VIEWER": {
+    "tags": [],
+    "icon_path": "assets/icons/action/CHARACTER_VIEWER.svg",
+    "scope": "internal"
+  },
+  "CARET_JIS": {
+    "tags": [],
+    "icon_path": "assets/icons/action/CARET_JIS.svg",
+    "scope": "internal"
+  },
+  "CARET": {
+    "tags": [],
+    "icon_path": "assets/icons/action/CARET.svg",
+    "scope": "internal"
+  },
+  "CAPSLOCK_JIS": {
+    "tags": [],
+    "icon_path": "assets/icons/action/CAPSLOCK_JIS.svg",
+    "scope": "internal"
+  },
+  "CAPSLOCK": {
+    "tags": [],
+    "icon_path": "assets/icons/action/CAPSLOCK.svg",
+    "scope": "internal"
+  },
+  "C": {
+    "tags": [],
+    "icon_path": "assets/icons/action/C.svg",
+    "scope": "internal"
+  },
+  "B_JIS": {
+    "tags": [],
+    "icon_path": "assets/icons/action/B_JIS.svg",
+    "scope": "internal"
+  },
+  "BT_DEVICE_5": {
+    "tags": [],
+    "icon_path": "assets/icons/action/BT_DEVICE_5.svg",
+    "scope": "internal"
+  },
+  "BT_DEVICE_4": {
+    "tags": [],
+    "icon_path": "assets/icons/action/BT_DEVICE_4.svg",
+    "scope": "internal"
+  },
+  "BT_DEVICE_3": {
+    "tags": [],
+    "icon_path": "assets/icons/action/BT_DEVICE_3.svg",
+    "scope": "internal"
+  },
+  "BT_DEVICE_2": {
+    "tags": [],
+    "icon_path": "assets/icons/action/BT_DEVICE_2.svg",
+    "scope": "internal"
+  },
+  "BT_DEVICE_1": {
+    "tags": [],
+    "icon_path": "assets/icons/action/BT_DEVICE_1.svg",
+    "scope": "internal"
+  },
+  "BT_CLEAR": {
+    "tags": [],
+    "icon_path": "assets/icons/action/BT_CLEAR.svg",
+    "scope": "internal"
+  },
+  "BOOKMARK": {
+    "tags": [],
+    "icon_path": "assets/icons/action/BOOKMARK.svg",
+    "scope": "internal"
+  },
+  "BOLD": {
+    "tags": [],
+    "icon_path": "assets/icons/action/BOLD.svg",
+    "scope": "internal"
+  },
+  "BLOCK_COMMENT": {
+    "tags": [],
+    "icon_path": "assets/icons/action/BLOCK_COMMENT.svg",
+    "scope": "internal"
+  },
+  "BASIC": {
+    "tags": [],
+    "icon_path": "assets/icons/action/BASIC.svg",
+    "scope": "internal"
+  },
+  "BACKSPACE_WORD": {
+    "tags": [],
+    "icon_path": "assets/icons/action/BACKSPACE_WORD.svg",
+    "scope": "internal"
+  },
+  "BACKSPACE": {
+    "tags": [],
+    "icon_path": "assets/icons/action/BACKSPACE.svg",
+    "scope": "internal"
+  },
+  "BACKSLASH": {
+    "tags": [],
+    "icon_path": "assets/icons/action/BACKSLASH.svg",
+    "scope": "internal"
+  },
+  "BACK": {
+    "tags": [],
+    "icon_path": "assets/icons/action/BACK.svg",
+    "scope": "internal"
+  },
+  "B": {
+    "tags": [],
+    "icon_path": "assets/icons/action/B.svg",
+    "scope": "internal"
+  },
+  "A_UMLAUT": {
+    "tags": [],
+    "icon_path": "assets/icons/action/A_UMLAUT.svg",
+    "scope": "internal"
+  },
+  "A_JIS": {
+    "tags": [],
+    "icon_path": "assets/icons/action/A_JIS.svg",
+    "scope": "internal"
+  },
+  "AT_SIGN": {
+    "tags": [],
+    "icon_path": "assets/icons/action/AT_SIGN.svg",
+    "scope": "internal"
+  },
+  "AT_JIS": {
+    "tags": [],
+    "icon_path": "assets/icons/action/AT_JIS.svg",
+    "scope": "internal"
+  },
+  "ASTERISK_JIS": {
+    "tags": [],
+    "icon_path": "assets/icons/action/ASTERISK_JIS.svg",
+    "scope": "internal"
+  },
+  "ASTERISK": {
+    "tags": [],
+    "icon_path": "assets/icons/action/ASTERISK.svg",
+    "scope": "internal"
+  },
+  "AMPERSAND_JIS": {
+    "tags": [],
+    "icon_path": "assets/icons/action/AMPERSAND_JIS.svg",
+    "scope": "internal"
+  },
+  "AMPERSAND": {
+    "tags": [],
+    "icon_path": "assets/icons/action/AMPERSAND.svg",
+    "scope": "internal"
+  },
+  "AI": {
+    "tags": [],
+    "icon_path": "assets/icons/action/AI.svg",
+    "scope": "internal"
+  },
+  "ADD_DESKTOP": {
+    "tags": [],
+    "icon_path": "assets/icons/action/ADD_DESKTOP.svg",
+    "scope": "internal"
+  },
+  "ADD_COMMENT": {
+    "tags": [],
+    "icon_path": "assets/icons/action/ADD_COMMENT.svg",
+    "scope": "internal"
+  },
+  "A": {
+    "tags": [],
+    "icon_path": "assets/icons/action/A.svg",
+    "scope": "internal"
+  },
+  "3D_Z": {
+    "tags": [],
+    "icon_path": "assets/icons/action/3D_Z.svg",
+    "scope": "internal"
+  },
+  "3D_YAW": {
+    "tags": [],
+    "icon_path": "assets/icons/action/3D_YAW.svg",
+    "scope": "internal"
+  },
+  "3D_Y": {
+    "tags": [],
+    "icon_path": "assets/icons/action/3D_Y.svg",
+    "scope": "internal"
+  },
+  "3D_X": {
+    "tags": [],
+    "icon_path": "assets/icons/action/3D_X.svg",
+    "scope": "internal"
+  },
+  "3D_ROLL": {
+    "tags": [],
+    "icon_path": "assets/icons/action/3D_ROLL.svg",
+    "scope": "internal"
+  },
+  "3D_PITCH": {
+    "tags": [],
+    "icon_path": "assets/icons/action/3D_PITCH.svg",
+    "scope": "internal"
+  }
+}
