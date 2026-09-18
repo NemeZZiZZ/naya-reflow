@@ -31,7 +31,7 @@
 - `toolkit/naya-modules-spike.py` — S2: 30/100b gesture write spike (live device).
 - `toolkit/naya-effect-spike.py` — Task 3.0: ed/1011 payload-encoding probe.
 - `client/web/src/lib/t10.ts` — T03/T10 behavior-set builders + parsers (pure).
-- `client/web/src/lib/flavors.ts` — Interrupt Flavor preset dictionary (pure data).
+- `client/web/src/lib/flavors.ts` — Interrupt Flavor policy enum (pure data; wire encoding OPEN until S1 flavor-diff).
 - `client/web/src/lib/settings.ts` — ED/fe payload builders + labels (pure).
 - `client/web/src/lib/modules.ts` — module-config parser/serializer (pure).
 - `client/web/src/components/AppTabs.tsx` — 5-tab navigation bar.
@@ -103,6 +103,19 @@ Expected: plan printed, no writes, exit 0.
 Run: `python3 toolkit/naya-t10-spike.py --apply`
 Expected: `SPIKE OK` — primary/shadow/tail readback identical; restore verified.
 If FAIL: record the failing step + hex; Phase 2 falls back to T03 scope (Global Constraints).
+
+- [ ] **Step 3b: Flavor-diff (NayaFlow-assisted, same live session)**
+
+Goal: find which bytes (if any) encode the Interrupt Flavor policy
+(Balanced / Hold–Preferred / Tap–Preferred / Tap–Unless Interrupted).
+Script gains a read-only `--dump <file>` mode (left layer 0 → file, no writes).
+Procedure per flavor: open NayaFlow → Behavior Settings → set flavor →
+quit NayaFlow fully → `python3 toolkit/naya-t10-spike.py --dump flavor-<id>.bin`.
+Diff the four dumps' T10 records against each other and the step-1 dump.
+Outcome A (bytes differ in T10 records): record offsets/values per flavor —
+flavor becomes a flashable field, Task 4.1/4.2 updated accordingly.
+Outcome B (dumps identical): flavor is host-profile-only — Task 4.1 stands
+as UI-only. Either way, record the verdict + hex evidence.
 
 - [ ] **Step 4: Record verdict + commit**
 
@@ -691,7 +704,7 @@ export function queueBehaviorSet(
 }
 ```
 
-(`_tappingTerm` is threaded for the flavor presets in Phase 4; builders default to 200ms until then.)
+(`tappingTerm` stays an independent setting (default 200ms); flavor policy is UI-only until the S1 flavor-diff proves a wire encoding.)
 
 - [ ] **Step 2: `BehaviorRows.tsx`**
 
@@ -925,7 +938,7 @@ git commit -m "Web led: Brush/Fill/Pipette + per-layer animations"
 
 ## Phase 4 — Behavior
 
-### Task 4.1: flavor presets
+### Task 4.1: flavor policy
 
 **Files:**
 - Create: `client/web/src/lib/flavors.ts`
@@ -935,32 +948,36 @@ git commit -m "Web led: Brush/Fill/Pipette + per-layer animations"
 - Produces:
 
 ```ts
-export interface FlavorPreset { id: string; label: string; tappingTerm: number; }
-export const FLAVORS: FlavorPreset[]; // balanced 200 / fast 150 / deliberate 280
-export function flavorById(id: string): FlavorPreset | undefined;
+export type FlavorId = 'balanced' | 'hold-preferred' | 'tap-preferred' | 'tap-unless-interrupted';
+export interface FlavorPolicy { id: FlavorId; label: string; hint: string; }
+export const FLAVORS: FlavorPolicy[]; // 4 policies, NayaFlow v1.25.1 ground truth
+export function flavorById(id: string): FlavorPolicy | undefined;
 ```
 
 - [ ] **Step 1: Smoke tests**
 
 ```ts
-// 22a. flavor presets
-eq(FLAVORS.length, 3, 'three flavor presets');
-eq(flavorById('balanced')?.tappingTerm, 200, 'balanced = 200ms');
+// 22a. flavor policy (4-way, NayaFlow parity; wire encoding OPEN — see S1 flavor-diff)
+eq(FLAVORS.length, 4, 'four flavor policies');
+eq(flavorById('balanced')?.label, 'Balanced', 'balanced label');
+eq(flavorById('tap-unless-interrupted')?.label, 'Tap–Unless Interrupted', '4th policy');
 eq(flavorById('nope'), undefined, 'unknown flavor');
 ```
 
 - [ ] **Step 2: FAIL → implement → PASS**
 
 ```ts
-/* Interrupt Flavor presets — UI dictionary only (spec §2): applying a flavor
- * sets the tapping term used by T03/T10 writers. No new wire format. */
-export interface FlavorPreset { id: string; label: string; tappingTerm: number; }
-export const FLAVORS: FlavorPreset[] = [
-  { id: 'balanced', label: 'Balanced', tappingTerm: 200 },
-  { id: 'fast', label: 'Fast typist', tappingTerm: 150 },
-  { id: 'deliberate', label: 'Deliberate', tappingTerm: 280 },
+/* Interrupt Flavor policy — UI-only until the S1 flavor-diff proves a wire
+ * encoding (spec §2). Tapping Term is a separate independent setting. */
+export type FlavorId = 'balanced' | 'hold-preferred' | 'tap-preferred' | 'tap-unless-interrupted';
+export interface FlavorPolicy { id: FlavorId; label: string; hint: string; }
+export const FLAVORS: FlavorPolicy[] = [
+  { id: 'balanced', label: 'Balanced', hint: 'Default resolution' },
+  { id: 'hold-preferred', label: 'Hold–Preferred', hint: 'Bias to hold on interrupt' },
+  { id: 'tap-preferred', label: 'Tap–Preferred', hint: 'Bias to tap on interrupt' },
+  { id: 'tap-unless-interrupted', label: 'Tap–Unless Interrupted', hint: 'Tap unless interrupted' },
 ];
-export function flavorById(id: string): FlavorPreset | undefined {
+export function flavorById(id: string): FlavorPolicy | undefined {
   return FLAVORS.find((f) => f.id === id);
 }
 ```
@@ -1007,7 +1024,7 @@ export function queueSetting(draft: Draft, op: SettingsOp): void {
 
 Three groups, plain rows (label left, control right, tabular numbers):
 
-- **Typing**: Interrupt Flavor — three segmented buttons from `FLAVORS`; applying one stores `tappingTerm` in a new `useState` lifted to App (`tappingTerm`, default 200) that Task 2.2's `queueBehaviorSet` call receives. Tapping Term — slider 100–400ms bound to the same state.
+- **Typing**: Interrupt Flavor — four segmented buttons from `FLAVORS` (policy select, UI-only until S1 flavor-diff proves a wire encoding; stored in profile, nothing flashed). Tapping Term — independent slider 10–1000ms, default 200, bound to `tappingTerm` state lifted to App that Task 2.2's `queueBehaviorSet` call receives.
 - **Power**: Idle/Sleep timeouts — two sliders 0–6000s. Current values loaded live via `ses.getTimeouts()` + `timeoutsMs` on mount (left connected only). Applying queues `{ kind:'settings', path:'fe/100a', payload: timeoutsPayload(idle*1000, sleep*1000, deep), label }` — deep preserved from the read.
 - **LED**: Max Brightness slider 0–100 → `maxBrtOp`; LED Scan Mode toggle → `scanModeOp`; Action Override select (None/L1/L2 → 0/1/2) → `ledOverrideOp`. No GET for these → label under the group: "Device does not report current values; the queue shows what will be sent."
 
@@ -1151,4 +1168,4 @@ git commit -m "Web devices: tab with device cards + draft stats"
 
 - Spec coverage: IA → P1; data model → 1.1/1.2/2.3; components → 1.4/2.2/3.2/4.2/5.2/6.1; wire risks → S1/S2/3.0 + flags; testing/phasing → smoke sections 19–23 (~166 + ~35 new ≈ 200+, within the ~250 target as tests are added per task; add per-task assertions freely, never fewer).
 - Stop conditions preserved: S1 fail → Phase 2 T03-only; S2 fail → Phase 5 read-only; 3.0 inconclusive → animation row falls back to ED/100D cycle button.
-- Known deliberate cuts (not placeholders): macros; OpenFlow's "remove unused module slot"; flavor as wire code; multi-select in Bindings tab (single-key editing).
+- Known deliberate cuts (not placeholders): macros; OpenFlow's "remove unused module slot"; flavor wire encoding (UI-only until the S1 flavor-diff proves otherwise); multi-select in Bindings tab (single-key editing).

@@ -24,7 +24,7 @@ Five top-level tabs in a single header bar:
   of the selected module — gesture tabs (1/2/3 Fingers / Dial), gesture →
   action table using the same action palette. FLASHABLE / APP ONLY badges;
   non-flashable items greyed with an explanation.
-- **Behavior** — global settings form: Typing (Interrupt Flavor presets,
+- **Behavior** — global settings form: Typing (Interrupt Flavor policy,
   Tapping Term), Power (Idle/Sleep timeouts), LED (Action Override, Max
   Brightness, Scan Mode).
 - **Devices** — existing DeviceSheet, extended (port, firmware, draft stats).
@@ -44,7 +44,7 @@ interface Draft {
   bindings: { layer: 0|1|2; key: KK; slot: Tap|Hold|DT|TH; action: Action }[]
   led:      { layer: 0|1|2; pos: number; h: number; s: number; anim: 0..3 }[]
   modules:  { slot: number; profile: Touch|Track|Tune; gestures: GestureBinding[] }[]
-  behavior: { flavor: Preset; tappingTerm: ms; idle: s; sleep: s;
+  behavior: { flavor: FlavorId; tappingTerm: ms; idle: s; sleep: s;
               ledOverride: Mode; maxBrt: 0..100; scanMode: 0|1 }
 }
 ```
@@ -54,8 +54,12 @@ Key decisions:
 - **T10 slots are written as a full set.** Editing any behavior of a key
   rewrites all 4 slots (device stores truth per set). Empty slot = None record.
   Removes T03-vs-T10 desync.
-- **Interrupt Flavor is a preset dictionary** (`flavor → {tappingTerm, …}`),
-  applied with one click; only known ED codes go to the device. No new wire.
+- **Interrupt Flavor is a 4-way policy** (NayaFlow v1.25.1 ground truth:
+  Balanced / Hold–Preferred / Tap–Preferred / Tap–Unless Interrupted —
+  “how a hold-tap key resolves when interrupted”). Tapping Term is a
+  separate ms setting. Flavor's wire encoding is OPEN — a flavor-diff
+  (keymap dumps at each flavor) is folded into spike S1; until proven,
+  flavor is UI-only (stored in profile, nothing flashed).
 - **Modules gestures** reuse the same Action objects as Bindings (single
   palette), written via `30/100b`. Read-only by default; write behind a
   feature flag until live-verified.
@@ -91,7 +95,7 @@ Key decisions:
 | Modules read    | partial 30/100b                | read-only by default |
 | Modules write   | ⚠️ 9 slots                     | feature flag until live-proven |
 | Macros          | ❌ unknown                     | out of scope |
-| Flavor          | ❌ presets only                | UI presets, no new wire |
+| Flavor          | ⚠️ policy, encoding OPEN       | 4-way policy; wire TBD via S1 flavor-diff |
 
 De-risk plan (before main development, via existing toolkit scripts, not web):
 
@@ -100,7 +104,7 @@ De-risk plan (before main development, via existing toolkit scripts, not web):
 2. **Modules write spike** — one gesture via 30/100b, readback. Flag removed
    only after success.
 
-Not in first iteration: macros, Interrupt Flavor as wire code, OpenFlow's
+Not in first iteration: macros, flavor wire encoding (UI-only until S1 proves otherwise), OpenFlow's
 "remove unused module slot" (dangerous without understanding).
 
 ## 5. Testing & phasing
@@ -108,7 +112,7 @@ Not in first iteration: macros, Interrupt Flavor as wire code, OpenFlow's
 Tests (extend existing smoke runner):
 
 - pure wire-encoding functions per new section (T10 writer, gesture payload,
-  flavor presets) — roundtrip tests as today;
+  flavor policy) — roundtrip tests as today;
 - importers/exporters — snapshot ↔ draft;
 - smoke count grows 166 → ~250; clean `vite build` is a required condition of
   every commit.
@@ -119,7 +123,7 @@ Phases (each a separate commit, independently working):
    FlashDialog groups by section. Breaks nothing.
 2. **Bindings T10** — after successful spike. Full 4-slot editor.
 3. **LED Map** — tools + animations (wire known, low risk).
-4. **Behavior** — settings form + flavor presets.
+4. **Behavior** — settings form + flavor policy.
 5. **Modules** — read-only overview; write behind flag after spike.
 6. **Devices** — extend existing sheet (minimal).
 
