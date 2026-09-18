@@ -536,6 +536,9 @@ import {
 } from '../src/lib/settings';
 import { FLAVORS, flavorById } from '../src/lib/flavors';
 import { queueSetting } from '../src/lib/queue';
+import {
+  GESTURE_NAMES, gestureName, parseModuleConfig, gesturePayload,
+} from '../src/lib/modules';
 
 // 21. settings payload builders ([layer, effect] for 1011 per 3.0 spike verdict)
 {
@@ -585,5 +588,46 @@ import { queueSetting } from '../src/lib/queue';
   queueSetting(d, maxBrtOp(70));
   eq(d.size, 1, 'same path deduped');
   eq(opSummary(d.ops[0]).includes('70'), true, 'latest value queued');
+}
+
+// 23. 30/100b module-config parser (Task 5.1). Fixture = S2 post-restore
+// read-back blobs (research/dumps/left-100b-20260918-084110.json:
+// L1 205B S2-verified, L0 120B factory zeros).
+function hexBytes(h: string): Uint8Array {
+  const out = new Uint8Array(h.length / 2);
+  for (let i = 0; i < out.length; i++) out[i] = parseInt(h.slice(i * 2, i * 2 + 2), 16);
+  return out;
+}
+{
+  const L1 = '0001010a0101010a020101320301010104010100050f0801000000ffffffff060f080100000001000000070f0800000000ffffffff080f080000000001000000090f0804000000010000000a0f0804000000ffffffff0b0f0803000000010000000c0f0803000000040000000d0f0803000000020000000e0f0803000000080000000f00001000001100001200001300001400001500001600001700001800001900001a00001b00001c00001d00001e00001f0000200000210000220000230000240000250000260000270000';
+  const L2 = '0001010a010101320201011403010101040101000507000607000707000807000907000a07000b07000c07000d0f0804000000ffffffff0e0f0804000000010000000f0f0806000000ffffffff100f0806000000010000001107001207001307001407001507001607001707001807001907001a07001b07001c07001d07001e07001f0000200000210000220000230000240000250000260000270000';
+  const cfg = parseModuleConfig(hexBytes(L1), 0);
+  eq(cfg !== null, true, 'L1 blob parses');
+  eq(cfg!.gestures.length, 40, 'L1 has 40 slots (00..27)');
+  eq(cfg!.gestures.map((g) => g.slot).join(','), Array.from({ length: 40 }, (_, i) => i).join(','), 'slots sequential');
+  eq(GESTURE_NAMES.length, 9, 'nine host gestures');
+  eq(cfg!.gestures[0].gesture, 'MOUSE_HORIZONTAL', 'slot 0 gesture id');
+  eq(cfg!.gestures[2].gesture, 'MOUSE_STATIC', 'slot 2 gesture id');
+  eq(cfg!.gestures[8].gesture, 'STATIC_ZOOM', 'slot 8 gesture id');
+  eq(gestureName(41), 'slot 41', 'unknown slot fallback label');
+  eq(toHex(cfg!.gestures[0].actionRaw), '00 01 01 0a', 'slot 0 raw record');
+  eq(toHex(cfg!.gestures[2].actionRaw), '02 01 01 32', 'slot 2 raw record');
+  eq(cfg!.gestures.slice(0, 5).every((g) => g.flashable), true, 'family-01 slots flashable');
+  eq(cfg!.gestures.slice(5).every((g) => !g.flashable), true, '0f/00 families read-only');
+  // S2-proven swap rebuild: slot 0 with slot 2 donor byte.
+  eq(toHex(gesturePayload(cfg!.gestures[0], [0x32])), '00 01 01 32', 'gesturePayload rebuild');
+  let threw = false;
+  try { gesturePayload(cfg!.gestures[0], [0x32, 0x00]); } catch { threw = true; }
+  eq(threw, true, 'same-length rule enforced');
+  threw = false;
+  try { gesturePayload(cfg!.gestures[5], [0x01, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00]); } catch { threw = true; }
+  eq(threw, true, 'unproven family rejected');
+  const cfg2 = parseModuleConfig(hexBytes(L2), 1);
+  eq(cfg2!.gestures.length, 40, 'L2 has 40 slots');
+  eq(toHex(cfg2!.gestures[1].actionRaw), '01 01 01 32', 'L2 slot 1 differs per layer');
+  eq(cfg2!.gestures[5].gesture, 'STATIC_SCROLL_VERTICAL', 'L2 slot 5 gesture id');
+  eq(cfg2!.gestures[5].flashable, false, '07-family slot read-only');
+  eq(parseModuleConfig(new Uint8Array([0x00, 0x01]), 0), null, 'truncated blob → null');
+  eq(parseModuleConfig(new Uint8Array(0), 0), null, 'empty blob → null');
 }
 void main();
