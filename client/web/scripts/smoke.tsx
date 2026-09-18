@@ -531,4 +531,26 @@ import {
   behaviorSetOf, behaviorSetOps, withSlot, hidPairOf,
 } from '../src/lib/t10';
 import type { BehaviorSet } from '../src/lib/t10';
+import {
+  ANIM_NAMES, edTargetValue, animOp, scanModeOp, maxBrtOp, ledOverrideOp,
+} from '../src/lib/settings';
+
+// 21. settings payload builders ([layer, effect] for 1011 per 3.0 spike verdict)
+{
+  eq(toHex(edTargetValue(0, 100)), '00 64', 'ed [target,value] encoding');
+  eq(maxBrtOp(100).path, 'ed/1013', 'maxbrt path');
+  eq(toHex(maxBrtOp(100).payload), '00 64', 'maxbrt payload');
+  let threw = false;
+  try { maxBrtOp(101); } catch { threw = true; }
+  eq(threw, true, 'maxbrt range guard');
+  eq(toHex(scanModeOp(1).payload), '00 01', 'scanmode payload');
+  eq(toHex(ledOverrideOp(2).payload), '00 02', 'override payload');
+  eq(toHex(animOp(1, 2).payload), '01 02', 'anim payload [layer,effect]');
+  eq(animOp(1, 2).path, 'ed/1011', 'anim path');
+  eq(opSection(animOp(1, 2)), 'led', 'anim grouped under LED Map');
+  eq(ANIM_NAMES.length, 4, 'four animations');
+  threw = false;
+  try { animOp(0, 4); } catch { threw = true; }
+  eq(threw, true, 'anim range guard');
+}
 void main();
