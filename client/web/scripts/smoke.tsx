@@ -534,6 +534,7 @@ import type { BehaviorSet } from '../src/lib/t10';
 import {
   ANIM_NAMES, edTargetValue, animOp, scanModeOp, maxBrtOp, ledOverrideOp,
 } from '../src/lib/settings';
+import { FLAVORS, flavorById } from '../src/lib/flavors';
 
 // 21. settings payload builders ([layer, effect] for 1011 per 3.0 spike verdict)
 {
@@ -564,5 +565,15 @@ import {
     eq(d.size, 3, 'same path+target deduped');
     eq(opSummary(d.ops[2]).includes('70'), true, 'latest value queued');
   }
+}
+// 22a. Interrupt Flavor policy dictionary (Task 4.1; wire encoding OPEN,
+// pending the S1 flavor-diff verdict — display metadata only).
+{
+  eq(FLAVORS.length, 4, 'four flavor policies');
+  eq(FLAVORS.map((f) => f.id).join(','), 'balanced,hold-preferred,tap-preferred,tap-unless-interrupted', 'flavor ids');
+  eq(flavorById('balanced')?.name, 'Balanced', 'flavorById balanced');
+  eq(flavorById('tap-unless-interrupted')?.name, 'Tap–Unless Interrupted', 'flavorById longest id');
+  eq(flavorById('fast'), undefined, 'unknown flavor → undefined');
+  eq(new Set(FLAVORS.map((f) => f.id)).size, 4, 'flavor ids unique');
 }
 void main();
