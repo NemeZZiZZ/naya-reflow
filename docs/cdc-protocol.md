@@ -873,3 +873,28 @@ Dumps: `research/dumps/left-healthy-post-recovery-20260917-064553.json`
 - Aux right: Touch docked, rail ~4220mV (~100%), base ~4095mV; right half silent
   on ALL 30/10xx (remap lives on left — by design, not a defect).
 - Modules currently swapped vs the earlier layout (Track left / Touch right).
+
+### 2026-09-19: factory-format saga — layer engine, stock ritual, brightness wrap
+- **Raw `30/10ca [01]` + keymap/LED-only restore leaves hold-to-layer DEAD
+  globally** (MO(1) thumbs + MO(2) corners, both halves; keys print base
+  letters). Keymap records are intact (T05 MO(2)@3e/49, MO(1)@43/44 all
+  present, restore readback IDENTICAL) — the wipe kills a separate
+  layer-list/profile store, not key records. Static chain only:
+  `_remapWriteLayerList → 30/1003 → 30/1004 → 30/100A → 30/100B → 30/100C →
+  30/100D → 30/100E`; no wire format for the layer list anywhere.
+- **Stock NayaFlow flash restores the layer engine**: `doClearAllDataOperations`
+  also enqueues `naya_remap::Profile(ADD_DEFAULT_DATA)` — our raw ritual never
+  did. Proven recipe: `10ca` → stock flash (accept its write-verification
+  error if any — layers still come back) → re-apply customs via `30/1004`.
+  Live-verified: stock overwrote 4 L0 records only (Z T03→plain, 2e/2f
+  11B→plain Shift, 1e F24→CapsLock; L1/L2 + all LED + timeouts untouched);
+  surgical 4-record rewrite ACKed `00 00` ×4, readback 796B IDENTICAL to the
+  pre-format backup. **Keymap-only 1004 writes do NOT break the layer store**
+  (many pre-format 1004 writes + this restore, hold works throughout).
+- **Brightness step WRAP BUG (new OPEN, FW 0.3.41.0, post-format + stock
+  flash)**: BRT-down steps normally to 10, next step flares to 100, then
+  descends to 0 (`50→…→10→100→…→0`, reproduces every time); BRT-up steps
+  0→100 then wraps to 10 and continues up. Suspected unsigned step
+  arithmetic without clamping (down: 0−step underflows → 100; up: 100+step
+  mods to 10). User does not recall it pre-format — but the NVS is factory
+  now, so this reads as a genuine firmware bug, not state corruption.
