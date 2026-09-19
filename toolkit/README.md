@@ -47,6 +47,5 @@ Working tools. All tested live against Naya Create (base FW 0.3.41.0).
   [`naya-effect-spike.py`](naya-effect-spike.py) — `ed/1011` per-layer
   effect probe (PROVEN `[layer,effect]`),
   [`naya-led-batch-spike.py`](naya-led-batch-spike.py) — `30/100e` chunked
-  full-map batch write (OPEN S4; candidate forms `--form layer|00layer`,
-  `--ack-mode per-chunk|final-only`, oracle = `30/100d` readback,
-  single-entry restore).
+  full-map batch write (tested DEAD 2026-09-19: all three prefix framings
+  parse-ACK without applying; per-key writes stay canonical).

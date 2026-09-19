@@ -49,10 +49,25 @@ MAX_ENTRIES = 60  # 2 + 60*4 = 242B worst case (00layer form)
 
 
 def fail(where, *evidence):
+    """evidence = alternating label, value, label, value... (values: bytes
+    print as hex). Paired via zip so bare strings never unpack char-wise."""
     print(f"SPIKE FAIL {where}")
-    for label, data in evidence:
+    it = iter(evidence)
+    for label, data in zip(it, it):
         print(f"  {label}: {data.hex(' ') if isinstance(data, bytes) else data}")
+    for extra in it:
+        print(f"  ?: {extra}")
     return 1
+
+
+def diff_entries(a, b, limit=4):
+    """First differing 4B entry indices + total count (readback evidence)."""
+    diffs = [i for i in range(min(len(a), len(b)) // 4)
+             if a[i * 4:i * 4 + 4] != b[i * 4:i * 4 + 4]]
+    if len(a) != len(b):
+        diffs.append(f"len {len(a)} vs {len(b)}")
+    show = ", ".join(str(d) for d in diffs[:limit])
+    return f"{len(diffs)} differing entries [{show}{'...' if len(diffs) > limit else ''}]"
 
 
 def pick_swap(blob):
@@ -65,11 +80,20 @@ def pick_swap(blob):
 
 
 def build_chunks(blob, layer, per, form):
-    """Full modified map -> list of params chunks (prefix re-sent each)."""
-    prefix = bytes([layer]) if form == "layer" else bytes([0x00, layer])
+    """Full modified map -> list of params chunks (prefix re-sent each).
+    partlayer: [chunk_index, layer] — exact mirror of the 30/100d read
+    framing ([part, layer] with part counting up)."""
     ents = [blob[i:i + 4] for i in range(0, len(blob), 4)]
-    return [prefix + b"".join(ents[i:i + per])
-            for i in range(0, len(ents), per)]
+    out = []
+    for k, i in enumerate(range(0, len(ents), per)):
+        if form == "layer":
+            prefix = bytes([layer])
+        elif form == "00layer":
+            prefix = bytes([0x00, layer])
+        else:  # partlayer
+            prefix = bytes([k, layer])
+        out.append(prefix + b"".join(ents[i:i + per]))
+    return out
 
 
 def main():
@@ -78,11 +102,19 @@ def main():
     ap.add_argument("--layer", type=int, default=0)
     ap.add_argument("--entries", type=int, default=20,
                     help="entries per chunk (default 20; cap 60 = 242B params)")
-    ap.add_argument("--form", choices=["layer", "00layer"], default="layer",
-                    help="chunk params prefix (default: their claimed [layer])")
-    ap.add_argument("--ack-mode", choices=["per-chunk", "final-only"],
+    ap.add_argument("--form", choices=["layer", "00layer", "partlayer"],
+                    default="layer",
+                    help="chunk params prefix (default: their claimed"
+                    " [layer]; 00layer mirrors the proven single-entry"
+                    " sub-op prefix; partlayer mirrors the 30/100d read"
+                    " framing [part, layer])")
+    ap.add_argument("--ack-mode", choices=["per-chunk", "final-only", "any"],
                     default="per-chunk",
-                    help="expect an ACK per chunk or only after the last")
+                    help="per-chunk: every chunk must ACK `00 <layer>`;"
+                    " final-only: silent accumulate, ACK after last chunk;"
+                    " any: log every ACK, abort only on no-reply (readback"
+                    " decides — for probing unknown ACK semantics like the"
+                    " observed `14 01` = 0x14 entries? + flag)")
     ap.add_argument("--apply", action="store_true",
                     help="actually write (default: dry run)")
     a = ap.parse_args()
@@ -144,7 +176,9 @@ def main():
                 ack = cdc.payload_of(f)
                 print(f"  chunk {k + 1}/{len(chunks)} ACK: {ack.hex(' ')}",
                       flush=True)
-                if ack not in (b"\x00\x00", b"\x00" + bytes([a.layer])):
+                if (a.ack_mode != "any"
+                        and ack not in (b"\x00\x00",
+                                        b"\x00" + bytes([a.layer]))):
                     return k, f"chunk {k + 1} BAD ACK {ack.hex(' ')}"
             return len(chunks), None
 
@@ -170,9 +204,13 @@ def main():
         if live == mod:
             print("readback: byte-identical to modified map — batch form"
                   " APPLIED")
+        elif live == orig:
+            print("readback: identical to ORIGINAL map — nothing applied"
+                  f" ({diff_entries(orig, mod)} was the probe delta)")
         else:
-            print(f"readback: DIFFERS from modified map"
-                  f" (live={len(live)}B mod={len(mod)}B)")
+            print(f"readback: DIFFERS from both (vs mod:"
+                  f" {diff_entries(live, mod)}; vs orig:"
+                  f" {diff_entries(live, orig)})")
 
         def restore_entries():
             """Single-entry writes of the two originals (proven path)."""

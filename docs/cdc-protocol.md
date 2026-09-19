@@ -805,12 +805,20 @@ Independent dark-board recovery, mirrors our saga. Verified against OUR binary
   unset, white = (H0,S0). **Cold-boot saturation-drop firmware bug** (traviswye):
   white keys come back RED after power cycle with byte-identical map — boot render
   ignores saturation. Our amber maps (S=100) are unaffected.
-- **Full-map 100e form** (their claim): `[layer] + 136 entries`, chunked ≤242B with
-  layer byte re-prefixed per continuation (matches our MORE/id countdown read path).
-  NOTE: our single-entry `[00,layer]+entry` 6-byte form WORKS (readback-proven many
-  times incl. L1/L2 layers); their "silently discarded" 5-byte write likely lacked
-  the layer prefix. Both forms coexist; oversized single frames wedge the parser
-  (their 41B/241B wedge) — keep single-entry or correct chunking.
+- **Full-map 100e form — DEAD on FW 0.3.41.0** (live-tested 2026-09-19,
+  `toolkit/naya-led-batch-spike.py`): three natural framings — params =
+  `[layer]+entries`, `[00,layer]+entries`, `[part,layer]+entries` (20-entry
+  chunks, 7 frames, ≤82B params) — ALL parse-ACK per chunk yet apply NOTHING
+  (30/100d readback byte-identical to original every time; probe = 2-entry
+  swap, restore verified). Curiosity for future RE: the `[layer]` framing
+  ACKs counters (`14 01, 14 14, 19 28, 19 3c, 19 50, 19 64, 19 78` — byte1
+  tracks a lagging cumulative entry position 1,20,40,…,120), i.e. the device
+  RECEIVES and counts the stream but never commits it; `[00,layer]`-prefixed
+  chunks ACK clean `00 00` because the first 6 bytes parse as a valid
+  single-entry write and the rest is ignored. Single 545B-frame form NOT
+  tested — oversized frames are the known parser-wedge trigger (41B/241B).
+  **Per-key single-entry `[00,layer,KK,H_lo,H_hi,S]` remains the only proven
+  LED write path** (the community "full-map" claim doesn't hold on this FW).
 - **ACK proves parse, not apply** (both learned independently).
 - **Write ACK echoes the layer** (live-proven 2026-09-17, `toolkit/naya-restore.py`
   + web `isWriteAck`): 30/1004 ACK payload = `00 00` on L0, `00 01` on L1,
