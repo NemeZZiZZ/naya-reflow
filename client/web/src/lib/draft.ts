@@ -111,7 +111,7 @@ export class Draft {
     this.ops = [];
   }
 
-  has(kind: Op['kind'], layer: number, kk: number): boolean {
+  has(kind: 'key' | 'led' | 'keyset', layer: number, kk: number): boolean {
     return this.ops.some(
       (o) =>
         o.kind === kind &&

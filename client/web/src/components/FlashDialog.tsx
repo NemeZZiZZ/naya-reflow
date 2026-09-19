@@ -26,6 +26,7 @@ import {
   SECTIONS,
   SECTION_LABELS,
   type Draft,
+  type Op,
 } from '../lib/draft';
 import { X } from 'lucide-react';
 import type { FlashState } from '../hooks/useFlash';
@@ -50,12 +51,18 @@ export default function FlashDialog({
   const [running, setRunning] = useState(false);
   const st = draft.stats();
 
-  const groups = SECTIONS.map((s) => ({
-    section: s,
-    rows: draft.ops
-      .map((o, i) => ({ o, i }))
-      .filter(({ o }) => opSection(o) === s),
-  })).filter((g) => g.rows.length > 0);
+  // Single pass over the ops, section order fixed by SECTIONS.
+  const groups = (() => {
+    const by: Record<string, { o: Op; i: number }[]> = {};
+    for (let i = 0; i < draft.ops.length; i++) {
+      const o = draft.ops[i];
+      const s = opSection(o);
+      (by[s] ??= []).push({ o, i });
+    }
+    return SECTIONS.map((section) => ({ section, rows: by[section] ?? [] })).filter(
+      (g) => g.rows.length > 0,
+    );
+  })();
 
   async function confirm() {
     if (running) return; // double-dispatched clicks must not start two runs
@@ -97,7 +104,7 @@ export default function FlashDialog({
         <div className="text-sm text-muted-foreground">
           {st.ops} ops · {st.frames} frames · {st.bytes} bytes
         </div>
-        <div className="max-h-64 overflow-y-auto rounded-md border border-border divide-y divide-border">
+        <div className="max-h-64 overflow-y-auto rounded-md border border-border">
           {draft.ops.length === 0 && (
             <div className="p-3 text-sm text-muted-foreground">
               Queue is empty.

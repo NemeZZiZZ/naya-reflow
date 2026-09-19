@@ -1,4 +1,4 @@
-// Keyboard view card: view/layer tabs + refresh/save/LED-toggle header,
+// Keyboard view card: view/layer tabs + refresh/LED-toggle header,
 // the fit-scaled keyboard, and the usage hint.
 import { RefreshCw } from "lucide-react";
 import Keyboard from "./Keyboard";
@@ -8,7 +8,6 @@ import { Button } from "./ui/button";
 import { Card, CardContent, CardHeader } from "./ui/card";
 import { Checkbox } from "./ui/checkbox";
 import { Label } from "./ui/label";
-import type { ReactNode } from "react";
 
 export default function KeyboardCard({
   view,
@@ -17,7 +16,6 @@ export default function KeyboardCard({
   onLayer,
   leftOn,
   onDump,
-  saveMenu,
   ledMode,
   onLedMode,
   kbBoxRef,
@@ -35,7 +33,6 @@ export default function KeyboardCard({
   onLayer: (l: number) => void;
   leftOn: boolean;
   onDump: () => void;
-  saveMenu: ReactNode;
   ledMode: boolean;
   onLedMode: (v: boolean) => void;
   kbBoxRef: React.RefObject<HTMLDivElement | null>;
@@ -60,7 +57,6 @@ export default function KeyboardCard({
           >
             <RefreshCw /> Refresh
           </Button>
-          {saveMenu}
           <Checkbox
             id="ledmode"
             checked={ledMode}

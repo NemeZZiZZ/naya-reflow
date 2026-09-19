@@ -280,8 +280,8 @@ export default function App() {
     setColorDlg(false);
   }
 
-  // saveMenu JSX is shared by the header tabs and the bindings-tab cards —
-  // keep it free of the hidden file input: a second copy would steal the ref
+  // saveMenu JSX lives in the header tabs only (single Save location) — keep
+  // it free of the hidden file input: a second copy would steal the ref
   // and React nulls it when that copy unmounts on tab switch. The input is
   // mounted once below, beside the dialogs.
   const saveMenu = (
@@ -333,7 +333,6 @@ export default function App() {
               onLayer={setLayer}
               leftOn={leftOn}
               onDump={() => void dump()}
-              saveMenu={saveMenu}
               ledMode={ledMode}
               onLedMode={setLedMode}
               kbBoxRef={kbBoxRef}

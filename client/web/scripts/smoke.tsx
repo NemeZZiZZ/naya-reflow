@@ -510,6 +510,22 @@ eq(timeoutsMs(new Uint8Array([1, 2, 3])), null, 'timeoutsMs rejects short');
   const keysLive = [[{ kk: 0x30, rec: prim }, { kk: 0x82, rec: shad }]] as unknown as KeyRec[][];
   eq(d2.reconcile(keysLive, [[]]), 1, 'reconcile drops satisfied keyset');
   eq(d2.size, 0, 'queue empty after keyset reconcile');
+  // settings/module opSummary + opKey + stats branches (deferred 1.1 coverage)
+  const ds = new Draft();
+  ds.add({ kind: 'settings', path: 'ed/1011', payload: new Uint8Array([0, 1]), label: 'Breathe L0' });
+  eq(opSummary(ds.ops[0]), 'ed/1011 → Breathe L0', 'settings opSummary');
+  ds.add({ kind: 'module', layer: 1, slot: 0, payload: new Uint8Array([0, 1, 1, 0x32]), label: 'Tap → A' });
+  eq(opKey(ds.ops[1]), 'module:1:0:00 01 01 32', 'module opKey format');
+  eq(opSummary(ds.ops[1]), 'L1 slot 0 → Tap → A', 'module opSummary');
+  const sst = ds.stats();
+  eq(sst.ops === 2 && sst.frames === 2 && sst.bytes === (10 + 2) + (10 + 2 + 4) ? 'ok' : 'bad',
+    'ok', 'stats settings+module branches');
+  // has() narrowed to key|led|keyset kinds
+  const dh = new Draft();
+  dh.add({ kind: 'key', layer: 0, kk: 0x1e, record: new Uint8Array(7), label: 'Q' });
+  eq(dh.has('key', 0, 0x1e), true, 'has finds queued key');
+  eq(dh.has('led', 0, 0x1e), false, 'has misses other kind');
+  eq(dh.has('keyset', 0, 0x1e), false, 'has misses other op shape');
 }
 // 20. T10/T03 behavior-set records
 {

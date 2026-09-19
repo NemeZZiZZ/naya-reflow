@@ -11,7 +11,6 @@ import { describeRecord, ledCss, toHex } from "../lib/naya";
 import type { KeyRec, LedRec } from "../lib/naya";
 import { hex2 } from "../lib/utils";
 import type { SelKey } from "../lib/queue";
-import type { ReactNode } from "react";
 
 const TH =
   "text-left px-2 py-1 text-muted-foreground font-semibold border-b border-border";
@@ -32,7 +31,6 @@ export default function LayoutTable({
   onLayer,
   leftOn,
   onDump,
-  saveMenu,
   showRaw,
   onShowRaw,
   dumpStat,
@@ -48,7 +46,6 @@ export default function LayoutTable({
   onLayer: (l: number) => void;
   leftOn: boolean;
   onDump: () => void;
-  saveMenu: ReactNode;
   showRaw: boolean;
   onShowRaw: (v: boolean) => void;
   dumpStat: string;
@@ -74,7 +71,6 @@ export default function LayoutTable({
           >
             <RefreshCw /> Refresh
           </Button>
-          {saveMenu}
           <Checkbox
             id="rawvals"
             checked={showRaw}

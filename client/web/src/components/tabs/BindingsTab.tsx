@@ -2,7 +2,7 @@
 // layout views plus the selection panel. Phase 2 adds the 4-slot behavior
 // editor (right column, single-key selection): editing any behavior rewrites
 // the whole T10/T03 set via a keyset op.
-import { useState, type ReactNode, type RefObject } from "react";
+import { useState, type RefObject } from "react";
 import { toast } from "sonner";
 import KeyboardCard from "../KeyboardCard";
 import LayoutTable, { type MergedRow } from "../LayoutTable";
@@ -31,7 +31,6 @@ export default function BindingsTab({
   onLayer,
   leftOn,
   onDump,
-  saveMenu,
   ledMode,
   onLedMode,
   kbBoxRef,
@@ -72,7 +71,6 @@ export default function BindingsTab({
   onLayer: (l: number) => void;
   leftOn: boolean;
   onDump: () => void;
-  saveMenu: ReactNode;
   ledMode: boolean;
   onLedMode: (v: boolean) => void;
   kbBoxRef: RefObject<HTMLDivElement | null>;
@@ -237,7 +235,6 @@ export default function BindingsTab({
               onLayer={handleLayer}
               leftOn={leftOn}
               onDump={onDump}
-              saveMenu={saveMenu}
               ledMode={ledMode}
               onLedMode={onLedMode}
               kbBoxRef={kbBoxRef}
@@ -262,7 +259,6 @@ export default function BindingsTab({
           onLayer={handleLayer}
           leftOn={leftOn}
           onDump={onDump}
-          saveMenu={saveMenu}
           showRaw={showRaw}
           onShowRaw={onShowRaw}
           dumpStat={dumpStat}

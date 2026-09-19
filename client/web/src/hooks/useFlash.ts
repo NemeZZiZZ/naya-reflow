@@ -48,7 +48,14 @@ export function useFlash({
   const runFlashQueue = useCallback(async (): Promise<FlashResult> => {
     const ses = sesRef.current.get('left') ?? null;
     const d = draftRef.current;
-    if (!ses || d.size === 0) return 'fail';
+    if (!ses) {
+      const msg = 'left half not connected';
+      toast.error('Flash failed', { description: msg });
+      log('err', `flash queue: ${msg}`);
+      setFlashState({ phase: 'fail', done: 0, total: d.size, message: msg });
+      return 'fail';
+    }
+    if (d.size === 0) return 'fail';
     busyRef.current = true;
     setFlashing(true);
     setFlashState({ phase: 'running', done: 0, total: d.size, message: null });
@@ -108,11 +115,14 @@ export function useFlash({
       // back with spliced parts ("truncated"). Let it settle first.
       await sleep(600);
       const fresh = await dumpAll(ses);
-      let dropped = 0;
       if (fresh) {
-        dropped = d.reconcile(fresh.keys, fresh.leds);
+        d.reconcile(fresh.keys, fresh.leds);
         bumpDraft();
       }
+      // Confirmed = ops no longer queued: reconcile-dropped key/led ops plus
+      // ACK-self-removed settings/module ops. (dropped alone undercounts when
+      // the queue held self-removing ops alongside.)
+      const confirmed = total - d.size;
       if (fresh && d.size === 0) {
         toast.success('Flash complete', {
           description: `${total} change(s) verified on device`,
@@ -122,12 +132,12 @@ export function useFlash({
         return 'ok';
       } else {
         toast.error('Flash partially verified', {
-          description: `${dropped}/${total} confirmed — ${d.size} still queued`,
+          description: `${confirmed}/${total} confirmed — ${d.size} still queued`,
         });
         log('err', `flash queue: ${d.size} op(s) not reflected`);
         setFlashState({
-          phase: 'partial', done: dropped, total,
-          message: `${dropped}/${total} confirmed — ${d.size} still queued`,
+          phase: 'partial', done: confirmed, total,
+          message: `${confirmed}/${total} confirmed — ${d.size} still queued`,
         });
         return 'partial';
       }
@@ -136,6 +146,7 @@ export function useFlash({
       console.debug((e as Error).stack);
       toast.error('Flash failed', { description: msg });
       log('err', `flash queue: ${msg}`);
+      bumpDraft(); // settings/module ops may have self-removed before the throw
       setFlashState({
         phase: 'fail', done, total,
         message: `${msg} — ${done}/${total} written before the error`,
