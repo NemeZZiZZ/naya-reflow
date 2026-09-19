@@ -58,6 +58,7 @@ export default function FlashDialog({
   })).filter((g) => g.rows.length > 0);
 
   async function confirm() {
+    if (running) return; // double-dispatched clicks must not start two runs
     setRunning(true);
     try {
       const res = await onFlash();

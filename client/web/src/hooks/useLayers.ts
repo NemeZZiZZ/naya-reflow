@@ -3,7 +3,7 @@
  * traffic. Owns the dumpAll() full-read core. */
 
 import { useCallback, useState } from 'react';
-import { parseLayer, parseLedmap } from '../lib/naya';
+import { parseLayer, parseLedmap, sleep } from '../lib/naya';
 import type { KeyRec, LedRec, NayaSession } from '../lib/naya';
 import type { LogFn } from './useLog';
 
@@ -56,6 +56,14 @@ export function useLayers({
             const p = parseLayer(blob);
             if (p.consumed !== p.total)
               throw new Error(`keymap ${L} truncated (${p.consumed}/${p.total}B)`);
+            // Resume-tail tripwire: an aborted multipart read can later be
+            // answered with the pending tail of the SAME stream — internally
+            // consistent (consumed==total) but only a slice of the layer.
+            // Healthy layers always carry 156 records (74 keys + tail slots).
+            if (p.recs.length !== 156)
+              throw new Error(
+                `keymap ${L} bad shape (${p.recs.length} records, want 156)`,
+              );
             return p;
           };
           const readLedLayer = async () => {
@@ -65,13 +73,34 @@ export function useLayers({
               throw new Error(`ledmap ${L} bad size (${lp.total}B, want 544)`);
             return lp;
           };
-          const withRetry = async <T,>(what: string, op: () => Promise<T>): Promise<T> => {
-            try {
-              return await op();
-            } catch (e) {
-              log('inf', `${what}: ${(e as Error).message}, re-reading once`);
-              return await op();
+          const withRetry = async <T,>(
+            what: string,
+            op: () => Promise<T>,
+          ): Promise<T> => {
+            let lastErr: unknown;
+            for (let attempt = 1; attempt <= 3; attempt++) {
+              try {
+                return await op();
+              } catch (e) {
+                lastErr = e;
+                if (attempt < 3) {
+                  // The device's multipart cursor can wedge after a burst of
+                  // writes (parts served out of order). Settle, re-handshake
+                  // to reset its reader state, then re-read from part 0.
+                  log(
+                    'inf',
+                    `${what}: ${(e as Error).message}, settle + re-handshake, retry ${attempt}/2`,
+                  );
+                  await sleep(700);
+                  try {
+                    await ses.handshake();
+                  } catch {
+                    /* best effort reset */
+                  }
+                }
+              }
             }
+            throw lastErr;
           };
           const p = await withRetry(`layer ${L}`, readKeyLayer);
           const { recs, consumed, total } = p;

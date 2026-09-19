@@ -2,11 +2,11 @@
  * every op in order, then a full re-dump (which reconciles the queue).
  * No fe/100a commit — writes apply instantly and persist. */
 
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { opSummary } from '../lib/draft';
 import type { Draft } from '../lib/draft';
-import { concat, isWriteAck, toHex } from '../lib/naya';
+import { concat, isWriteAck, sleep, toHex } from '../lib/naya';
 import type { NayaSession, Side } from '../lib/naya';
 import { parseCmdPath } from '../lib/settings';
 import type { LayerDump } from './useLayers';
@@ -39,8 +39,13 @@ export function useFlash({
 }) {
   const [flashing, setFlashing] = useState(false);
   const [flashState, setFlashState] = useState<FlashState>(IDLE);
+  // Double-dispatch guard: a confirm click can reach us twice (automation
+  // double-events, radix re-dispatch) — two concurrent write loops interleave
+  // their multipart reads on the same port and wedge the stream. Second and
+  // later callers await the SAME in-flight promise.
+  const inFlight = useRef<Promise<FlashResult> | null>(null);
 
-  const doFlashQueue = useCallback(async (): Promise<FlashResult> => {
+  const runFlashQueue = useCallback(async (): Promise<FlashResult> => {
     const ses = sesRef.current.get('left') ?? null;
     const d = draftRef.current;
     if (!ses || d.size === 0) return 'fail';
@@ -98,6 +103,10 @@ export function useFlash({
       }
       bumpDraft(); // settings ops removed themselves above
       log('inf', `flash queue: ${done}/${total} written, re-reading…`);
+      // ED writes (animations) spin the LED engine up and the device drops
+      // or reorders multipart replies right after — immediate re-dumps came
+      // back with spliced parts ("truncated"). Let it settle first.
+      await sleep(600);
       const fresh = await dumpAll(ses);
       let dropped = 0;
       if (fresh) {
@@ -137,6 +146,15 @@ export function useFlash({
       setFlashing(false);
     }
   }, [sesRef, busyRef, draftRef, dumpAll, bumpDraft, log]);
+
+  const doFlashQueue = useCallback((): Promise<FlashResult> => {
+    if (inFlight.current) return inFlight.current;
+    const p = runFlashQueue().finally(() => {
+      if (inFlight.current === p) inFlight.current = null;
+    });
+    inFlight.current = p;
+    return p;
+  }, [runFlashQueue]);
 
   return { flashing, flashState, doFlashQueue };
 }

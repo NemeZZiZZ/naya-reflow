@@ -225,6 +225,11 @@ export async function roundtrip(
   req: Uint8Array,
   tries: number,
   onFrame?: FrameHandler | null,
+  // Extra acceptance check for multipart reads: all part replies share the
+  // same t/c0/c1, so a late/duplicate reply to an EARLIER part request would
+  // match the triple and splice a wrong segment into the blob ("truncated"
+  // parse). The matcher rejects stale candidates; roundtrip keeps reading.
+  match?: (f: Frame) => boolean,
 ): Promise<Frame> {
   const wantT = req[4];
   const wantC0 = req[6];
@@ -239,7 +244,13 @@ export async function roundtrip(
       continue;
     }
     if (onFrame) onFrame('<', f.raw);
-    if (f.type === wantT && f.c0 === wantC0 && f.c1 === wantC1) return f;
+    if (
+      f.type === wantT &&
+      f.c0 === wantC0 &&
+      f.c1 === wantC1 &&
+      (!match || match(f))
+    )
+      return f;
   }
   throw new Error(
     'sync lost waiting cmd ' +
@@ -260,6 +271,33 @@ export class BusySkipError extends Error {
   }
 }
 
+// Multipart staleness defense (per read call): replies to 30/1003, 30/100d
+// and 30/100b all share one t/c0/c1, so a late or retransmitted reply to a
+// PREVIOUS part request passes the triple check. Two structural guards:
+//  - payload[1] must echo the requested layer (cross-layer staleness);
+//  - a byte-identical raw frame can be accepted only once per read
+//    (duplicate retransmits; legit parts never repeat because the leading
+//    KK/slot byte advances with the data offset).
+//
+// LIVE-PROVEN QUIRK (2026-09-19): the device keeps a per-command multipart
+// CURSOR that survives both our aborts AND a 30/1001 re-handshake. If a read
+// dies mid-stream, the next read of the same family resumes the OLD stream:
+// the device serves the pending tail (often a single MORE=0 frame) which
+// parses as a consistent-but-truncated layer (observed: L0 tail 531B/105
+// records accepted as "full"). So every aborted multipart read marks the
+// family dirty, and the next read first DRAINS the pending stream to
+// MORE=0 (content discarded) before starting fresh.
+export function partMatcher(layer: number): (f: Frame) => boolean {
+  const seen = new Set<string>();
+  return (f: Frame) => {
+    if (f.payload.length < 2 || f.payload[1] !== layer) return false;
+    const key = toHex(f.raw);
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  };
+}
+
 export class NayaSession {
   port: SerialPort;
   dst: number;
@@ -268,6 +306,56 @@ export class NayaSession {
   reader: ReadableStreamDefaultReader<Uint8Array>;
   writeFn: WriteFn;
   onFrame: FrameHandler | null;
+  // c1 of a multipart family (0x03 keymap / 0x0d ledmap / 0x0b modules)
+  // whose stream the device may still hold open; see partMatcher comment.
+  streamDirtyC1: number | null = null;
+
+  // Consume any pending multipart stream of family c1 to its MORE=0 tail.
+  // Best-effort: a sulking device just times out and we move on (the retry
+  // ladder's sleep + re-handshake remains the backstop). Content discarded.
+  private async drainStream(c1: number): Promise<void> {
+    for (let part = 0; part < 16; part++) {
+      let f: Frame;
+      try {
+        f = await this.cmd(0x30, 0x10, c1, new Uint8Array([part, 0]));
+      } catch {
+        return;
+      }
+      if (f.payload.length < 1 || f.payload[0] === 0) return;
+    }
+  }
+
+  // Shared multipart loop: drain a dirty family, run the part loop with the
+  // staleness matcher, and mark the family dirty again if we abort midway.
+  private async readMultipart(c1: number, layer: number): Promise<Uint8Array> {
+    if (this.streamDirtyC1 === c1) {
+      await this.drainStream(c1);
+      this.streamDirtyC1 = null;
+    }
+    const parts: Uint8Array[] = [];
+    const match = partMatcher(layer);
+    let part = 0;
+    try {
+      for (;;) {
+        const f = await this.cmd(
+          0x30,
+          0x10,
+          c1,
+          new Uint8Array([part, layer]),
+          undefined,
+          match,
+        );
+        parts.push(f.payload.slice(2));
+        if (f.payload[0] === 0) break;
+        if (++part >= 16) throw new Error('runaway parts');
+      }
+    } catch (e) {
+      this.streamDirtyC1 = c1;
+      throw e;
+    }
+    this.streamDirtyC1 = null;
+    return concat(parts);
+  }
 
   constructor(
     port: SerialPort,
@@ -361,7 +449,7 @@ export class NayaSession {
     await fr.drain();
     try {
       await ses.wake();
-    } catch (e) {
+    } catch {
       // The picked port may be the other half (picker ports are
       // indistinguishable): knock on the alternate address once.
       // Halves ignore misaddressed frames (right ignores 0x50).
@@ -410,6 +498,7 @@ export class NayaSession {
     c1: number,
     params: Uint8Array,
     busyGuard?: { current: boolean },
+    match?: (f: Frame) => boolean,
   ): Promise<Frame> {
     const prev = this.tail;
     let release!: () => void;
@@ -432,6 +521,7 @@ export class NayaSession {
         buildFrame(this.dst, type, c0, c1, params),
         6,
         this.onFrame,
+        match,
       );
     } finally {
       release();
@@ -444,15 +534,7 @@ export class NayaSession {
 
   async readLayer(layer: number): Promise<Uint8Array> {
     // Multipart: response payload = [MORE, LAYER, DATA...], loop until MORE=0.
-    const parts: Uint8Array[] = [];
-    let part = 0;
-    for (;;) {
-      const f = await this.cmd(0x30, 0x10, 0x03, new Uint8Array([part, layer]));
-      parts.push(f.payload.slice(2));
-      if (f.payload[0] === 0) break;
-      if (++part >= 16) throw new Error('runaway parts');
-    }
-    return concat(parts);
+    return this.readMultipart(0x03, layer);
   }
 
   async writeKey(record: Uint8Array | number[], layer = 0): Promise<Uint8Array> {
@@ -474,15 +556,7 @@ export class NayaSession {
   async readLedmap(layer: number): Promise<Uint8Array> {    // 30/100d LED MAP: same [part,layer] params + multipart shape as the
     // keymap (payload = [MORE, LAYER, DATA...]). 544B/layer =
     // 136 x [KK, Hue_lo, Hue_hi, Sat], KK 0x00..0x87. Per-layer container.
-    const parts: Uint8Array[] = [];
-    let part = 0;
-    for (;;) {
-      const f = await this.cmd(0x30, 0x10, 0x0d, new Uint8Array([part, layer]));
-      parts.push(f.payload.slice(2));
-      if (f.payload[0] === 0) break;
-      if (++part >= 16) throw new Error('runaway parts');
-    }
-    return concat(parts);
+    return this.readMultipart(0x0d, layer);
   }
 
   async writeLed(kk: number, h: number, s: number, layer = 0): Promise<Uint8Array> {
@@ -504,15 +578,7 @@ export class NayaSession {
   async readModuleConfig(layer: number): Promise<Uint8Array> {
     // 30/100b MODULE CONFIG DATA: same [part,layer] multipart shape.
     // 40 slots/layer, records [SLOT, FAMILY, LEN, payload].
-    const parts: Uint8Array[] = [];
-    let part = 0;
-    for (;;) {
-      const f = await this.cmd(0x30, 0x10, 0x0b, new Uint8Array([part, layer]));
-      parts.push(f.payload.slice(2));
-      if (f.payload[0] === 0) break;
-      if (++part >= 16) throw new Error('runaway parts');
-    }
-    return concat(parts);
+    return this.readMultipart(0x0b, layer);
   }
 
   async getTimeouts(): Promise<Uint8Array> {

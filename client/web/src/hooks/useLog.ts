@@ -32,6 +32,9 @@ export function useLog() {
     const id = ++logId.current;
     const cat: LogEntry['cat'] =
       cls === 'tx' || cls === 'rx' ? 'cdc' : cls === 'err' ? 'err' : 'info';
+    // Console mirror: the in-app panel is behind a toggle; devtools (and
+    // automation) should always see the stream.
+    console.log(`[naya:${cat}] ${msg}`);
     setLogs((prev) => {
       const next = [...prev, { id, cls, cat, msg, t: stamp() }];
       return next.length > 400 ? next.slice(next.length - 400) : next;

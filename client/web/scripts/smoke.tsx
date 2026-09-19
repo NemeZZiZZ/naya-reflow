@@ -752,4 +752,32 @@ function hexBytes(h: string): Uint8Array {
   eq(r.queued, false, 'length change rejected');
   eq(d.size, 2, 'rejections queue nothing');
 }
+// 25. partMatcher — multipart staleness defense: all part replies share the
+// t/c0/c1 triple, so stale/duplicate frames from earlier part requests must
+// be rejected (layer echo + once-per-raw) instead of splicing a seam into
+// the assembled blob ("truncated" re-dump bug after ED writes).
+import { partMatcher } from '../src/lib/naya';
+import type { Frame } from '../src/lib/naya';
+{
+  const mk = (layer: number, data: number[]): Frame => ({
+    src: 0,
+    dst: 0x50,
+    id: 0,
+    type: 0x30,
+    c0: 0x10,
+    c1: 0x03,
+    payload: Uint8Array.from([1, layer, ...data]),
+    raw: buildFrame(0x50, 0x30, 0x10, 0x03, Uint8Array.from([1, layer, ...data])),
+  });
+  const match = partMatcher(0);
+  eq(match(mk(0, [0xaa])), true, 'fresh L0 part accepted');
+  eq(match(mk(1, [0xaa])), false, 'wrong layer echo rejected');
+  eq(match(mk(0, [0xaa])), false, 'byte-identical duplicate rejected');
+  eq(match(mk(0, [0xbb])), true, 'different-raw L0 part accepted');
+  eq(
+    match({ ...mk(0, [0xcc]), payload: Uint8Array.from([1]) }),
+    false,
+    'short payload rejected',
+  );
+}
 void main();
