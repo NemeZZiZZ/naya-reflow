@@ -134,6 +134,14 @@ export default function App() {
   async function dump() {
     const ses = sesRef.current.get("left");
     if (!ses) return;
+    // Guard: dumpAll sets busyRef but doesn't re-check it — a second entry
+    // (double-clicked Refresh, Refresh during Flash) interleaves two multipart
+    // read loops through the cmd mutex and desyncs both. Pollers already
+    // yield; user-triggered dumps must too.
+    if (busyRef.current) {
+      log("inf", "dump: device busy (flash or dump in flight), ignored");
+      return;
+    }
     const fresh = await layers.dumpAll(ses);
     // Fresh device state may satisfy queued ops (e.g. after NayaFlow edits or
     // a successful flash) — drop those from the queue.
