@@ -11,6 +11,15 @@ import importlib.util
 import os
 import sys
 
+# cdc-client imports pyserial at module top, but the spike pure-logic paths
+# never touch it — stub the module when absent so system python3 (no pyserial)
+# can still run these tests. Device I/O always needs the real dependency.
+try:
+    import serial  # noqa: F401
+except ImportError:
+    import types
+    sys.modules["serial"] = types.ModuleType("serial")
+
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
@@ -95,12 +104,34 @@ eq(mblob[:off_v] + modspike.build_swap_record(new_rec, victim)
    + mblob[off_v + len(victim):], mblob,
    "restore write reproduces the original blob byte-for-byte")
 eq(modspike.build_write_params(0x00, new_rec).hex(" "),
-   "00 00 00 01 04 2b 00 07 00", "write params [00, SLOT] + record")
+    "00 00 00 01 04 2b 00 07 00", "write params [00, LAYER] + record")
 eq(modspike.parse_slots(bytes.fromhex("00 00 00 01 00 00")),
    [(0, bytes.fromhex("00 00 00")), (3, bytes.fromhex("01 00 00"))],
    "parse all-zero L0-style blob")
 eq(modspike.find_swap_pair(modspike.parse_slots(bytes.fromhex("00 00 00"))),
    None, "no swap pair in zero-only blob")
+# keep-searching: first shape group has identical payloads (no pair), the pair
+# hides in a later group — exercises the cross-group scan, not just first-hit
+ks_blob = bytes.fromhex(
+    "00 01 04 29 00 07 00"  # slot 0: 7B action 0x29
+    " 01 01 04 29 00 07 00"  # slot 1: same 7B shape AND payload → no pair here
+    " 02 01 01 0a"  # slot 2: 4B
+    " 03 01 01 14")  # slot 3: same 4B shape, action differs → pair
+(ks_v, ks_d) = modspike.find_swap_pair(modspike.parse_slots(ks_blob))
+eq((ks_v[0], ks_d[0]), (14, 18), "keep-searching finds the later-group pair")
+# describe() decoders for every branch
+eq(modspike.describe(bytes.fromhex("00 01 04 29 00 07 00")),
+   "family=0x01 action-HID=0x29 color?=0x00 gesture?=MOUSE_HORIZONTAL",
+   "describe 7B family-01")
+eq(modspike.describe(bytes.fromhex("00 01 01 0a")),
+   "family=0x01 byte3=0x0a gesture?=MOUSE_HORIZONTAL",
+   "describe 4B family-01")
+eq(modspike.describe(bytes.fromhex("09 0f 08 01 00 00 00 ff ff ff ff")),
+   "family=0x0f action-u32=0x00000001 color-u32=0xffffffff",
+   "describe 11B family-0f (slot 9: no gesture guess)")
+eq(modspike.describe(bytes.fromhex("00 02 02 aa bb")),
+   "family=0x02 payload=aa bb gesture?=MOUSE_HORIZONTAL",
+   "describe fallback branch")
 
 # 23. Task 3.0 effect-spike payload forms (ed/1011 candidates + restore)
 eq(fxspike.EFFECTS, {"SOLID": 0, "BREATHE": 1, "SWIRL": 2, "SPECTRUM": 3},
