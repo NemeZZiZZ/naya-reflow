@@ -47,8 +47,34 @@ export function useLayers({
         let nKeys = 0;
         let nLeds = 0;
         for (const L of [0, 1, 2]) {
-          const blob = await ses.readLayer(L);
-          const { recs, consumed, total } = parseLayer(blob);
+          // Multipart reads can desync on a lost frame (parts share the same
+          // cmd id): a short blob ends mid-record. parseLayer's invariant is
+          // consumed === total, parseLedmap's is a fixed 544B/layer. Anything
+          // else → one full re-read of that layer.
+          const readKeyLayer = async () => {
+            const blob = await ses.readLayer(L);
+            const p = parseLayer(blob);
+            if (p.consumed !== p.total)
+              throw new Error(`keymap ${L} truncated (${p.consumed}/${p.total}B)`);
+            return p;
+          };
+          const readLedLayer = async () => {
+            const lblob = await ses.readLedmap(L);
+            const lp = parseLedmap(lblob);
+            if (lp.total !== 544 || lp.total % 4 !== 0)
+              throw new Error(`ledmap ${L} bad size (${lp.total}B, want 544)`);
+            return lp;
+          };
+          const withRetry = async <T,>(what: string, op: () => Promise<T>): Promise<T> => {
+            try {
+              return await op();
+            } catch (e) {
+              log('inf', `${what}: ${(e as Error).message}, re-reading once`);
+              return await op();
+            }
+          };
+          const p = await withRetry(`layer ${L}`, readKeyLayer);
+          const { recs, consumed, total } = p;
           keys[L] = recs;
           keyTotals[L] = total;
           nKeys += recs.length;
@@ -56,8 +82,7 @@ export function useLayers({
             'inf',
             `layer ${L}: ${total}B, ${recs.length} records (${consumed}/${total})`,
           );
-          const lblob = await ses.readLedmap(L);
-          const lparsed = parseLedmap(lblob);
+          const lparsed = await withRetry(`ledmap ${L}`, readLedLayer);
           leds[L] = lparsed.recs;
           ledTotals[L] = lparsed.total;
           nLeds += lparsed.recs.length;

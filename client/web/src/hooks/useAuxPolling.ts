@@ -56,7 +56,7 @@ export function useAuxPolling({
             const saved = ses.onFrame;
             ses.onFrame = null;
             try {
-              const aux = await readAux(ses, side);
+              const aux = await readAux(ses, side, busyRef);
               setHalves((prev) =>
                 prev[side].connected
                   ? { ...prev, [side]: { ...prev[side], ...aux } }
@@ -65,6 +65,7 @@ export function useAuxPolling({
               const ch = noteModule(side, aux.modPresent, aux.modType);
               if (ch) log('inf', 'module event: ' + ch);
             } catch (e) {
+              if ((e as Error).name === 'BusySkipError') return; // user op started mid-sweep
               // Quiet on success path, but a failed poll must be visible:
               // otherwise the pills show stale data with no indication.
               log(
@@ -95,7 +96,13 @@ export function useAuxPolling({
           const saved = ses.onFrame;
           ses.onFrame = null;
           try {
-            const f = await ses.cmd(0xde, 0x10, 0x01, new Uint8Array([0]));
+            const f = await ses.cmd(
+              0xde,
+              0x10,
+              0x01,
+              new Uint8Array([0]),
+              busyRef,
+            );
             const m = modPresence(f.payload);
             if (!m) continue;
             const ch = noteModule(side, m.present, m.present ? m.type : 'none');

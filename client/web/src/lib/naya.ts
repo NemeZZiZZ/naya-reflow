@@ -250,6 +250,16 @@ export async function roundtrip(
   );
 }
 
+// Thrown by cmd() when a poller's busyGuard trips after the mutex is won:
+// a dump/flash started while this background request waited. Callers should
+// skip the tick silently — the next interval will retry.
+export class BusySkipError extends Error {
+  constructor() {
+    super('skipped: session busy');
+    this.name = 'BusySkipError';
+  }
+}
+
 export class NayaSession {
   port: SerialPort;
   dst: number;
@@ -394,13 +404,25 @@ export class NayaSession {
   // frames until the deadline ("sync lost"). Every cmd() runs atomically.
   private tail: Promise<void> = Promise.resolve();
 
-  async cmd(type: number, c0: number, c1: number, params: Uint8Array): Promise<Frame> {
+  async cmd(
+    type: number,
+    c0: number,
+    c1: number,
+    params: Uint8Array,
+    busyGuard?: { current: boolean },
+  ): Promise<Frame> {
     const prev = this.tail;
     let release!: () => void;
     this.tail = new Promise<void>((res) => {
       release = res;
     });
     await prev;
+    // Race closure for pollers: they check busyRef at interval-fire time, but
+    // a dump/flash can set it between that check and this cmd winning the
+    // mutex. Re-check after serialization: background traffic must never
+    // interleave with a multipart dump (parts share t/c0/c1 — one lost frame
+    // desyncs the whole assembly).
+    if (busyGuard?.current) throw new BusySkipError();
     try {
       this.fr.clear();
       await this.fr.drain(150, 600);
@@ -428,7 +450,7 @@ export class NayaSession {
       const f = await this.cmd(0x30, 0x10, 0x03, new Uint8Array([part, layer]));
       parts.push(f.payload.slice(2));
       if (f.payload[0] === 0) break;
-      if (++part >= 8) throw new Error('runaway parts');
+      if (++part >= 16) throw new Error('runaway parts');
     }
     return concat(parts);
   }
@@ -458,7 +480,7 @@ export class NayaSession {
       const f = await this.cmd(0x30, 0x10, 0x0d, new Uint8Array([part, layer]));
       parts.push(f.payload.slice(2));
       if (f.payload[0] === 0) break;
-      if (++part >= 8) throw new Error('runaway parts');
+      if (++part >= 16) throw new Error('runaway parts');
     }
     return concat(parts);
   }
@@ -488,7 +510,7 @@ export class NayaSession {
       const f = await this.cmd(0x30, 0x10, 0x0b, new Uint8Array([part, layer]));
       parts.push(f.payload.slice(2));
       if (f.payload[0] === 0) break;
-      if (++part >= 8) throw new Error('runaway parts');
+      if (++part >= 16) throw new Error('runaway parts');
     }
     return concat(parts);
   }

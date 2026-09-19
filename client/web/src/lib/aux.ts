@@ -59,6 +59,7 @@ export const emptyHalf = (side: Side): HalfSnapshot => ({
 export async function readAux(
   ses: NayaSession,
   side: Side,
+  busyGuard?: { current: boolean },
 ): Promise<Omit<HalfSnapshot, 'side' | 'connected'>> {
   const rows: [string, string][] = [];
   let fw = '—';
@@ -76,10 +77,11 @@ export async function readAux(
     fmt: (p: Uint8Array) => string,
   ): Promise<Uint8Array | null> => {
     try {
-      const f = await ses.cmd(t, c0, c1, new Uint8Array([0]));
+      const f = await ses.cmd(t, c0, c1, new Uint8Array([0]), busyGuard);
       rows.push([label, fmt(f.payload)]);
       return f.payload;
     } catch (e) {
+      if ((e as Error).name === 'BusySkipError') throw e; // not a device fault
       rows.push([label, 'NO REPLY (' + (e as Error).message + ')']);
       return null;
     }
