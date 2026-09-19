@@ -4,7 +4,7 @@
  * along each row so removeAt keeps working after grouping. Inspired by (and
  * deliberately simpler than) OpenFlow's dialog. */
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -49,6 +49,9 @@ export default function FlashDialog({
   state: FlashState;
 }) {
   const [running, setRunning] = useState(false);
+  // Synchronous guard: state updates are async, two clicks in the same tick
+  // must not both pass (double events / double-click).
+  const runningRef = useRef(false);
   const st = draft.stats();
 
   // Single pass over the ops, section order fixed by SECTIONS.
@@ -65,12 +68,14 @@ export default function FlashDialog({
   })();
 
   async function confirm() {
-    if (running) return; // double-dispatched clicks must not start two runs
+    if (runningRef.current) return; // double-dispatched clicks must not start two runs
+    runningRef.current = true;
     setRunning(true);
     try {
       const res = await onFlash();
       if (res === 'ok') onOpenChange(false); // keep open on partial/fail
     } finally {
+      runningRef.current = false;
       setRunning(false);
     }
   }
