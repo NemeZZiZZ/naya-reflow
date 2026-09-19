@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
-"""T10 full-set writer spike: prove the device accepts a 4-slot behavior
-write (primary + shadow + tail flag) via 30/1004 with readback verification.
+"""T10 full-set writer spike: prove the device accepts a full behavior-set
+write — 4 behavior slots (tap/hold/double/tap+hold) encoded as 3 records
+(27B primary + shadow + tail flag) — via 30/1004 with readback verification.
 
 Usage: naya-t10-spike.py [--port /dev/cu.usbmodemXXXX] [--apply] [--dump FILE]
 Dry-run by default: prints the plan, touches nothing.
