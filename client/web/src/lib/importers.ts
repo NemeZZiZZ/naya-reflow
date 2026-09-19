@@ -5,6 +5,7 @@
  * Caller diffs against the live caches and flashes via the normal queue. */
 
 import { describeRecord, parseLayer, parseLedmap } from './naya';
+import { fillerRecord, hasT10Shadow, SHADOW_OFF } from './t10';
 import type { Draft } from './draft';
 import type { KeyRec, LedRec } from './naya';
 
@@ -102,21 +103,20 @@ export function parseSnapshotFile(obj: unknown): SnapMaps | { error: string } {
 export interface DiffResult {
   keysQueued: number;
   ledsQueued: number;
-  /** records whose length changed — device ignores those writes */
-  skippedLen: number;
   /** snapshot entries with no live counterpart */
   skippedMissing: number;
 }
 
 /** Diff snapshot maps against the live caches; differing entries become
- * draft ops (latest-op-wins dedups against already-queued edits). */
+ * draft ops (latest-op-wins dedups against already-queued edits). Length
+ * changes queue too (S1-proven); a live T10 shadow downgrades via filler. */
 export function diffSnapshotToDraft(
   draft: Draft,
   snap: SnapMaps,
   liveKeys: KeyRec[][],
   liveLeds: LedRec[][],
 ): DiffResult {
-  const r: DiffResult = { keysQueued: 0, ledsQueued: 0, skippedLen: 0, skippedMissing: 0 };
+  const r: DiffResult = { keysQueued: 0, ledsQueued: 0, skippedMissing: 0 };
   for (const L of snap.layers) {
     const liveK = new Map((liveKeys[L] ?? []).map((x) => [x.kk, x]));
     for (const s of snap.keys[L] ?? []) {
@@ -125,24 +125,34 @@ export function diffSnapshotToDraft(
         r.skippedMissing++;
         continue;
       }
-      if (cur.rec.length !== s.rec.length) {
-        r.skippedLen++;
-        continue;
-      }
-      let same = true;
-      for (let i = 0; i < s.rec.length; i++)
-        if (cur.rec[i] !== s.rec[i]) {
-          same = false;
-          break;
-        }
+      let same = cur.rec.length === s.rec.length;
+      if (same)
+        for (let i = 0; i < s.rec.length; i++)
+          if (cur.rec[i] !== s.rec[i]) {
+            same = false;
+            break;
+          }
       if (!same) {
-        draft.add({
-          kind: 'key',
-          layer: L,
-          kk: s.kk,
-          record: s.rec,
-          label: describeRecord(s.rec),
-        });
+        const liveT10 =
+          (cur.rec[1] === 0x10 || hasT10Shadow(liveKeys[L], s.kk)) &&
+          s.rec[1] !== 0x10;
+        if (liveT10) {
+          draft.add({
+            kind: 'keyset',
+            layer: L,
+            kk: s.kk,
+            records: [s.rec, fillerRecord(s.kk + SHADOW_OFF)],
+            label: describeRecord(s.rec),
+          });
+        } else {
+          draft.add({
+            kind: 'key',
+            layer: L,
+            kk: s.kk,
+            record: s.rec,
+            label: describeRecord(s.rec),
+          });
+        }
         r.keysQueued++;
       }
     }

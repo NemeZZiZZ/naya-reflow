@@ -419,6 +419,12 @@ Full frames: `naya-archive/aux-left.txt`, `aux-right.txt`.
 - Writer constraint discovered: same-length record writes apply; length-changing
   (7B↔11B key records) appear ignored — probe3 Vs at 2e/2f survived a restore
   attempt. Keymap L0 = factory + F24@1e (stock) + probe3 Vs (2e BT_DEV1, 2f MOUSE_R).
+  **REFUTED 2026-09-18/19 (S1 + cascade tests): length-changing 30/1004 writes
+  apply in both directions** — T01 7B ↔ T10 set 27B+10B+tail readback-verified
+  both ways, and probe3 itself applied 7→11B (the "restore ignored" observation
+  was a host-side bug of the early client, not a device rule). Web-client
+  same-length skips removed 2026-09-19; the flash loop's re-dump reconcile is
+  the safety net (an ignored write would surface as Partial, not corruption).
 - Client: `left ledmap [layer|all]`.
 
 ### 30/100b per-layer table (dumps/left-100b-*.json, semantics TBD)

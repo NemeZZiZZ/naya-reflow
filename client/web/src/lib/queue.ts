@@ -17,8 +17,10 @@ export interface SelKey {
   kk: number;
 }
 
-/** Queue the picked action for every selected key. Same-length guard per
- * key uses that pair's own layer (the device ignores 7B↔11B changes). */
+/** Queue the picked action for every selected key. Length-changing writes
+ * apply (S1-proven 7B↔27B via 30/1004); picking a non-T10 action on a key
+ * that is T10 or still carries a T10 shadow at KK+0x52 downgrades via
+ * keyset + filler so the stale shadow can't keep reporting old slots. */
 export function queueAction(
   draft: Draft,
   sel: SelKey[],
@@ -30,11 +32,24 @@ export function queueAction(
   for (const { layer: l, kk } of sel) {
     const rec = buildRecord(kk, action.body());
     const cur = (keysByLayer[l] ?? []).find((r) => r.kk === kk);
-    if (!cur || cur.rec.length !== rec.length) {
+    if (!cur) {
       skipped++;
       continue;
     }
-    draft.add({ kind: 'key', layer: l, kk, record: rec, label: action.label });
+    if (
+      rec[1] !== 0x10 &&
+      (cur.rec[1] === 0x10 || hasT10Shadow(keysByLayer[l], kk))
+    ) {
+      draft.add({
+        kind: 'keyset',
+        layer: l,
+        kk,
+        records: [rec, fillerRecord(kk + SHADOW_OFF)],
+        label: action.label,
+      });
+    } else {
+      draft.add({ kind: 'key', layer: l, kk, record: rec, label: action.label });
+    }
     queued++;
   }
   return { queued, skipped };

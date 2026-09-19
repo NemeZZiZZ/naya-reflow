@@ -49,10 +49,13 @@ export type Op = KeyOp | LedOp | KeySetOp | SettingsOp | ModuleOp;
 export function opKey(o: Op): string {
   switch (o.kind) {
     case 'key':
-    case 'led':
-      return `${o.kind}:${o.layer}:${o.kk}`;
     case 'keyset':
-      return `keyset:${o.layer}:${o.kk}`;
+      // Shared key on purpose: a plain pick and a behavior-set edit on the
+      // same key replace each other (latest wins) instead of coexisting as
+      // two writes the reconcile could never both confirm.
+      return `key:${o.layer}:${o.kk}`;
+    case 'led':
+      return `led:${o.layer}:${o.kk}`;
     case 'settings':
       // Keyed by path + first payload byte (the ED target / 1011 layer):
       // per-layer anims coexist, same-knob values dedup. fe/100a byte 0 is

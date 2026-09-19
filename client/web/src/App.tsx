@@ -204,7 +204,6 @@ export default function App() {
       "inf",
       `import '${f.name}': layers [${snap.layers.join(",")}] → ` +
         `${r.keysQueued} key(s) + ${r.ledsQueued} LED(s) queued` +
-        (r.skippedLen > 0 ? `, ${r.skippedLen} skipped (length change — device ignores)` : "") +
         (r.skippedMissing > 0 ? `, ${r.skippedMissing} skipped (no live counterpart)` : ""),
     );
     if (r.keysQueued + r.ledsQueued > 0)
@@ -226,20 +225,14 @@ export default function App() {
 
   function queueActionForSelection() {
     if (!pickedAction) return;
-    const { queued, skipped } = queueAction(
+    const { queued } = queueAction(
       draftRef.current,
       sel,
       pickedAction,
       keysByLayer,
     );
     bumpDraft();
-    log(
-      "inf",
-      `queued action '${pickedAction.label}' for ${queued} key(s)` +
-        (skipped > 0
-          ? `, ${skipped} skipped (length change — device ignores)`
-          : ""),
-    );
+    log("inf", `queued action '${pickedAction.label}' for ${queued} key(s)`);
   }
 
   function queueBehaviorSetForKey(

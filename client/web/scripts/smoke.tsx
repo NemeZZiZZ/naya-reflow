@@ -450,7 +450,25 @@ eq(timeoutsMs(new Uint8Array([1, 2, 3])), null, 'timeoutsMs rejects short');
       keys: [[{ kk: 9, t: 1, rec: rec7, offset: 0 }], [], []],
       leds: snap4.leds, layers: [0],
     }, [[{ kk: 9, t: 1, rec: rec11, offset: 0 }], [], []], [[{ kk: 9, h: 10, s: 20, offset: 0 }], [], []]);
-    eq(r3.skippedLen, 1, 'length change skipped');
+    eq(r3.keysQueued === 1 && d3.size === 1 && d3.ops[0].kind === 'key' ? 'ok' : 'bad',
+       'ok', 'plain length change queues a key op (S1: writes apply)');
+    eq(d3.ops[0].kind === 'key' && toHex(d3.ops[0].record), toHex(rec7), 'queued record is the snapshot one');
+    // live T10 primary + shadow, snapshot plain → keyset downgrade with filler
+    const t10p = new Uint8Array(27); t10p[0] = 9; t10p[1] = 0x10; t10p[2] = 0x18;
+    const t10s = new Uint8Array(27); t10s[0] = 9 + 0x52; t10s[1] = 0x10; t10s[2] = 0x18;
+    const d3b = new Draft();
+    const r3b = diffSnapshotToDraft(d3b, {
+      keys: [[{ kk: 9, t: 0x10, rec: rec7, offset: 0 }], [], []],
+      leds: [[], [], []], layers: [0],
+    }, [[{ kk: 9, t: 0x10, rec: t10p, offset: 0 }, { kk: 9 + 0x52, t: 0x10, rec: t10s, offset: 0 }], [], []],
+       [[], [], []]);
+    eq(r3b.keysQueued === 1 && d3b.size === 1 && d3b.ops[0].kind === 'keyset' ? 'ok' : 'bad',
+       'ok', 'T10 live + plain snapshot downgrades via keyset');
+    if (d3b.ops[0].kind === 'keyset') {
+      eq(d3b.ops[0].records.length, 2, 'downgrade writes primary + shadow filler');
+      eq(toHex(d3b.ops[0].records[0]), toHex(rec7), 'primary is the snapshot record');
+      eq(toHex(d3b.ops[0].records[1]), '5b 00 00', 'filler clears the shadow slot');
+    }
     eq('error' in parseSnapshotFile({ tool: 'nope' }) ? 'err' : 'ok', 'err', 'unknown tool rejected');
   }
 }
@@ -472,7 +490,17 @@ eq(timeoutsMs(new Uint8Array([1, 2, 3])), null, 'timeoutsMs rejects short');
   d.add(ks);
   eq(opSection(ks), 'bindings', 'keyset → bindings section');
   eq(d.stats().frames, 1 + 2, 'keyset frames = 1 settings + 2 records');
-  eq(opKey(ks), 'keyset:0:48', 'keyset opKey');
+  eq(opKey(ks), 'key:0:48', 'keyset shares the key opKey (latest wins)');
+  {
+    const dk = new Draft();
+    dk.add({ kind: 'key', layer: 0, kk: 0x30, record: new Uint8Array(7), label: 'Z' });
+    dk.add({ kind: 'keyset', layer: 0, kk: 0x30, records: [new Uint8Array(7), new Uint8Array(3)], label: 'Z down' });
+    eq(dk.size, 1, 'keyset replaces a queued key op on the same key');
+    eq(dk.ops[0].kind, 'keyset', 'keyset is the surviving op');
+    dk.add({ kind: 'key', layer: 0, kk: 0x30, record: new Uint8Array(7), label: 'Y' });
+    eq(dk.size, 1, 'key op replaces a queued keyset (one op)');
+    eq(dk.ops[0].kind, 'key', 'surviving op is the key op');
+  }
   // keyset reconcile: satisfied only when EVERY record matches device
   // (reconcile looks up device recs by kk === record byte 0)
   const prim = Object.assign(new Uint8Array(27), { 0: 0x30 });
@@ -632,8 +660,9 @@ import {
   ] as unknown as KeyRec[];
   const r2 = queueBehaviorSet(d, 0, 0x22, { tap: 0x07, hold: null, double: null, taphold: null }, 200, 'clear all', prev);
   eq(r2.queued, true, 'downgrade from T10 queues');
-  eq(d.ops[1].kind, 'keyset', 'downgrade with shadow → keyset op');
-  const recs = (d.ops[1] as { records: Uint8Array[] }).records;
+  eq(d.size, 1, 'keyset replaces the earlier plain key op (shared opKey)');
+  eq(d.ops[0].kind, 'keyset', 'downgrade with shadow → keyset op');
+  const recs = (d.ops[0] as { records: Uint8Array[] }).records;
   eq(recs.length, 2, 'plain + filler records');
   eq(toHex(recs[0]), '22 01 04 07 00 07 00', 'primary back to T01');
   eq(toHex(recs[1]), '74 00 00', 'shadow back to filler');
@@ -779,5 +808,61 @@ import type { Frame } from '../src/lib/naya';
     false,
     'short payload rejected',
   );
+}
+// 26. queueAction length handling — the old same-length skip is refuted
+// (S1 proved 7B↔27B applies via 30/1004); only missing live records skip,
+// and T10 keys downgrade through the keyset+filler path.
+import { queueAction } from '../src/lib/queue';
+{
+  const z = findAction('key-z') ?? ACTIONS.find((a) => a.label === 'Z')!;
+  const zRec = buildRecord(0x30, z.body());
+  // same length → plain key op
+  {
+    const d = new Draft();
+    const r = queueAction(d, [{ layer: 0, kk: 0x30 }], z,
+      [[{ kk: 0x30, t: 1, rec: new Uint8Array(7), offset: 0 }], [], []]);
+    eq(r.queued === 1 && r.skipped === 0 && d.size === 1 && d.ops[0].kind === 'key' ? 'ok' : 'bad',
+       'ok', 'same-length pick queues a key op');
+  }
+  // length change on a plain key → key op with the new record
+  {
+    const d = new Draft();
+    const vendor11 = new Uint8Array([0x30, 0x01, 0x08, 1, 2, 3, 4, 5, 6, 7, 8]);
+    const r = queueAction(d, [{ layer: 1, kk: 0x30 }], z,
+      [[], [{ kk: 0x30, t: 1, rec: vendor11, offset: 0 }], []]);
+    eq(r.queued === 1 && r.skipped === 0 && d.ops[0].kind === 'key' ? 'ok' : 'bad',
+       'ok', 'plain length change queues (no skip)');
+    if (d.ops[0].kind === 'key') eq(toHex(d.ops[0].record), toHex(zRec), 'record is the new body');
+  }
+  // live T10 primary → keyset downgrade with shadow filler
+  {
+    const d = new Draft();
+    const t10p = new Uint8Array(27); t10p[0] = 0x30; t10p[1] = 0x10; t10p[2] = 0x18;
+    const r = queueAction(d, [{ layer: 0, kk: 0x30 }], z,
+      [[{ kk: 0x30, t: 0x10, rec: t10p, offset: 0 }], [], []]);
+    eq(r.queued === 1 && d.size === 1 && d.ops[0].kind === 'keyset' ? 'ok' : 'bad',
+       'ok', 'T10 pick downgrades via keyset');
+    if (d.ops[0].kind === 'keyset') {
+      eq(toHex(d.ops[0].records[0]), toHex(zRec), 'primary is the picked action');
+      eq(toHex(d.ops[0].records[1]), '82 00 00', 'filler clears shadow @0x82');
+    }
+  }
+  // plain primary but lingering T10 shadow → still keyset+filler
+  {
+    const d = new Draft();
+    const t10s = new Uint8Array(27); t10s[0] = 0x82; t10s[1] = 0x10; t10s[2] = 0x18;
+    const r = queueAction(d, [{ layer: 2, kk: 0x30 }], z,
+      [[], [], [{ kk: 0x30, t: 1, rec: new Uint8Array(7), offset: 0 },
+                 { kk: 0x82, t: 0x10, rec: t10s, offset: 0 }]]);
+    eq(r.queued === 1 && d.ops[0].kind === 'keyset' ? 'ok' : 'bad',
+       'ok', 'lingering shadow also downgrades via keyset');
+  }
+  // no live record → skipped
+  {
+    const d = new Draft();
+    const r = queueAction(d, [{ layer: 0, kk: 0x30 }], z, [[], [], []]);
+    eq(r.queued === 0 && r.skipped === 1 && d.size === 0 ? 'ok' : 'bad',
+       'ok', 'missing live record still skips');
+  }
 }
 void main();

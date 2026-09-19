@@ -110,9 +110,7 @@ export default function SelectionPanel({
             )}
           </div>
           <p className="mt-1.5 text-xs text-muted-foreground">
-            Queues into the draft — nothing writes until Flash. Keys whose
-            record length would change are skipped (the device ignores 7B↔11B
-            changes).
+            Queues into the draft — nothing writes until Flash.
           </p>
         </div>
         <div>
