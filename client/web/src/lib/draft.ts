@@ -147,9 +147,14 @@ export class Draft {
         const recs = keysByLayer[o.layer] ?? [];
         // Satisfied only when EVERY record matches the device record whose
         // kk === rec[0] (byte 0 of each record is its KK; the shadow record
-        // lives at primary kk + 0x52).
+        // lives at primary kk + 0x52). A filler record ([kk,00,00] — a
+        // cleared slot) is also satisfied by ABSENCE: the device compacts
+        // empty slots out of its dump, so "no record at that KK" means the
+        // slot is empty, which is what the filler writes.
         return !o.records.every((rec) => {
           const cur = recs.find((r) => r.kk === rec[0]);
+          const filler = rec.length === 3 && rec[1] === 0;
+          if (filler) return cur === undefined || bytesEqual(cur.rec, rec);
           return cur !== undefined && bytesEqual(cur.rec, rec);
         });
       }

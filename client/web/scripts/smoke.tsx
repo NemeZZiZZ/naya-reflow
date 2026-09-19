@@ -543,7 +543,7 @@ eq(timeoutsMs(new Uint8Array([1, 2, 3])), null, 'timeoutsMs rejects short');
 import {
   t03Record, t10Primary, t10ShadowMini, t10ShadowFull,
   behaviorSetOf, behaviorSetOps, withSlot, hidPairOf,
-  plainRecord, fillerRecord, hasT10Shadow,
+  plainRecord, hasT10Shadow, cascadeClear,
 } from '../src/lib/t10';
 import type { BehaviorSet } from '../src/lib/t10';
 import {
@@ -639,6 +639,42 @@ import {
   eq(toHex(recs[1]), '74 00 00', 'shadow back to filler');
   eq(hasT10Shadow(prev, 0x22), true, 'hasT10Shadow detects stale shadow');
   eq(hasT10Shadow(undefined, 0x22), false, 'hasT10Shadow without cache');
+}
+
+// 22d. cascadeClear — clearing a chain slot prunes its dependents
+{
+  const full: BehaviorSet = { tap: 0x07, hold: 0x09, double: 0x1a, taphold: 0x1b };
+  const c1 = cascadeClear(full, 'hold');
+  eq(c1.set.hold, null, 'hold cleared');
+  eq(c1.set.double, null, 'double cascaded');
+  eq(c1.set.taphold, null, 'taphold cascaded');
+  eq(c1.set.tap, 0x07, 'tap untouched');
+  eq(c1.dropped.join('+'), 'Double Tap+Tap+Hold', 'dropped names reported');
+  const c2 = cascadeClear(full, 'double');
+  eq(c2.set.hold, 0x09, 'hold kept when clearing double');
+  eq(c2.set.taphold, null, 'taphold cascaded with double');
+  eq(c2.dropped.join('+'), 'Tap+Hold', 'one dependent dropped');
+  const c3 = cascadeClear(full, 'taphold');
+  eq(c3.dropped.length, 0, 'leaf slot clears alone');
+  eq(c3.set.double, 0x1a, 'double kept');
+  // end-to-end: cascade from a full set → tap-only downgrade path
+  const d = new Draft();
+  const r = queueBehaviorSet(d, 0, 0x22, cascadeClear(full, 'hold').set, 200, 'clear hold (cascade)');
+  eq(r.queued, true, 'cascade result queues via downgrade path');
+  eq(d.ops[0].kind, 'key', 'no shadow cache → plain key op');
+  // reconcile with a stale-shadow downgrade: the device compacts the empty
+  // shadow slot out of its dump — filler [kk,00,00] is satisfied by ABSENCE.
+  const dS = new Draft();
+  const primS = plainRecord(0x22, 0x07);
+  const fillS = new Uint8Array([0x74, 0x00, 0x00]);
+  dS.add({ kind: 'keyset', layer: 0, kk: 0x22, records: [primS, fillS], label: 'downgrade' });
+  eq(dS.reconcile([[{ kk: 0x22, rec: primS }]] as unknown as KeyRec[][], [[]]), 1,
+    'keyset reconcile: filler satisfied by absent slot');
+  // but a NON-filler record (real shadow) still requires presence
+  const dT = new Draft();
+  dT.add({ kind: 'keyset', layer: 0, kk: 0x22, records: [primS, new Uint8Array(10)], label: 'multi' });
+  eq(dT.reconcile([[{ kk: 0x22, rec: primS }]] as unknown as KeyRec[][], [[]]), 0,
+    'missing real shadow keeps op queued');
 }
 
 // 23. 30/100b module-config parser (Task 5.1). Fixture = S2 post-restore

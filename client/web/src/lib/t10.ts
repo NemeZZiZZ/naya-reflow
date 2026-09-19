@@ -175,3 +175,26 @@ export function withSlot(
 ): BehaviorSet {
   return { ...set, [slot]: hid };
 }
+
+/** Clearing a chain slot also clears the dependents that cannot exist
+ * alone on the wire (hold ← double ← taphold). Returns the pruned set
+ * plus the human names of the slots dropped alongside the request. */
+export function cascadeClear(
+  set: BehaviorSet,
+  slot: Slot,
+): { set: BehaviorSet; dropped: string[] } {
+  let next = withSlot(set, slot, null);
+  const dropped: string[] = [];
+  const drop = (s: Slot, name: string) => {
+    if (next[s] == null) return;
+    next = withSlot(next, s, null);
+    dropped.push(name);
+  };
+  if (slot === 'hold') {
+    drop('double', 'Double Tap');
+    drop('taphold', 'Tap+Hold');
+  } else if (slot === 'double') {
+    drop('taphold', 'Tap+Hold');
+  }
+  return { set: next, dropped };
+}

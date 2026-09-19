@@ -12,6 +12,7 @@ import BehaviorRows from "../BehaviorRows";
 import { ACTIONS, buildRecord, type ActionDef } from "../../lib/actions";
 import {
   behaviorSetOf,
+  cascadeClear,
   hidPairOf,
   withSlot,
   type BehaviorSet,
@@ -182,12 +183,18 @@ export default function BindingsTab({
       toast.error("behavior chain: Tap is required first");
       return;
     }
+    // Wire chain: clearing a slot cascades to the dependents it anchors
+    // (hold ← double ← taphold) — they cannot exist alone on the wire.
+    const { set: next, dropped } = cascadeClear(set, s);
     // Downgrades (e.g. clearing Hold) may need shadow cleanup — pass the
     // current layer cache so behaviorSetOps can see the stale T10 shadow.
     onQueueBehaviorSet(
-      layer, single, withSlot(set, s, null), `clear ${s}`,
+      layer, single, next,
+      dropped.length ? `clear ${s} (+ ${dropped.join(", ")})` : `clear ${s}`,
       keysByLayer[layer],
     );
+    if (dropped.length)
+      toast.info(`cleared ${dropped.join(" + ")} too — the wire chain needs ${s} first`);
   }
 
   const editor =
@@ -205,8 +212,9 @@ export default function BindingsTab({
         />
         <div className="text-[11px] leading-snug text-muted-foreground">
           Chain rule (wire format): Hold needs Tap, Double Tap needs Hold,
-          Tap+Hold needs Double Tap. Clearing back to Tap only rewrites the
-          key as a plain binding.
+          Tap+Hold needs Double Tap. Clearing a slot also clears the slots
+          that depend on it; clearing back to Tap only rewrites the key as a
+          plain binding.
         </div>
         {slot != null && (
           <ActionPalette
