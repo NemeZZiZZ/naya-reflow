@@ -18,7 +18,7 @@ import { cn } from '../../lib/utils';
 type LedTool = 'brush' | 'fill' | 'pipette';
 
 const TOOLS: { id: LedTool; label: string; Icon: LucideIcon; hint: string }[] = [
-  { id: 'brush', label: 'Brush', Icon: Brush, hint: 'Paint one key per click' },
+  { id: 'brush', label: 'Brush', Icon: Brush, hint: 'Paint keys — click or drag across the board' },
   { id: 'fill', label: 'Fill', Icon: PaintBucket, hint: 'Paint the whole layer (ignores the clicked key)' },
   { id: 'pipette', label: 'Pipette', Icon: Pipette, hint: 'Pick the clicked key color, queues nothing' },
 ];
@@ -64,7 +64,14 @@ export default function LedTab({
   const leds = ledsByLayer[layer] ?? [];
 
   function toolClick(_pos: number, kk: number) {
+    paintKey(kk, false);
+  }
+
+  // viaDrag: pointer-enter during a brush stroke — non-brush tools stay
+  // click-only (fill/pipette on every enter would be chaos).
+  function paintKey(kk: number, viaDrag: boolean) {
     if (!leftOn) return;
+    if (viaDrag && tool !== 'brush') return;
     if (tool === 'pipette') {
       const cur = ledmap.get(kk);
       if (cur) {
@@ -131,13 +138,15 @@ export default function LedTab({
                 ledMode
                 sel={NO_SEL}
                 onSelect={toolClick}
+                onPaint={(kk) => paintKey(kk, true)}
+                cursorClass={tool === 'brush' ? 'cursor-crosshair' : undefined}
                 disabled={!leftOn}
                 dirty={dirtyKks}
               />
             </div>
             <p className="mt-2 text-xs text-muted-foreground">
               {leftOn
-                ? 'Click a key to apply the tool — changes queue up, nothing writes until Flash.'
+                ? 'Click — or drag with the Brush — to apply the tool; changes queue up, nothing writes until Flash.'
                 : 'Connect the LEFT half — colors load automatically.'}
             </p>
           </CardContent>

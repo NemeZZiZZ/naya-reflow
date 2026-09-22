@@ -5,6 +5,7 @@
 // legends/fills come from props (paint after layer / LED dumps),
 // selection lives in the parent.
 import type { SVGProps } from "react";
+import { useRef } from "react";
 import { contrastStroke, describeRecord, hsToHex, ledCss, readableInk, toHex } from "../lib/naya";
 import { keyIconName, shortLabel } from "../lib/key-icon-map";
 import { KEY_ICONS } from "../lib/key-icons";
@@ -81,9 +82,12 @@ interface KeyProps {
     additive: boolean,
     allLayers: boolean,
   ) => void;
+  /** paint mode (drag): replaces click handling with pointer events */
+  onPaintDown?: (kk: number) => void;
+  onPaintEnter?: (kk: number) => void;
 }
 
-function Key({ pos, rec, led, ledMode, selected, dirty, onSelect }: KeyProps) {
+function Key({ pos, rec, led, ledMode, selected, dirty, onSelect, onPaintDown, onPaintEnter }: KeyProps) {
   const kk = pos; // positionId == KK index (proven: 0=Esc/LA1, 0x30=Z/LC4 …)
   const label = rec ? shortLabel(rec) : (POS_KEY[String(pos)] ?? "");
   // action glyph for non-standard keys (currentColor => follows legend color);
@@ -154,7 +158,20 @@ function Key({ pos, rec, led, ledMode, selected, dirty, onSelect }: KeyProps) {
               ? { outline: `2px solid ${contrastStroke(ledFill)}`, outlineOffset: 1 }
               : undefined
           }
-          onClick={(e) => onSelect(pos, kk, e.shiftKey, e.altKey)}
+          onClick={
+            onPaintDown
+              ? undefined
+              : (e) => onSelect(pos, kk, e.shiftKey, e.altKey)
+          }
+          onPointerDown={
+            onPaintDown
+              ? (e) => {
+                  e.preventDefault();
+                  onPaintDown(kk);
+                }
+              : undefined
+          }
+          onPointerEnter={onPaintEnter ? () => onPaintEnter(kk) : undefined}
         >
       <div className="relative">
         <ShapeSvg name={POS_SHAPE[pos]} fill={fill} stroke={stroke} />
@@ -200,6 +217,10 @@ interface KeyboardProps {
   disabled?: boolean;
   /** KKs with queued (not yet flashed) changes — get a dot marker */
   dirty?: Set<number>;
+  /** drag-paint mode: pointer-down starts a stroke, pointer-enter paints */
+  onPaint?: (kk: number) => void;
+  /** cursor override for paint tools (e.g. "cursor-crosshair") */
+  cursorClass?: string;
 }
 
 export default function Keyboard({
@@ -210,7 +231,22 @@ export default function Keyboard({
   onSelect,
   disabled = false,
   dirty,
+  onPaint,
+  cursorClass,
 }: KeyboardProps) {
+  const paintingRef = useRef(false);
+  const paintDown = onPaint
+    ? (kk: number) => {
+        paintingRef.current = true;
+        onPaint(kk);
+      }
+    : undefined;
+  const paintEnter = onPaint
+    ? (kk: number) => {
+        if (paintingRef.current) onPaint(kk);
+      }
+    : undefined;
+  const endPaint = onPaint ? () => (paintingRef.current = false) : undefined;
   const pick = (
     pos: number,
     kk: number,
@@ -229,6 +265,8 @@ export default function Keyboard({
       selected={sel.has(pos)}
       dirty={dirty?.has(pos) ?? false}
       onSelect={pick}
+      onPaintDown={paintDown}
+      onPaintEnter={paintEnter}
     />
   );
   const col = (extra: string, keys: number[]) => (
@@ -305,9 +343,14 @@ export default function Keyboard({
           "grid w-full min-w-235 grid-cols-[1fr_14rem_1fr] gap-1 select-none",
           {
             "opacity-50 saturate-50 cursor-default": disabled,
-            "cursor-pointer": !disabled,
+            "cursor-pointer": !disabled && !cursorClass,
+            "touch-none": !!onPaint,
           },
+          cursorClass,
         )}
+        onPointerUp={endPaint}
+        onPointerCancel={endPaint}
+        onPointerLeave={endPaint}
       >
         {halfLeft}
         {middle}
