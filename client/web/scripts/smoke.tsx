@@ -30,6 +30,7 @@ import {
 import type { StorageLike } from '../src/lib/backups';
 import { buildKeymapExport, buildLedmapExport } from '../src/lib/exporters';
 import { migrateSnapshot } from '../src/lib/importers';
+import { SNAPSHOT_VERSION } from '../src/lib/utils';
 
 let n = 0;
 function eq(a: unknown, b: unknown, name: string) {
@@ -999,5 +1000,22 @@ import { queueAction } from '../src/lib/queue';
   eq(hashStr('abc') === hashStr('abc'), true, '27 hash deterministic');
   eq(hashStr('abc') !== hashStr('abd'), true, '27 hash separates input');
   eq(/^[0-9a-f]{8}$/.test(hashStr('x')), true, '27 hash 8 hex chars');
+}
+
+// §28 version matrix (UHK #14): package.json is part of the version
+// surface — the gate fails here if it drifts from the code constant.
+{
+  const pkg = JSON.parse(
+    fs.readFileSync(
+      path.join(process.env.SMOKE_ROOT ?? process.cwd(), 'package.json'),
+      'utf8',
+    ),
+  ) as { naya?: { snapshotVersion?: number }; version?: string };
+  eq(
+    pkg.naya?.snapshotVersion,
+    SNAPSHOT_VERSION,
+    '28 pkg naya.snapshotVersion === SNAPSHOT_VERSION',
+  );
+  eq(typeof pkg.version, 'string', '28 pkg version present');
 }
 void main();

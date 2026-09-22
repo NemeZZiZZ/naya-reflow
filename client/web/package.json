@@ -2,6 +2,9 @@
   "name": "naya-reflow-web",
   "private": true,
   "version": "0.0.0",
+  "naya": {
+    "snapshotVersion": 1
+  },
   "type": "module",
   "scripts": {
     "dev": "vite",
