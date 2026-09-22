@@ -18,6 +18,7 @@ import ColorDialog from "./components/ColorDialog";
 import LogPanel from "./components/LogPanel";
 import DeviceSheet from "./components/DeviceSheet";
 import SaveMenu from "./components/SaveMenu";
+import BackupsDialog from "./components/BackupsDialog";
 import FlashDialog from "./components/FlashDialog";
 import { TooltipProvider } from "./components/ui/tooltip";
 import { useLog } from "./hooks/useLog";
@@ -33,6 +34,8 @@ import { useKbFit } from "./hooks/useKbFit";
 import { queueAction, queueBehaviorSet, queueColor, queueFillLayer } from "./lib/queue";
 import { buildKeymapExport, buildLedmapExport, saveJson } from "./lib/exporters";
 import { diffSnapshotToDraft, parseSnapshotFile } from "./lib/importers";
+import type { SnapMaps } from "./lib/importers";
+import { listAutoBackups, loadAutoBackup } from "./lib/backups";
 import type { ActionDef } from "./lib/actions";
 import type { BehaviorSet } from "./lib/t10";
 import type { KeyRec, LedRec, Side } from "./lib/naya";
@@ -89,6 +92,12 @@ export default function App() {
     sesRef,
     busyRef,
     draftRef,
+    layers: {
+      keys: keysByLayer,
+      leds: ledsByLayer,
+      blobKeys: blobTotals.keys,
+      blobLeds: blobTotals.leds,
+    },
     dumpAll: layers.dumpAll,
     bumpDraft,
     log,
@@ -178,6 +187,24 @@ export default function App() {
   }
 
   const importRef = useRef<HTMLInputElement>(null);
+  const [backupsOpen, setBackupsOpen] = useState(false);
+
+  // Shared import/restore tail: diff a parsed snapshot against the live
+  // caches and queue the difference (latest-op-wins). Caller does the
+  // log/toast wording around it.
+  function applySnap(snap: SnapMaps, name: string) {
+    const r = diffSnapshotToDraft(draftRef.current, snap, keysByLayer, ledsByLayer);
+    bumpDraft();
+    log(
+      "inf",
+      `import '${name}': layers [${snap.layers.join(",")}] → ` +
+        `${r.keysQueued} key(s) + ${r.ledsQueued} LED(s) queued` +
+        (r.skippedMissing > 0 ? `, ${r.skippedMissing} skipped (no live counterpart)` : ""),
+    );
+    if (r.keysQueued + r.ledsQueued > 0)
+      log("inf", "import: review the queue, then Flash to apply");
+    else log("inf", "import: device already matches the snapshot");
+  }
 
   async function importSnapshotFile(f: File) {
     if (keysByLayer.some((k) => k.length === 0)) {
@@ -196,17 +223,22 @@ export default function App() {
       log("err", `import: ${snap.error}`);
       return;
     }
-    const r = diffSnapshotToDraft(draftRef.current, snap, keysByLayer, ledsByLayer);
-    bumpDraft();
-    log(
-      "inf",
-      `import '${f.name}': layers [${snap.layers.join(",")}] → ` +
-        `${r.keysQueued} key(s) + ${r.ledsQueued} LED(s) queued` +
-        (r.skippedMissing > 0 ? `, ${r.skippedMissing} skipped (no live counterpart)` : ""),
-    );
-    if (r.keysQueued + r.ledsQueued > 0)
-      log("inf", "import: review the queue, then Flash to apply");
-    else log("inf", "import: device already matches the snapshot");
+    applySnap(snap, f.name);
+  }
+
+  function restoreBackup(id: string) {
+    if (keysByLayer.some((k) => k.length === 0)) {
+      log("err", "restore: layer cache empty — Refresh first (diff needs live state)");
+      return;
+    }
+    const snap = loadAutoBackup(id);
+    if ("error" in snap) {
+      log("err", `restore: ${snap.error}`);
+      return;
+    }
+    const meta = listAutoBackups().find((m) => m.id === id);
+    applySnap(snap, `backup ${meta ? meta.ts : id}`);
+    setBackupsOpen(false);
   }
 
   // Live timeout read for the Behavior tab (left half only). Failures
@@ -288,6 +320,7 @@ export default function App() {
       onExportKeys={exportKeys}
       onExportLeds={exportLeds}
       onImport={() => importRef.current?.click()}
+      onBackups={() => setBackupsOpen(true)}
     />
   );
 
@@ -470,6 +503,11 @@ export default function App() {
             e.target.value = "";
             if (f) void importSnapshotFile(f);
           }}
+        />
+        <BackupsDialog
+          open={backupsOpen}
+          onOpenChange={setBackupsOpen}
+          onRestore={restoreBackup}
         />
       </div>
       <Toaster theme="dark" position="bottom-right" />

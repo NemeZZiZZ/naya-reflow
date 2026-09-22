@@ -20,6 +20,16 @@ import { parseSnapshotFile, diffSnapshotToDraft } from '../src/lib/importers';
 import type { SnapMaps } from '../src/lib/importers';
 import { timeoutsMs, timeoutsPayload } from '../src/lib/naya';
 import Keyboard from '../src/components/Keyboard';
+import {
+  saveAutoBackup,
+  listAutoBackups,
+  loadAutoBackup,
+  deleteAutoBackup,
+  hashStr,
+} from '../src/lib/backups';
+import type { StorageLike } from '../src/lib/backups';
+import { buildKeymapExport, buildLedmapExport } from '../src/lib/exporters';
+import { migrateSnapshot } from '../src/lib/importers';
 
 let n = 0;
 function eq(a: unknown, b: unknown, name: string) {
@@ -880,5 +890,114 @@ import { queueAction } from '../src/lib/queue';
     eq(r.queued === 0 && r.skipped === 1 && d.size === 0 ? 'ok' : 'bad',
        'ok', 'missing live record still skips');
   }
+}
+// §27 auto-backups + schema version + golden round-trip (UHK adoption)
+{
+  const mkStorage = (): StorageLike => {
+    const m = new Map<string, string>();
+    return {
+      getItem: (k) => m.get(k) ?? null,
+      setItem: (k, v) => void m.set(k, v),
+      removeItem: (k) => void m.delete(k),
+    };
+  };
+  const mkRec = (kk: number, bytes: number[]): KeyRec => ({
+    kk,
+    t: bytes[1],
+    rec: Uint8Array.from(bytes),
+    offset: -1,
+  });
+  const keys: KeyRec[][] = [
+    [
+      mkRec(0x30, [0x30, 0x01, 0x04, 0x1d, 0x00, 0x07, 0x00]),
+      mkRec(0x31, [0x31, 0x03, 0x07, 0x00, 0x1d, 0x00, 0x1b, 0x00, 0x00, 0x00, 0x00]),
+    ],
+    [mkRec(0x2e, [0x2e, 0x00, 0x08, 0x03, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00])],
+    [mkRec(0x1e, [0x1e, 0x01, 0x04, 0x73, 0x00, 0x07, 0x00])],
+  ];
+  const leds: LedRec[][] = [
+    [
+      { kk: 0x30, h: 243, s: 100, offset: -1 },
+      { kk: 0x31, h: 30, s: 150, offset: -1 },
+    ],
+    [{ kk: 0x2e, h: 0, s: 0, offset: -1 }],
+    [{ kk: 0x1e, h: 511, s: 255, offset: -1 }],
+  ];
+  const blobKeys = keys.map((l) => l.reduce((a, r) => a + r.rec.length, 0));
+  const blobLeds = leds.map((l) => l.length * 4);
+
+  const st = mkStorage();
+  const r1 = saveAutoBackup(keys, leds, blobKeys, blobLeds, st);
+  eq(r1.status, 'saved', '27 backup saved');
+  if (r1.status === 'saved')
+    eq(r1.meta.bytes, blobKeys.reduce((a, b) => a + b, 0) + blobLeds.reduce((a, b) => a + b, 0), '27 meta bytes = blob totals');
+
+  const r2 = saveAutoBackup(keys, leds, blobKeys, blobLeds, st);
+  eq(r2.status === 'skipped' && r2.reason, 'unchanged', '27 identical backup deduped');
+  eq(listAutoBackups(st).length, 1, '27 list still 1');
+
+  keys[0][0].rec[3] = 0x14; // Z -> T
+  const r3 = saveAutoBackup(keys, leds, blobKeys, blobLeds, st);
+  eq(r3.status, 'saved', '27 changed state saved');
+  const metas = listAutoBackups(st);
+  eq(metas.length, 2, '27 list 2, newest first');
+  eq(metas[0].hash !== metas[1].hash, true, '27 hashes differ');
+
+  const snap = loadAutoBackup(metas[0].id, st);
+  eq('error' in snap ? 'err' : 'ok', 'ok', '27 load parses');
+  if (!('error' in snap)) {
+    eq(String(snap.layers), '0,1,2', '27 backup layers');
+    eq(toHex(snap.keys[0][0].rec), '30 01 04 14 00 07 00', '27 backup rec is the CHANGED one (newest)');
+    eq(snap.leds[0][1].h, 30, '27 backup led hue');
+  }
+
+  // golden round-trip: parsed maps -> rebuild export -> parse -> identical
+  if (!('error' in snap)) {
+    const reExp = buildKeymapExport(snap.keys, blobKeys, 0, true);
+    const reSnap = reExp ? parseSnapshotFile(reExp.data) : { error: 'null' };
+    eq('error' in reSnap ? 'err' : 'ok', 'ok', '27 re-export parses');
+    if (!('error' in reSnap)) {
+      const a = snap.keys.map((l) => l.map((r) => toHex(r.rec)).join(','));
+      const b = reSnap.keys.map((l) => l.map((r) => toHex(r.rec)).join(','));
+      eq(JSON.stringify(a) === JSON.stringify(b), true, '27 key round-trip byte-identical');
+    }
+    const reLed = buildLedmapExport(snap.leds, blobLeds, 0, true);
+    eq(reLed !== null, true, '27 led export builds');
+    if (reLed) {
+      const reLedSnap = parseSnapshotFile(reLed.data);
+      eq('error' in reLedSnap ? 'err' : 'ok', 'ok', '27 re-led parses');
+      if (!('error' in reLedSnap)) {
+        const c = snap.leds.map((l) => l.map((r) => `${r.h}/${r.s}`).join(','));
+        const d = reLedSnap.leds.map((l) => l.map((r) => `${r.h}/${r.s}`).join(','));
+        eq(JSON.stringify(c) === JSON.stringify(d), true, '27 led round-trip identical');
+      }
+    }
+  }
+  eq(deleteAutoBackup(metas[0].id, st), true, '27 delete works');
+  eq(deleteAutoBackup(metas[0].id, st), false, '27 delete idempotent-false');
+  eq('error' in loadAutoBackup(metas[0].id, st), true, '27 deleted id errors');
+
+  // schema version peek-guard
+  const exp = buildKeymapExport(keys, blobKeys, 0, true);
+  if (exp) {
+    const doc = exp.data as Record<string, unknown>;
+    eq(doc.v, 1, '27 exports carry v1');
+    doc.v = 2;
+    const g = parseSnapshotFile(doc);
+    eq('error' in g && g.error.includes('newer') ? 'newer' : 'other', 'newer', '27 future version rejected');
+    delete doc.v;
+    eq('error' in parseSnapshotFile(doc) ? 'err' : 'ok', 'ok', '27 missing v treated as v1');
+    const same = migrateSnapshot(doc);
+    eq(same === doc, true, '27 migrate v1 is identity');
+  }
+
+  // node without storage arg: localStorage undefined -> storage-skip
+  const rn = saveAutoBackup(keys, leds, blobKeys, blobLeds);
+  eq(rn.status === 'skipped' && rn.reason, 'storage', '27 no storage env skips gracefully');
+
+  // hash sanity
+  eq(hashStr('abc') === hashStr('abc'), true, '27 hash deterministic');
+  eq(hashStr('abc') !== hashStr('abd'), true, '27 hash separates input');
+  eq(/^[0-9a-f]{8}$/.test(hashStr('x')), true, '27 hash 8 hex chars');
 }
 void main();

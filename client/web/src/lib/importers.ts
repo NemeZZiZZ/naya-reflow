@@ -8,6 +8,7 @@ import { describeRecord, parseLayer, parseLedmap } from './naya';
 import { fillerRecord, hasT10Shadow, SHADOW_OFF } from './t10';
 import type { Draft } from './draft';
 import type { KeyRec, LedRec } from './naya';
+import { SNAPSHOT_VERSION } from './utils';
 
 export interface SnapMaps {
   keys: KeyRec[][];
@@ -16,11 +17,22 @@ export interface SnapMaps {
   layers: number[];
 }
 
+/** Ordered migration chain for our own snapshot schema. Each future link:
+ * `if ((obj.v ?? 1) < N) { …mutate…; obj.v = N; }`, oldest first. v1 is
+ * the initial schema — nothing to do yet. */
+export function migrateSnapshot(obj: Record<string, unknown>): Record<string, unknown> {
+  return obj;
+}
+
 function hexToBytes(hex: string): Uint8Array | null {
-  if (typeof hex !== 'string' || hex.length % 2 !== 0) return null;
-  const out = new Uint8Array(hex.length / 2);
+  // Our own exports store spaced hex ('toHex' joins with spaces); strip all
+  // whitespace first — parseInt silently tolerates stray spaces and turns
+  // them into garbage bytes instead of failing.
+  const h = hex.replace(/\s+/g, '');
+  if (typeof hex !== 'string' || h.length === 0 || h.length % 2 !== 0) return null;
+  const out = new Uint8Array(h.length / 2);
   for (let i = 0; i < out.length; i++) {
-    const b = parseInt(hex.slice(i * 2, i * 2 + 2), 16);
+    const b = parseInt(h.slice(i * 2, i * 2 + 2), 16);
     if (Number.isNaN(b)) return null;
     out[i] = b;
   }
@@ -29,6 +41,51 @@ function hexToBytes(hex: string): Uint8Array | null {
 
 function isObj(v: unknown): v is Record<string, unknown> {
   return typeof v === 'object' && v !== null;
+}
+
+/** Parse one naya-reflow export doc (kind keymap-x / ledmap-x) into maps of
+ * the requested mode. Shared by the plain single-kind path and the nested
+ * docs inside a full backup. */
+function parseExportLayers(
+  doc: Record<string, unknown>,
+  mode: 'keys' | 'leds',
+): SnapMaps | { error: string } {
+  if (!isObj(doc.layers)) return { error: 'export missing layers' };
+  const keys: KeyRec[][] = [[], [], []];
+  const leds: LedRec[][] = [[], [], []];
+  const layers: number[] = [];
+  for (const L of [0, 1, 2]) {
+    const lay = (doc.layers as Record<string, unknown>)[String(L)];
+    if (lay === undefined) continue;
+    if (!isObj(lay)) return { error: `layer ${L}: bad shape` };
+    if (mode === 'keys') {
+      if (!Array.isArray(lay.records))
+        return { error: `layer ${L}: missing records` };
+      for (const r of lay.records as unknown[]) {
+        if (!isObj(r) || typeof r.kk !== 'number' || typeof r.rec !== 'string')
+          return { error: `layer ${L}: bad record` };
+        const bytes = hexToBytes(r.rec);
+        if (!bytes || bytes.length < 3)
+          return { error: `layer ${L} KK ${r.kk}: bad rec hex` };
+        keys[L].push({ kk: r.kk, t: bytes[1], rec: bytes, offset: -1 });
+      }
+    } else {
+      if (!Array.isArray(lay.leds)) return { error: `layer ${L}: missing leds` };
+      for (const r of lay.leds as unknown[]) {
+        if (
+          !isObj(r) ||
+          typeof r.kk !== 'number' ||
+          typeof r.hue !== 'number' ||
+          typeof r.sat !== 'number'
+        )
+          return { error: `layer ${L}: bad led entry` };
+        leds[L].push({ kk: r.kk, h: r.hue, s: r.sat, offset: -1 });
+      }
+    }
+    layers.push(L);
+  }
+  if (layers.length === 0) return { error: 'export holds no layers' };
+  return { keys, leds, layers };
 }
 
 /** Parse an unknown JSON value into per-layer key/LED maps, or an error. */
@@ -57,45 +114,30 @@ export function parseSnapshotFile(obj: unknown): SnapMaps | { error: string } {
     return { keys, leds, layers };
   }
   if (obj.tool === 'naya-reflow' && typeof obj.kind === 'string') {
-    if (!isObj(obj.layers)) return { error: 'export missing layers' };
-    const keys: KeyRec[][] = [[], [], []];
-    const leds: LedRec[][] = [[], [], []];
-    const layers: number[] = [];
-    const isKeys = (obj.kind as string).startsWith('keymap');
-    const isLeds = (obj.kind as string).startsWith('ledmap');
-    if (!isKeys && !isLeds) return { error: `unknown kind '${obj.kind}'` };
-    for (const L of [0, 1, 2]) {
-      const lay = obj.layers[String(L)];
-      if (lay === undefined) continue;
-      if (!isObj(lay)) return { error: `layer ${L}: bad shape` };
-      if (isKeys) {
-        if (!Array.isArray(lay.records))
-          return { error: `layer ${L}: missing records` };
-        for (const r of lay.records as unknown[]) {
-          if (!isObj(r) || typeof r.kk !== 'number' || typeof r.rec !== 'string')
-            return { error: `layer ${L}: bad record` };
-          const bytes = hexToBytes(r.rec);
-          if (!bytes || bytes.length < 3)
-            return { error: `layer ${L} KK ${r.kk}: bad rec hex` };
-          keys[L].push({ kk: r.kk, t: bytes[1], rec: bytes, offset: -1 });
-        }
-      } else {
-        if (!Array.isArray(lay.leds)) return { error: `layer ${L}: missing leds` };
-        for (const r of lay.leds as unknown[]) {
-          if (
-            !isObj(r) ||
-            typeof r.kk !== 'number' ||
-            typeof r.hue !== 'number' ||
-            typeof r.sat !== 'number'
-          )
-            return { error: `layer ${L}: bad led entry` };
-          leds[L].push({ kk: r.kk, h: r.hue, s: r.sat, offset: -1 });
-        }
-      }
-      layers.push(L);
+    // Peek-version guard (UHK pattern): read the version before any deep
+    // parse — files from a newer app fail with an actionable message
+    // instead of a cryptic shape error further down. Old files without a
+    // version field are schema v1.
+    const v = typeof obj.v === 'number' ? obj.v : 1;
+    if (v > SNAPSHOT_VERSION)
+      return {
+        error: `schema v${v} is newer than this app supports (v${SNAPSHOT_VERSION}) — update naya-reflow`,
+      };
+    const doc = (v < SNAPSHOT_VERSION ? migrateSnapshot(obj) : obj) as Record<string, unknown>;
+    if (doc.kind === 'naya-full-backup') {
+      if (!isObj(doc.keys) || !isObj(doc.leds))
+        return { error: 'backup missing keys/leds docs' };
+      const kv = parseExportLayers(doc.keys as Record<string, unknown>, 'keys');
+      if ('error' in kv) return kv;
+      const lv = parseExportLayers(doc.leds as Record<string, unknown>, 'leds');
+      if ('error' in lv) return lv;
+      const layers = [...new Set([...kv.layers, ...lv.layers])].sort((a, b) => a - b);
+      return { keys: kv.keys, leds: lv.leds, layers };
     }
-    if (layers.length === 0) return { error: 'export holds no layers' };
-    return { keys, leds, layers };
+    const isKeys = (doc.kind as string).startsWith('keymap');
+    const isLeds = (doc.kind as string).startsWith('ledmap');
+    if (!isKeys && !isLeds) return { error: `unknown kind '${doc.kind}'` };
+    return parseExportLayers(doc, isKeys ? 'keys' : 'leds');
   }
   return { error: `unknown file (tool=${String((obj as Record<string, unknown>).tool)})` };
 }

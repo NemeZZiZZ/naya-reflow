@@ -4,7 +4,7 @@
 
 import { describeRecord, toHex } from './naya';
 import type { KeyRec, LedRec } from './naya';
-import { hex2 } from './utils';
+import { hex2, SNAPSHOT_VERSION } from './utils';
 
 export function saveJson(name: string, obj: unknown) {
   const url = URL.createObjectURL(
@@ -35,6 +35,7 @@ export function buildKeymapExport(
   const out: Record<string, unknown> = {
     tool: 'naya-reflow',
     kind: all ? 'keymap-all' : 'keymap-layer',
+    v: SNAPSHOT_VERSION,
     side: 'left',
     exportedAt: new Date().toISOString(),
     layers: {},
@@ -72,6 +73,7 @@ export function buildLedmapExport(
   const out: Record<string, unknown> = {
     tool: 'naya-reflow',
     kind: all ? 'ledmap-all' : 'ledmap-layer',
+    v: SNAPSHOT_VERSION,
     side: 'left',
     exportedAt: new Date().toISOString(),
     layers: {},

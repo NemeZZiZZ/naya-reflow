@@ -4,10 +4,11 @@
 
 import { useCallback, useRef, useState } from 'react';
 import { toast } from 'sonner';
+import { saveAutoBackup, listAutoBackups } from '../lib/backups';
 import { opSummary } from '../lib/draft';
 import type { Draft } from '../lib/draft';
 import { concat, isWriteAck, sleep, toHex } from '../lib/naya';
-import type { NayaSession, Side } from '../lib/naya';
+import type { KeyRec, LedRec, NayaSession, Side } from '../lib/naya';
 import { parseCmdPath } from '../lib/settings';
 import type { LayerDump } from './useLayers';
 import type { LogFn } from './useLog';
@@ -26,6 +27,7 @@ export function useFlash({
   sesRef,
   busyRef,
   draftRef,
+  layers,
   dumpAll,
   bumpDraft,
   log,
@@ -33,6 +35,13 @@ export function useFlash({
   sesRef: React.RefObject<Map<Side, NayaSession>>;
   busyRef: React.RefObject<boolean>;
   draftRef: React.RefObject<Draft>;
+  /** live caches — the pre-flash auto-backup snapshots these */
+  layers: {
+    keys: KeyRec[][];
+    leds: LedRec[][];
+    blobKeys: number[];
+    blobLeds: number[];
+  };
   dumpAll: (ses: NayaSession) => Promise<LayerDump | null>;
   bumpDraft: () => void;
   log: LogFn;
@@ -63,6 +72,25 @@ export function useFlash({
     let done = 0;
     try {
       log('inf', `flash queue: ${total} op(s)`);
+      // Pre-flash auto-backup (UHK compensation pattern): the device has
+      // no staging buffer, so park a restore point of the live caches
+      // first. Failures degrade to a log line — they must never block
+      // the write the user asked for.
+      const bk = saveAutoBackup(
+        layers.keys,
+        layers.leds,
+        layers.blobKeys,
+        layers.blobLeds,
+      );
+      if (bk.status === 'saved')
+        log(
+          'inf',
+          `auto-backup saved (${bk.meta.bytes}B, ${listAutoBackups().length} kept) — "Restore auto-backup…" in the Save menu`,
+        );
+      else if (bk.reason === 'unchanged')
+        log('inf', 'auto-backup: unchanged since last flash (deduped)');
+      else if (bk.reason === 'storage')
+        log('err', 'auto-backup: storage unavailable/full — continuing without');
       await ses.handshake();
       // Snapshot iteration: settings ops self-remove from d.ops on ACK.
       for (const o of [...d.ops]) {
@@ -156,7 +184,7 @@ export function useFlash({
       busyRef.current = false;
       setFlashing(false);
     }
-  }, [sesRef, busyRef, draftRef, dumpAll, bumpDraft, log]);
+  }, [sesRef, busyRef, draftRef, layers, dumpAll, bumpDraft, log]);
 
   const doFlashQueue = useCallback((): Promise<FlashResult> => {
     if (inFlight.current) return inFlight.current;

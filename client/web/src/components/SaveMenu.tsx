@@ -15,11 +15,13 @@ export default function SaveMenu({
   onExportKeys,
   onExportLeds,
   onImport,
+  onBackups,
 }: {
   leftOn: boolean;
   onExportKeys: (all: boolean) => void;
   onExportLeds: (all: boolean) => void;
   onImport: () => void;
+  onBackups: () => void;
 }) {
   return (
     <DropdownMenu>
@@ -45,6 +47,9 @@ export default function SaveMenu({
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={onImport} disabled={!leftOn}>
           Import snapshot…
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={onBackups} disabled={!leftOn}>
+          Restore auto-backup…
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
