@@ -98,3 +98,15 @@ Full docs: `docs/cdc-protocol.md` §2026-09-19 + §2026-09-22.
   `troubleshooting.md`, `protocol/led.md`, `protocol/keymap.md`.
 - Web client (this repo, `client/web`) is the working flash/restore tool:
   Import backup → Flash → verified, live-proven twice.
+
+## UPDATE 2026-09-22 (later same day)
+
+- Right half ANSWERS CDC again after the user's stock NayaFlow flash:
+  web client shows R connected with 98% battery (was: fully dark, no
+  aux data at handoff time). Visual backlight status still unconfirmed —
+  treat "right dark" as downgraded to "right render state unknown".
+- All keymap/LED customs verified IDENTICAL to
+  `research/dumps/left-backup-20260922-pre10ca-relapse.json` (saga #2
+  surgical restore). Brightness-wrap FW bug unchanged.
+- Web client progress since handoff: action-picker dedup shipped
+  (commit 7521adb), single-palette rule live-verified on device.
