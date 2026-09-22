@@ -172,6 +172,11 @@ export default function BindingsTab({
     setSlot(null);
   }
 
+  function pickPlain(a: ActionDef) {
+    onPickAction(a);
+    onQueueAction();
+  }
+
   function clearSlot(s: Slot) {
     if (single == null || set == null) return;
     if (
@@ -214,12 +219,19 @@ export default function BindingsTab({
           that depend on it; clearing back to Tap only rewrites the key as a
           plain binding.
         </div>
-        {slot != null && (
-          <ActionPalette
-            onPick={pickForSlot}
-            filter={slot === "tap" ? undefined : hidOnly}
-          />
-        )}
+        {/* Single palette rule: with the editor visible the bottom panel
+            hides its palette — plain picks land here when no slot is
+            active, slot-filtered picks when one is. */}
+        <div className="text-[11px] font-medium text-muted-foreground">
+          {slot == null
+            ? "Assign action — becomes this key's binding"
+            : `Pick action for “${slot}”`}
+        </div>
+        <ActionPalette
+          onPick={slot == null ? pickPlain : pickForSlot}
+          pickedId={slot == null ? (pickedAction?.id ?? null) : undefined}
+          filter={slot != null && slot !== "tap" ? hidOnly : undefined}
+        />
       </div>
     ) : null;
 
@@ -272,6 +284,7 @@ export default function BindingsTab({
 
       {sel.length > 0 && (
         <SelectionPanel
+          assignHidden={view === "kb" && set != null}
           sel={sel}
           onRemovePair={onRemovePair}
           onClear={onClear}

@@ -1,5 +1,7 @@
 // Selection panel: chips of selected (layer, KK) pairs, the action
-// palette + queue button, and the color picker row + queue/fill buttons.
+// palette + queue button (hidden while the right-side editor palette is
+// active — single palette rule), and the color picker row + queue/fill
+// buttons.
 import { Plus, X } from "lucide-react";
 import ActionPalette from "./ActionPalette";
 import { Button } from "./ui/button";
@@ -27,6 +29,7 @@ const LED_PRESETS: { name: string; h: number; s: number }[] = [
 
 export default function SelectionPanel({
   sel,
+  assignHidden,
   onRemovePair,
   onClear,
   pickedAction,
@@ -43,6 +46,7 @@ export default function SelectionPanel({
   layer,
 }: {
   sel: SelKey[];
+  assignHidden?: boolean;
   onRemovePair: (layer: number, kk: number) => void;
   onClear: () => void;
   pickedAction: ActionDef | null;
@@ -66,7 +70,12 @@ export default function SelectionPanel({
           <X /> Clear selection
         </Button>
       </CardHeader>
-      <CardContent className="grid gap-4 md:grid-cols-[240px_1.5fr_1fr]">
+      <CardContent
+        className={
+          "grid gap-4 " +
+          (assignHidden ? "md:grid-cols-[240px_1fr]" : "md:grid-cols-[240px_1.5fr_1fr]")
+        }
+      >
         <div>
           <div className="mb-2 text-sm font-medium">
             Selected keys ({sel.length})
@@ -86,33 +95,35 @@ export default function SelectionPanel({
             ))}
           </div>
         </div>
-        <div>
-          <div className="mb-2 flex items-center justify-between">
-            <div className="text-sm font-medium">Assign action</div>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => onPickAction(findAction("empty") ?? null)}
-              title="Pick the empty (unassign) action"
-            >
-              Empty
-            </Button>
+        {!assignHidden && (
+          <div>
+            <div className="mb-2 flex items-center justify-between">
+              <div className="text-sm font-medium">Assign action</div>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => onPickAction(findAction("empty") ?? null)}
+                title="Pick the empty (unassign) action"
+              >
+                Empty
+              </Button>
+            </div>
+            <ActionPalette onPick={onPickAction} pickedId={pickedAction?.id ?? null} />
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              <Button disabled={!pickedAction} onClick={onQueueAction}>
+                Queue action for {sel.length} key(s)
+              </Button>
+              {pickedAction && (
+                <span className="text-sm text-muted-foreground">
+                  → {pickedAction.label}
+                </span>
+              )}
+            </div>
+            <p className="mt-1.5 text-xs text-muted-foreground">
+              Queues into the draft — nothing writes until Flash.
+            </p>
           </div>
-          <ActionPalette onPick={onPickAction} pickedId={pickedAction?.id ?? null} />
-          <div className="mt-2 flex flex-wrap items-center gap-2">
-            <Button disabled={!pickedAction} onClick={onQueueAction}>
-              Queue action for {sel.length} key(s)
-            </Button>
-            {pickedAction && (
-              <span className="text-sm text-muted-foreground">
-                → {pickedAction.label}
-              </span>
-            )}
-          </div>
-          <p className="mt-1.5 text-xs text-muted-foreground">
-            Queues into the draft — nothing writes until Flash.
-          </p>
-        </div>
+        )}
         <div>
           <div className="mb-2 text-sm font-medium">Set color</div>
           <div className="mb-2 flex flex-wrap items-center gap-1.5">
