@@ -375,7 +375,9 @@ export default function App() {
               keymap={keymap}
               ledmap={ledmap}
               selKks={selKks}
-              onSelect={selection.onSelect}
+              onSelect={(_pos, kk, additive, allLayers) =>
+                selection.onSelect(layer, kk, additive, allLayers)
+              }
               dirtyKks={dirtyKks}
               showRaw={showRaw}
               onShowRaw={setShowRaw}

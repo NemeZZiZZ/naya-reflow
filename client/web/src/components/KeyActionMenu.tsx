@@ -61,6 +61,14 @@ export default function KeyActionMenu({
 }) {
   const [active, setActive] = useState<"whole" | Slot>("whole");
   const [cur, setCur] = useState<BehaviorSet | null>(set);
+  // The layer cache can land AFTER this menu mounted (dump still running) —
+  // re-sync the optimistic copy when the parsed set arrives. Identity-stable
+  // thanks to useMemo at the call sites, so local picks are never clobbered.
+  const [prevSet, setPrevSet] = useState<BehaviorSet | null>(set);
+  if (set !== prevSet) {
+    setPrevSet(set);
+    setCur(set);
+  }
 
   // Hold/Double/Tap+Hold (and Tap on a multi-key) are HID-only on the wire.
   const hidOnly = (a: ActionDef) =>

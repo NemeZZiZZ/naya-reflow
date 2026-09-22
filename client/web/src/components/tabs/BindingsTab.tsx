@@ -3,7 +3,7 @@
 // panel for selections and in a right-click context popover for in-place
 // editing. Editing any behavior rewrites the whole T10/T03 set via a
 // keyset op.
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import KeyboardCard from "../KeyboardCard";
 import KeyActionMenu from "../KeyActionMenu";
 import LayoutTable, { type MergedRow } from "../LayoutTable";
@@ -116,8 +116,12 @@ export default function BindingsTab({
 
   const single =
     sel.length === 1 && sel[0].layer === layer ? sel[0].kk : null;
-  const set: BehaviorSet | null =
-    single != null ? behaviorSetOf(keysByLayer[layer] ?? [], single) : null;
+  // Identity-stable parsed set: KeyActionMenu re-syncs its optimistic copy
+  // when this reference changes (cache landing after mount), never otherwise.
+  const set: BehaviorSet | null = useMemo(
+    () => (single != null ? behaviorSetOf(keysByLayer[layer] ?? [], single) : null),
+    [keysByLayer, layer, single],
+  );
 
   function hidLabel(hid: number): string {
     const a = ACTIONS.find(
@@ -156,8 +160,10 @@ export default function BindingsTab({
   const px = ctx ? Math.max(8, Math.min(ctx.x, window.innerWidth - 540)) : 0;
   const py = ctx ? Math.max(8, Math.min(ctx.y, window.innerHeight - 480)) : 0;
 
-  const ctxSet =
-    ctx != null ? behaviorSetOf(keysByLayer[layer] ?? [], ctx.kk) : null;
+  const ctxSet = useMemo(
+    () => (ctx != null ? behaviorSetOf(keysByLayer[layer] ?? [], ctx.kk) : null),
+    [ctx, keysByLayer, layer],
+  );
 
   return (
     <>
