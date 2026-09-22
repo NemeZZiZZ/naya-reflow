@@ -179,9 +179,7 @@ export default function BindingsTab({
           selKks={selKks}
           onSelect={onSelect}
           dirtyKks={dirtyKks}
-          onContext={
-            !ledMode && leftOn ? (kk, x, y) => setCtx({ kk, x, y }) : undefined
-          }
+          onContext={!ledMode ? (kk, x, y) => setCtx({ kk, x, y }) : undefined}
         />
       )}
 
