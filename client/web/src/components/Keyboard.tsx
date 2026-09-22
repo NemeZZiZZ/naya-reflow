@@ -82,12 +82,15 @@ interface KeyProps {
     additive: boolean,
     allLayers: boolean,
   ) => void;
-  /** paint mode (drag): replaces click handling with pointer events */
+  /** paint mode (drag): pointer events paint; click stays as fallback */
   onPaintDown?: (kk: number) => void;
   onPaintEnter?: (kk: number) => void;
+  /** click fallback for click-only activation (a11y/automation); the parent
+   *  skips it right after a pointer paint so real clicks queue once */
+  onPaintClick?: (kk: number) => void;
 }
 
-function Key({ pos, rec, led, ledMode, selected, dirty, onSelect, onPaintDown, onPaintEnter }: KeyProps) {
+function Key({ pos, rec, led, ledMode, selected, dirty, onSelect, onPaintDown, onPaintEnter, onPaintClick }: KeyProps) {
   const kk = pos; // positionId == KK index (proven: 0=Esc/LA1, 0x30=Z/LC4 …)
   const label = rec ? shortLabel(rec) : (POS_KEY[String(pos)] ?? "");
   // action glyph for non-standard keys (currentColor => follows legend color);
@@ -160,7 +163,7 @@ function Key({ pos, rec, led, ledMode, selected, dirty, onSelect, onPaintDown, o
           }
           onClick={
             onPaintDown
-              ? undefined
+              ? (onPaintClick ? () => onPaintClick(kk) : undefined)
               : (e) => onSelect(pos, kk, e.shiftKey, e.altKey)
           }
           onPointerDown={
@@ -235,15 +238,28 @@ export default function Keyboard({
   cursorClass,
 }: KeyboardProps) {
   const paintingRef = useRef(false);
+  const lastPtrPaint = useRef(0);
   const paintDown = onPaint
     ? (kk: number) => {
         paintingRef.current = true;
+        lastPtrPaint.current = Date.now();
         onPaint(kk);
       }
     : undefined;
   const paintEnter = onPaint
     ? (kk: number) => {
-        if (paintingRef.current) onPaint(kk);
+        if (paintingRef.current) {
+          lastPtrPaint.current = Date.now();
+          onPaint(kk);
+        }
+      }
+    : undefined;
+  // click-only activation (a11y, automation): paint unless the same gesture
+  // just painted via pointerdown (real mouse clicks queue once)
+  const paintClick = onPaint
+    ? (kk: number) => {
+        if (Date.now() - lastPtrPaint.current < 400) return;
+        onPaint(kk);
       }
     : undefined;
   const endPaint = onPaint ? () => (paintingRef.current = false) : undefined;
@@ -267,6 +283,7 @@ export default function Keyboard({
       onSelect={pick}
       onPaintDown={paintDown}
       onPaintEnter={paintEnter}
+      onPaintClick={paintClick}
     />
   );
   const col = (extra: string, keys: number[]) => (
