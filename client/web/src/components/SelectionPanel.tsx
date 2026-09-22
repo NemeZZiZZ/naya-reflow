@@ -120,7 +120,9 @@ export default function SelectionPanel({
               )}
             </div>
             <p className="mt-1.5 text-xs text-muted-foreground">
-              Queues into the draft — nothing writes until Flash.
+              Queues into the draft — nothing writes until Flash. Applies on
+              the selected layer(s) only; Alt+click a key to select it on
+              every layer.
             </p>
           </div>
         )}
@@ -190,7 +192,8 @@ export default function SelectionPanel({
           </div>
           <p className="mt-1.5 text-xs text-muted-foreground">
             Factory amber ≈ H38/S100. Fill layer queues the color for all{" "}
-            {ledCount} LEDs of Layer {layer}.
+            {ledCount} LEDs of Layer {layer}. Brightness is keyboard-wide
+            (Behavior → LED), not per key.
           </p>
         </div>
       </CardContent>
