@@ -23,6 +23,7 @@ import FlashDialog from "./components/FlashDialog";
 import { TooltipProvider } from "./components/ui/tooltip";
 import { useLog } from "./hooks/useLog";
 import { usePersistentFlag } from "./hooks/usePersistentFlag";
+import { initialUrlState, useUrlSync } from "./hooks/useUrlSync";
 import { useLayers } from "./hooks/useLayers";
 import { useSessions } from "./hooks/useSessions";
 import { useAuxPolling } from "./hooks/useAuxPolling";
@@ -50,9 +51,12 @@ export default function App() {
   const [logOpen, toggleLog] = usePersistentFlag("naya-logopen", false);
 
   // --- editor state -----------------------------------------------------
-  const [tab, setTab] = useState<AppTab>("bindings");
-  const [view, setView] = useState<EditorView>("kb");
-  const [layer, setLayer] = useState(0);
+  // tab/view/layer (+ optional single selected key) start from the URL
+  // (?tab=led&layer=2&key=48 …) — shareable views, Back closes the panel.
+  const urlInit = useMemo(() => initialUrlState(), []);
+  const [tab, setTab] = useState<AppTab>(urlInit.tab);
+  const [view, setView] = useState<EditorView>(urlInit.view);
+  const [layer, setLayer] = useState(urlInit.layer);
   const [showRaw, setShowRaw] = useState(false);
   const [ledMode, setLedMode] = useState(true);
   const [pickedAction, setPickedAction] = useState<ActionDef | null>(null);
@@ -68,8 +72,16 @@ export default function App() {
   const layers = useLayers({ busyRef, log });
   const { keysByLayer, ledsByLayer, blobTotals, dumpStat, ledDumpStat } =
     layers;
-  const selection = useSelection();
+  const selection = useSelection(urlInit.selKey ? [urlInit.selKey] : []);
   const { sel, setSel } = selection;
+  useUrlSync({
+    tab,
+    view,
+    layer,
+    sel,
+    setSel,
+    clearSelection: selection.clearSelection,
+  });
   const sessions = useSessions({
     log,
     onFrame,

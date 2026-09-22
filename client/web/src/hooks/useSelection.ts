@@ -7,8 +7,8 @@ import type { SelKey } from '../lib/queue';
 
 export type { SelKey };
 
-export function useSelection() {
-  const [sel, setSel] = useState<SelKey[]>([]);
+export function useSelection(initial: SelKey[] = []) {
+  const [sel, setSel] = useState<SelKey[]>(initial);
 
   // plain click replaces, Shift+click toggles the (layer, KK) pair,
   // Alt+click toggles the KK on all three layers at once.
