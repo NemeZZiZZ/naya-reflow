@@ -898,3 +898,30 @@ Dumps: `research/dumps/left-healthy-post-recovery-20260917-064553.json`
   arithmetic without clamping (down: 0−step underflows → 100; up: 100+step
   mods to 10). User does not recall it pre-format — but the NVS is factory
   now, so this reads as a genuine firmware bug, not state corruption.
+
+### 2026-09-22: saga #2 relapse — wrap probe + second full ritual (recipe re-proven)
+- **BRT-wrap wire probe** (`toolkit/naya-brt-wrap-spike.py`, commit 8e1cd2d):
+  DEC ladder 50→10 applies, next DEC = full OFF (render PARKS in OFF —
+  ADJ_BRT 90/100 does NOT relight); no down-wrap on the wire, device clamps
+  DEC correctly. Up-wrap untestable via plain INC after park. Verdict: the
+  NayaFlow-observed wrap is host-side value arithmetic + OFF-park interplay,
+  not device render wrap; the FW underflow suspect remains for the
+  NayaFlow-internal path.
+- **Dark-saga relapse**: ff-ladders + undark + cold boot failed (light
+  ping-ponged between halves, both modules lit, both halves dark) → second
+  authorized `30/10ca` (backup first:
+  `research/dumps/left-backup-20260922-pre10ca-relapse.json`).
+- **Stock flash write-verify error is REPRODUCIBLE (2/2)** after 10ca —
+  benign for layers (layer engine comes back), consistent enough to treat
+  as part of the ritual. Only-L0-usable symptom between 10ca and stock
+  flash re-confirmed (layer-list store wiped again).
+- **Host-side gotcha (new)**: `30/1004` params MUST be `[00, layer] +
+  record`. Sending `[00] + record` (missing layer byte) makes the device
+  read KK as the layer and answer `19 KK`-shaped ACKs (status 0x19, KK
+  echo) WITHOUT applying; survives `ee/10ce` reboot. Correct prefix gets
+  the normal `00 <layer>` ACK and applies instantly.
+- **Surgical re-restore after stock flash**: same 4 L0 records overwritten
+  (1e F24→CapsLock, 2e/2f customs→plain, 30 Z hold-tap→plain; −25B), 4×
+  `00 00` ACKs, readback all 6 blocks IDENTICAL to pre-10ca backup.
+  Recipe stands: `10ca` → stock flash (ignore verify error) → surgical
+  `30/1004` customs restore.
