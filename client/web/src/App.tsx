@@ -58,7 +58,7 @@ export default function App() {
   const [view, setView] = useState<EditorView>(urlInit.view);
   const [layer, setLayer] = useState(urlInit.layer);
   const [showRaw, setShowRaw] = useState(false);
-  const [ledMode, setLedMode] = useState(true);
+  const [ledMode, setLedMode] = useState(false);
   const [panelColor, setPanelColor] = useState({ h: 180, s: 100 });
   const [tappingTerm, setTappingTerm] = useState(200);
   const [colorDlg, setColorDlg] = useState(false);
