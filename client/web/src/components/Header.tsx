@@ -1,13 +1,11 @@
-// App header: title + badges + settings/log buttons, then the app tabs.
+// App header: title + badges + log button, then the app tabs.
 import type { ReactNode } from "react";
-import { SettingsIcon, Terminal } from "lucide-react";
+import { Terminal } from "lucide-react";
 import AppTabs, { type AppTab } from "./AppTabs";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
 
 export default function Header({
-  leftOn,
-  onSettings,
   logOpen,
   onToggleLog,
   tab,
@@ -17,8 +15,6 @@ export default function Header({
   onFlashOpen,
   saveMenu,
 }: {
-  leftOn: boolean;
-  onSettings: () => void;
   logOpen: boolean;
   onToggleLog: () => void;
   tab: AppTab;
@@ -43,21 +39,11 @@ export default function Header({
         </h1>
         <Badge variant="info">React</Badge>
         <Button
-          variant="secondary"
-          size="icon"
-          title="Activity timeouts"
-          disabled={!leftOn}
-          onClick={onSettings}
-          className="ml-auto -my-1"
-        >
-          <SettingsIcon />
-          <span className="sr-only">Settings</span>
-        </Button>
-        <Button
           variant={logOpen ? "default" : "secondary"}
           size="default"
           title={logOpen ? "Hide log" : "Show log"}
           onClick={onToggleLog}
+          className="ml-auto -my-1"
         >
           <Terminal /> Log
         </Button>

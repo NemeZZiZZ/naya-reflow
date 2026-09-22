@@ -4,9 +4,9 @@
 // flavor-diff proves a wire encoding (persisted to localStorage, nothing
 // flashed). Tapping Term is an independent slider (10-1000ms) lifted to App
 // — Task 2.2's queueBehaviorSet call receives it.
-// Power: Idle/Sleep timeout sliders (0-6000s). Current values load live via
-// fe/100b on mount (left half only); Apply queues one fe/100a op with the
-// deep timeout preserved from the read.
+// Power: Idle/Sleep/Deep timeout sliders (0-6000s). Current values load live
+// via fe/100b on mount (left half only); Apply queues one fe/100a op with
+// all three values. (Replaces the old Settings dialog.)
 // LED: Max Brightness / Scan Mode / Action Override queue ED ops on change.
 // The device reports none of these back — the queue shows what will be sent.
 import { useEffect, useState } from 'react';
@@ -83,7 +83,7 @@ export default function BehaviorTab({
   const [flavor, setFlavor] = useState<FlavorId>(loadFlavor);
   const [idleS, setIdleS] = useState(FACTORY.idleMs / 1000);
   const [sleepS, setSleepS] = useState(FACTORY.sleepMs / 1000);
-  const [deepMs, setDeepMs] = useState(FACTORY.deepMs);
+  const [deepS, setDeepS] = useState(FACTORY.deepMs / 1000);
   const [liveTimeouts, setLiveTimeouts] = useState(false);
   const [maxBrt, setMaxBrt] = useState(100);
   const [scanMode, setScanMode] = useState(true);
@@ -99,7 +99,7 @@ export default function BehaviorTab({
       if (cancelled || !t) return;
       setIdleS(Math.round(t.idleMs / 1000));
       setSleepS(Math.round(t.sleepMs / 1000));
-      setDeepMs(t.deepMs);
+      setDeepS(Math.round(t.deepMs / 1000));
       setLiveTimeouts(true);
     });
     return () => {
@@ -122,11 +122,11 @@ export default function BehaviorTab({
     queueSetting(draftRef.current, {
       kind: 'settings',
       path: 'fe/100a',
-      payload: timeoutsPayload(idleS * 1000, sleepS * 1000, deepMs),
-      label: `timeouts idle ${idleS}s sleep ${sleepS}s`,
+      payload: timeoutsPayload(idleS * 1000, sleepS * 1000, deepS * 1000),
+      label: `timeouts idle ${idleS}s sleep ${sleepS}s deep ${deepS}s`,
     });
     bumpDraft();
-    log('inf', `queued timeouts idle ${idleS}s / sleep ${sleepS}s (deep preserved)`);
+    log('inf', `queued timeouts idle ${idleS}s / sleep ${sleepS}s / deep ${deepS}s`);
   }
 
   function pushMaxBrt(v: number) {
@@ -218,6 +218,18 @@ export default function BehaviorTab({
               className="w-32"
             />
             <span className="w-16 text-right text-sm">{sleepS} s</span>
+          </Row>
+          <Row label="Deep Sleep" hint={showingLive ? 'Live from the device.' : undefined}>
+            <input
+              type="range"
+              min={0}
+              max={6000}
+              step={10}
+              value={deepS}
+              onChange={(e) => setDeepS(Number(e.target.value))}
+              className="w-32"
+            />
+            <span className="w-16 text-right text-sm">{deepS} s</span>
           </Row>
           <div className="flex justify-end pt-2">
             <Button size="sm" onClick={applyTimeouts}>

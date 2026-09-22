@@ -19,7 +19,6 @@ import LogPanel from "./components/LogPanel";
 import DeviceSheet from "./components/DeviceSheet";
 import SaveMenu from "./components/SaveMenu";
 import FlashDialog from "./components/FlashDialog";
-import SettingsDialog from "./components/SettingsDialog";
 import { TooltipProvider } from "./components/ui/tooltip";
 import { useLog } from "./hooks/useLog";
 import { usePersistentFlag } from "./hooks/usePersistentFlag";
@@ -59,7 +58,6 @@ export default function App() {
   const [colorDlg, setColorDlg] = useState(false);
   const [dlgColor, setDlgColor] = useState({ h: 180, s: 100 });
   const [flashOpen, setFlashOpen] = useState(false);
-  const [settingsOpen, setSettingsOpen] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [sheetTab, setSheetTab] = useState<Side>("left");
 
@@ -299,8 +297,6 @@ export default function App() {
       <div className="flex min-h-screen">
         <div className="mx-auto max-w-6xl flex-1 p-6 min-w-80">
           <Header
-            leftOn={leftOn}
-            onSettings={() => setSettingsOpen(true)}
             logOpen={logOpen}
             onToggleLog={toggleLog}
             tab={tab}
@@ -463,12 +459,6 @@ export default function App() {
           onChanged={bumpDraft}
           busy={flashing}
           state={flashState}
-        />
-        <SettingsDialog
-          open={settingsOpen}
-          onOpenChange={setSettingsOpen}
-          left={sesRef.current.get("left")}
-          onLog={log}
         />
         <input
           ref={importRef}
