@@ -5,12 +5,18 @@
 // legends/fills come from props (paint after layer / LED dumps),
 // selection lives in the parent.
 import type { SVGProps } from "react";
-import { describeRecord, ledCss } from "../lib/naya";
+import { describeRecord, hsToHex, ledCss, toHex } from "../lib/naya";
 import { keyIconName, shortLabel } from "../lib/key-icon-map";
 import { KEY_ICONS } from "../lib/key-icons";
 import { POS_KEY, POS_SHAPE, SHAPES } from "../lib/kb-data";
 import type { KeyShape } from "../lib/kb-data";
 import { cn } from "../lib/utils";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "./ui/tooltip";
 
 export interface LedVal {
   h: number;
@@ -89,13 +95,61 @@ function Key({ pos, rec, led, ledMode, selected, dirty, onSelect }: KeyProps) {
     : ledMode && led
       ? ledCss(led.h, led.s)
       : "transparent";
+  // UHK-style hover tooltip: full action breakdown (slot lines + raw hex),
+  // in LED mode the color row leads.
+  const desc = rec ? describeRecord(rec) : null;
+  const tip = (
+    <div className="grid gap-0.5">
+      <div className="font-medium">
+        {POS_KEY[String(pos)] ?? "?"}
+        <span className="ml-2 font-normal text-muted-foreground">
+          pos {pos} · KK 0x{kk.toString(16)}
+        </span>
+      </div>
+      {ledMode && led && (
+        <div className="flex items-center gap-1.5">
+          <span
+            className="inline-block size-3 rounded-sm border border-border"
+            style={{ background: ledCss(led.h, led.s) }}
+          />
+          <span className="font-mono">{hsToHex(led.h, led.s)}</span>
+          <span className="text-muted-foreground">
+            H {led.h} · S {led.s}
+          </span>
+        </div>
+      )}
+      {desc ? (
+        desc
+          .split(" / ")
+          .map((line, i) =>
+            i === 0 && !ledMode ? (
+              <div key={i}>{line}</div>
+            ) : (
+              <div key={i} className="text-muted-foreground">
+                {line}
+              </div>
+            ),
+          )
+      ) : (
+        !ledMode && (
+          <div className="text-muted-foreground">no record — transparent</div>
+        )
+      )}
+      {rec && (
+        <div className="font-mono text-[10px] text-muted-foreground">
+          {toHex(rec)}
+        </div>
+      )}
+    </div>
+  );
   return (
-    <div
-      className="kb-key"
-      data-pos={pos}
-      title={`pos ${pos} = ${POS_KEY[String(pos)] ?? "?"} KK 0x${kk.toString(16)}${rec ? " — " + describeRecord(rec) : ""}`}
-      onClick={(e) => onSelect(pos, kk, e.shiftKey, e.altKey)}
-    >
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <div
+          className="kb-key"
+          data-pos={pos}
+          onClick={(e) => onSelect(pos, kk, e.shiftKey, e.altKey)}
+        >
       <div className="relative">
         <ShapeSvg name={POS_SHAPE[pos]} fill={fill} stroke="#E5E1E6" />
         <span
@@ -116,7 +170,10 @@ function Key({ pos, rec, led, ledMode, selected, dirty, onSelect }: KeyProps) {
           />
         )}
       </div>
-    </div>
+        </div>
+      </TooltipTrigger>
+      <TooltipContent>{tip}</TooltipContent>
+    </Tooltip>
   );
 }
 
@@ -235,18 +292,20 @@ export default function Keyboard({
   );
 
   return (
-    <div
-      className={cn(
-        "grid w-full min-w-235 grid-cols-[1fr_14rem_1fr] gap-1 select-none",
-        {
-          "opacity-50 saturate-50 cursor-default": disabled,
-          "cursor-pointer": !disabled,
-        },
-      )}
-    >
-      {halfLeft}
-      {middle}
-      {halfRight}
-    </div>
+    <TooltipProvider delayDuration={250}>
+      <div
+        className={cn(
+          "grid w-full min-w-235 grid-cols-[1fr_14rem_1fr] gap-1 select-none",
+          {
+            "opacity-50 saturate-50 cursor-default": disabled,
+            "cursor-pointer": !disabled,
+          },
+        )}
+      >
+        {halfLeft}
+        {middle}
+        {halfRight}
+      </div>
+    </TooltipProvider>
   );
 }
