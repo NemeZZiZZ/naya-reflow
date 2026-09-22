@@ -922,6 +922,47 @@ export function hexToHs(hex: string): { h: number; s: number } | null {
   return { h: Math.round(h) % 360, s: Math.round(s) };
 }
 
+// A11y helpers for colored keycaps (UHK pattern): legend ink and selection
+// ring are picked for readability against the LED fill, not hardcoded.
+// Accepts #rrggbb (hsToHex) and `hsl(h s% l%)` (ledCss) fill formats.
+export function hexLuma(fill: string): number {
+  const s = fill.trim();
+  const hsl = /^hsl\((\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)%\s+(\d+(?:\.\d+)?)%\)$/.exec(s);
+  if (hsl) {
+    const h = ((Number(hsl[1]) % 360) + 360) % 360;
+    const sat = Math.min(100, Number(hsl[2])) / 100;
+    const lig = Math.min(100, Number(hsl[3])) / 100;
+    const c = (1 - Math.abs(2 * lig - 1)) * sat;
+    const x = c * (1 - Math.abs(((h / 60) % 2) - 1));
+    let r = 0, g = 0, b = 0;
+    if (h < 60) { r = c; g = x; }
+    else if (h < 120) { r = x; g = c; }
+    else if (h < 180) { g = c; b = x; }
+    else if (h < 240) { g = x; b = c; }
+    else if (h < 300) { r = x; b = c; }
+    else { r = c; b = x; }
+    const m = lig - c / 2;
+    return 0.2126 * (r + m) + 0.7152 * (g + m) + 0.0722 * (b + m);
+  }
+  const m = /^#?([0-9a-fA-F]{6})$/.exec(s);
+  if (!m) return 0.5;
+  const v = parseInt(m[1], 16);
+  const r = ((v >> 16) & 0xff) / 255;
+  const g = ((v >> 8) & 0xff) / 255;
+  const b = (v & 0xff) / 255;
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+}
+
+/** Legend ink that stays readable over the given fill color. */
+export function readableInk(fill: string): string {
+  return hexLuma(fill) > 0.55 ? '#111315' : '#f4f4f5';
+}
+
+/** Selection ring with the max perceptual delta vs the fill. */
+export function contrastStroke(fill: string): string {
+  return hexLuma(fill) > 0.55 ? '#000000' : '#ffffff';
+}
+
 // Decoders for read-only status payloads (payload = frame body after C0C1).
 // fe/1002 live payload on stock base FW is 00 00 03 29 00 (the trailing 38
 // quoted in early notes was the frame CRC, not payload).

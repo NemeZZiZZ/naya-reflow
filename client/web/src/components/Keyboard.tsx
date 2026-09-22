@@ -5,7 +5,7 @@
 // legends/fills come from props (paint after layer / LED dumps),
 // selection lives in the parent.
 import type { SVGProps } from "react";
-import { describeRecord, hsToHex, ledCss, toHex } from "../lib/naya";
+import { contrastStroke, describeRecord, hsToHex, ledCss, readableInk, toHex } from "../lib/naya";
 import { keyIconName, shortLabel } from "../lib/key-icon-map";
 import { KEY_ICONS } from "../lib/key-icons";
 import { POS_KEY, POS_SHAPE, SHAPES } from "../lib/kb-data";
@@ -90,11 +90,12 @@ function Key({ pos, rec, led, ledMode, selected, dirty, onSelect }: KeyProps) {
   // null -> text legend fallback (letters, digits, Shift, Menu, F-keys …)
   const iconName = rec ? keyIconName(describeRecord(rec)) : null;
   const icon = iconName ? KEY_ICONS[iconName] : undefined;
-  const fill = selected
-    ? "#ffffff"
-    : ledMode && led
-      ? ledCss(led.h, led.s)
-      : "transparent";
+  // LED fills get readability-driven ink + (when selected) a max-delta ring
+  // instead of the hardcoded white-fill selection (UHK a11y pattern).
+  const ledFill = ledMode && led ? ledCss(led.h, led.s) : null;
+  const fill = ledFill ?? (selected ? "#ffffff" : "transparent");
+  const ink = ledFill ? readableInk(ledFill) : null;
+  const stroke = ledFill && selected ? contrastStroke(ledFill) : "#E5E1E6";
   // UHK-style hover tooltip: full action breakdown (slot lines + raw hex),
   // in LED mode the color row leads.
   const desc = rec ? describeRecord(rec) : null;
@@ -148,19 +149,25 @@ function Key({ pos, rec, led, ledMode, selected, dirty, onSelect }: KeyProps) {
         <div
           className="kb-key"
           data-pos={pos}
+          style={
+            selected && ledFill
+              ? { outline: `2px solid ${contrastStroke(ledFill)}`, outlineOffset: 1 }
+              : undefined
+          }
           onClick={(e) => onSelect(pos, kk, e.shiftKey, e.altKey)}
         >
       <div className="relative">
-        <ShapeSvg name={POS_SHAPE[pos]} fill={fill} stroke="#E5E1E6" />
+        <ShapeSvg name={POS_SHAPE[pos]} fill={fill} stroke={stroke} />
         <span
           className={cn(
             "absolute text-sm left-1/2 top-1/2 -translate-1/2 font-medium whitespace-nowrap [&_svg]:block [&_svg]:size-8",
-            {
+            !ink && {
               "text-gray-900": selected,
               "text-gray-100 text-shadow-[-1px_-1px_0_rgba(0,0,0,.5),1px_-1px_0_rgba(0,0,0,.5),-1px_1px_0_rgba(0,0,0,.5),1px_1px_0_rgba(0,0,0,.5)]":
                 !selected,
             },
           )}
+          style={ink ? { color: ink } : undefined}
           dangerouslySetInnerHTML={{ __html: icon ? icon : label }}
         />
         {dirty && (

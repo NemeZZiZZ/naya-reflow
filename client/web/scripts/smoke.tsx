@@ -5,6 +5,7 @@ import {
   describeRecord, ledCss, fwVersionText, NayaSession, FrameReader,
   modPresence, modFwText, modRailMv, modPct, batteryMv, batteryPctRough,
   sideFromUsbInfo, hsToHex, hexToHs, isWriteAck,
+  hexLuma, readableInk, contrastStroke,
 } from '../src/lib/naya';
 import {
   POS_KEY, POS_SHAPE, SHAPES,
@@ -1017,5 +1018,23 @@ import { queueAction } from '../src/lib/queue';
     '28 pkg naya.snapshotVersion === SNAPSHOT_VERSION',
   );
   eq(typeof pkg.version, 'string', '28 pkg version present');
+}
+
+// §29 keycap contrast helpers (UHK #9): ink/ring picked by fill luminance.
+{
+  const near = (a: number, b: number) => Math.abs(a - b) < 1e-9;
+  eq(near(hexLuma('#ffffff'), 1), true, '29 white luma 1');
+  eq(near(hexLuma('#000000'), 0), true, '29 black luma 0');
+  eq(hexLuma('#ffff00') > 0.55, true, '29 yellow is bright');
+  eq(hexLuma('#0000ff') < 0.55, true, '29 blue is dark');
+  eq(readableInk('#ffff00'), '#111315', '29 bright fill -> dark ink');
+  eq(readableInk('#0000ff'), '#f4f4f5', '29 dark fill -> light ink');
+  eq(contrastStroke('#ff0000'), '#ffffff', '29 dark red -> white ring');
+  eq(contrastStroke('#00ff00'), '#000000', '29 bright green -> black ring');
+  eq(hexLuma('nonsense'), 0.5, '29 invalid hex -> neutral');
+  // full path: ledCss colors flow through the helpers (S0 renders mid-gray
+  // at L=50, so light ink; saturated blue stays dark -> light ink too)
+  eq(readableInk(ledCss(0, 0)), '#f4f4f5', '29 ledCss mid-gray -> light ink');
+  eq(readableInk(ledCss(60, 100)), '#111315', '29 ledCss yellow -> dark ink');
 }
 void main();
