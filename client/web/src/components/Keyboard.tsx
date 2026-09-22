@@ -86,11 +86,13 @@ interface KeyProps {
   onPaintDown?: (kk: number) => void;
   onPaintEnter?: (kk: number) => void;
   /** click fallback for click-only activation (a11y/automation); the parent
-   *  skips it right after a pointer paint so real clicks queue once */
+    *  skips it right after a pointer paint so real clicks queue once */
   onPaintClick?: (kk: number) => void;
+  /** keymap-mode right click: open the config popover anchored here */
+  onContext?: (kk: number, x: number, y: number) => void;
 }
 
-function Key({ pos, rec, led, ledMode, selected, dirty, onSelect, onPaintDown, onPaintEnter, onPaintClick }: KeyProps) {
+function Key({ pos, rec, led, ledMode, selected, dirty, onSelect, onPaintDown, onPaintEnter, onPaintClick, onContext }: KeyProps) {
   const kk = pos; // positionId == KK index (proven: 0=Esc/LA1, 0x30=Z/LC4 …)
   const label = rec ? shortLabel(rec) : (POS_KEY[String(pos)] ?? "");
   // action glyph for non-standard keys (currentColor => follows legend color);
@@ -175,6 +177,14 @@ function Key({ pos, rec, led, ledMode, selected, dirty, onSelect, onPaintDown, o
               : undefined
           }
           onPointerEnter={onPaintEnter ? () => onPaintEnter(kk) : undefined}
+          onContextMenu={
+            onContext
+              ? (e) => {
+                  e.preventDefault();
+                  onContext(kk, e.clientX, e.clientY);
+                }
+              : undefined
+          }
         >
       <div className="relative">
         <ShapeSvg name={POS_SHAPE[pos]} fill={fill} stroke={stroke} />
@@ -224,6 +234,8 @@ interface KeyboardProps {
   onPaint?: (kk: number) => void;
   /** cursor override for paint tools (e.g. "cursor-crosshair") */
   cursorClass?: string;
+  /** keymap-mode right click on a key: (kk, viewport x, viewport y) */
+  onContext?: (kk: number, x: number, y: number) => void;
 }
 
 export default function Keyboard({
@@ -236,6 +248,7 @@ export default function Keyboard({
   dirty,
   onPaint,
   cursorClass,
+  onContext,
 }: KeyboardProps) {
   const paintingRef = useRef(false);
   const lastPtrPaint = useRef(0);
@@ -284,6 +297,7 @@ export default function Keyboard({
       onPaintDown={paintDown}
       onPaintEnter={paintEnter}
       onPaintClick={paintClick}
+      onContext={onPaint ? undefined : onContext}
     />
   );
   const col = (extra: string, keys: number[]) => (

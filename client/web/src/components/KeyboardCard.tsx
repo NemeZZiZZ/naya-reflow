@@ -26,6 +26,7 @@ export default function KeyboardCard({
   selKks,
   onSelect,
   dirtyKks,
+  onContext,
 }: {
   view: EditorView;
   onView: (v: EditorView) => void;
@@ -43,6 +44,7 @@ export default function KeyboardCard({
   selKks: Set<number>;
   onSelect: (pos: number, kk: number, additive: boolean, allLayers: boolean) => void;
   dirtyKks: Set<number>;
+  onContext?: (kk: number, x: number, y: number) => void;
 }) {
   return (
     <Card className="mb-3">
@@ -83,12 +85,13 @@ export default function KeyboardCard({
               onSelect={onSelect}
               disabled={!leftOn}
               dirty={dirtyKks}
+              onContext={onContext}
             />
           </div>
         </div>
         <p className="mt-2 text-xs text-muted-foreground">
           {leftOn
-            ? "Click a key to select it, Shift+click for multi-select, Alt+click selects the key on all layers. Assign an action and/or a color in the panel below — changes queue up, nothing writes until Flash."
+            ? "Click a key to select it, Shift+click for multi-select, Alt+click selects the key on all layers. Right-click a key to configure it in place — or use the panel below. Changes queue up, nothing writes until Flash."
             : "Connect the LEFT half — legends and colors load automatically."}
         </p>
       </CardContent>

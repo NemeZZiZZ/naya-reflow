@@ -1,25 +1,20 @@
-// Bindings tab: today's editor bundle, moved here unchanged — keyboard and
-// layout views plus the selection panel. Phase 2 adds the 4-slot behavior
-// editor (right column, single-key selection): editing any behavior rewrites
-// the whole T10/T03 set via a keyset op.
-import { useState, type RefObject } from "react";
-import { toast } from "sonner";
+// Bindings tab: keyboard and layout views plus the selection panel. Key
+// config lives in the reusable KeyActionMenu — embedded in the bottom
+// panel for selections and in a right-click context popover for in-place
+// editing. Editing any behavior rewrites the whole T10/T03 set via a
+// keyset op.
+import { useEffect, useRef, useState } from "react";
 import KeyboardCard from "../KeyboardCard";
+import KeyActionMenu from "../KeyActionMenu";
 import LayoutTable, { type MergedRow } from "../LayoutTable";
 import SelectionPanel from "../SelectionPanel";
-import ActionPalette from "../ActionPalette";
-import BehaviorRows from "../BehaviorRows";
 import { ACTIONS, buildRecord, type ActionDef } from "../../lib/actions";
-import {
-  behaviorSetOf,
-  cascadeClear,
-  hidPairOf,
-  withSlot,
-  type BehaviorSet,
-  type Slot,
-} from "../../lib/t10";
+import { behaviorSetOf, hidPairOf, type BehaviorSet, type Slot } from "../../lib/t10";
+import { POS_KEY } from "../../lib/kb-data";
 import { shortLabel } from "../../lib/key-icon-map";
 import type { KeyRec } from "../../lib/naya";
+import { hex2 } from "../../lib/utils";
+import { X } from "lucide-react";
 import type { HsColor } from "../../hooks/useCustomColors";
 import type { SelKey } from "../../lib/queue";
 import type { EditorView } from "../ViewLayerTabs";
@@ -51,9 +46,7 @@ export default function BindingsTab({
   onClear,
   toggleKk,
   toggleAllRowKks,
-  pickedAction,
-  onPickAction,
-  onQueueAction,
+  onQueueActionFor,
   keysByLayer,
   onQueueBehaviorSet,
   panelColor,
@@ -73,8 +66,8 @@ export default function BindingsTab({
   onDump: () => void;
   ledMode: boolean;
   onLedMode: (v: boolean) => void;
-  kbBoxRef: RefObject<HTMLDivElement | null>;
-  kbStageRef: RefObject<HTMLDivElement | null>;
+  kbBoxRef: React.RefObject<HTMLDivElement | null>;
+  kbStageRef: React.RefObject<HTMLDivElement | null>;
   kbScale: number;
   keymap: Map<number, Uint8Array>;
   ledmap: Map<number, { h: number; s: number }>;
@@ -96,9 +89,7 @@ export default function BindingsTab({
   onClear: () => void;
   toggleKk: (layer: number, kk: number) => void;
   toggleAllRowKks: (layer: number, kks: number[]) => void;
-  pickedAction: ActionDef | null;
-  onPickAction: (a: ActionDef | null) => void;
-  onQueueAction: () => void;
+  onQueueActionFor: (selKeys: SelKey[], a: ActionDef) => void;
   keysByLayer: KeyRec[][];
   onQueueBehaviorSet: (
     layer: number,
@@ -116,25 +107,17 @@ export default function BindingsTab({
   onFillLayer: () => void;
   ledCount: number;
 }) {
-  // 4-slot behavior editor: single-key selection on the viewed layer with a
-  // key-family record (plain / T03 / T10). Null for layer switches, specials,
-  // or an empty layer cache.
-  const [slot, setSlot] = useState<Slot | null>(null);
+  // Right-click context popover target (keymap mode only; LED paint mode
+  // keeps its own pointer semantics).
+  const [ctx, setCtx] = useState<{ kk: number; x: number; y: number } | null>(
+    null,
+  );
+  const popRef = useRef<HTMLDivElement | null>(null);
+
   const single =
     sel.length === 1 && sel[0].layer === layer ? sel[0].kk : null;
   const set: BehaviorSet | null =
     single != null ? behaviorSetOf(keysByLayer[layer] ?? [], single) : null;
-
-  // Any selection/layer change drops the open palette row (slot state is
-  // per-key — keeping it across keys would queue to the wrong target).
-  function handleSelect(_pos: number, kk: number, add: boolean, all: boolean) {
-    setSlot(null);
-    onSelect(layer, kk, add, all);
-  }
-  function handleLayer(l: number) {
-    setSlot(null);
-    onLayer(l);
-  }
 
   function hidLabel(hid: number): string {
     const a = ACTIONS.find(
@@ -144,123 +127,62 @@ export default function BindingsTab({
     return shortLabel(buildRecord(0, a.body())) || a.label;
   }
 
-  // T10 triples carry no MODMASK — Hold/Double/TapHold (and Tap on a
-  // multi-key) are HID-only. Tap on a plain key falls back to the normal
-  // action queue (modifiers allowed there).
-  const hidOnly = (a: ActionDef) =>
-    hidPairOf(buildRecord(0, a.body())) != null;
-
-  function pickForSlot(a: ActionDef) {
-    if (slot == null || single == null || set == null) return;
-    if (
-      slot === "tap" &&
-      set.hold == null &&
-      set.double == null &&
-      set.taphold == null
-    ) {
-      onPickAction(a);
-      onQueueAction();
-      setSlot(null);
-      return;
-    }
-    const hid = hidPairOf(buildRecord(0, a.body()))?.hid;
-    if (hid == null) {
-      toast.error("behavior slots need a plain keyboard key (no modifiers)");
-      return;
-    }
-    onQueueBehaviorSet(layer, single, withSlot(set, slot, hid), `${slot} → ${a.label}`);
-    setSlot(null);
+  function wholeLabelOf(kk: number): string {
+    const rec = keymap.get(kk);
+    return rec
+      ? shortLabel(rec) || POS_KEY[String(kk)] || hex2(kk)
+      : "no record — transparent";
   }
 
-  function pickPlain(a: ActionDef) {
-    onPickAction(a);
-    onQueueAction();
-  }
+  // Outside-click / Escape closes the context popover.
+  useEffect(() => {
+    if (!ctx) return;
+    const close = (e: PointerEvent) => {
+      if (popRef.current && !popRef.current.contains(e.target as Node))
+        setCtx(null);
+    };
+    const esc = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setCtx(null);
+    };
+    window.addEventListener("pointerdown", close);
+    window.addEventListener("keydown", esc);
+    return () => {
+      window.removeEventListener("pointerdown", close);
+      window.removeEventListener("keydown", esc);
+    };
+  }, [ctx]);
 
-  function clearSlot(s: Slot) {
-    if (single == null || set == null) return;
-    if (
-      s === "tap" &&
-      (set.hold != null || set.double != null || set.taphold != null)
-    ) {
-      toast.error("behavior chain: Tap is required first");
-      return;
-    }
-    // Wire chain: clearing a slot cascades to the dependents it anchors
-    // (hold ← double ← taphold) — they cannot exist alone on the wire.
-    const { set: next, dropped } = cascadeClear(set, s);
-    // Downgrades (e.g. clearing Hold) may need shadow cleanup — pass the
-    // current layer cache so behaviorSetOps can see the stale T10 shadow.
-    onQueueBehaviorSet(
-      layer, single, next,
-      dropped.length ? `clear ${s} (+ ${dropped.join(", ")})` : `clear ${s}`,
-      keysByLayer[layer],
-    );
-    if (dropped.length)
-      toast.info(`cleared ${dropped.join(" + ")} too — the wire chain needs ${s} first`);
-  }
+  // Popover placement clamped to the viewport.
+  const px = ctx ? Math.max(8, Math.min(ctx.x, window.innerWidth - 540)) : 0;
+  const py = ctx ? Math.max(8, Math.min(ctx.y, window.innerHeight - 480)) : 0;
 
-  const editor =
-    view === "kb" && set != null ? (
-      <div className="w-80 shrink-0 flex flex-col gap-2 rounded-lg border border-border p-3">
-        <div className="text-xs font-medium text-muted-foreground">
-          Behaviors — KK {single} (0x{(single ?? 0).toString(16)})
-        </div>
-        <BehaviorRows
-          set={set}
-          activeSlot={slot}
-          onSlot={setSlot}
-          onClear={clearSlot}
-          hidLabel={hidLabel}
-        />
-        <div className="text-[11px] leading-snug text-muted-foreground">
-          Chain rule (wire format): Hold needs Tap, Double Tap needs Hold,
-          Tap+Hold needs Double Tap. Clearing a slot also clears the slots
-          that depend on it; clearing back to Tap only rewrites the key as a
-          plain binding.
-        </div>
-        {/* Single palette rule: with the editor visible the bottom panel
-            hides its palette — plain picks land here when no slot is
-            active, slot-filtered picks when one is. */}
-        <div className="text-[11px] font-medium text-muted-foreground">
-          {slot == null
-            ? "Assign action — becomes this key's binding"
-            : `Pick action for “${slot}”`}
-        </div>
-        <ActionPalette
-          onPick={slot == null ? pickPlain : pickForSlot}
-          pickedId={slot == null ? (pickedAction?.id ?? null) : undefined}
-          filter={slot != null && slot !== "tap" ? hidOnly : undefined}
-        />
-      </div>
-    ) : null;
+  const ctxSet =
+    ctx != null ? behaviorSetOf(keysByLayer[layer] ?? [], ctx.kk) : null;
 
   return (
     <>
       {view === "kb" && (
-        <div className="flex gap-4 items-start">
-          <div className="flex-1 min-w-0">
-            <KeyboardCard
-              view={view}
-              onView={onView}
-              layer={layer}
-              onLayer={handleLayer}
-              leftOn={leftOn}
-              onDump={onDump}
-              ledMode={ledMode}
-              onLedMode={onLedMode}
-              kbBoxRef={kbBoxRef}
-              kbStageRef={kbStageRef}
-              kbScale={kbScale}
-              keymap={keymap}
-              ledmap={ledmap}
-              selKks={selKks}
-              onSelect={handleSelect}
-              dirtyKks={dirtyKks}
-            />
-          </div>
-          {editor}
-        </div>
+        <KeyboardCard
+          view={view}
+          onView={onView}
+          layer={layer}
+          onLayer={onLayer}
+          leftOn={leftOn}
+          onDump={onDump}
+          ledMode={ledMode}
+          onLedMode={onLedMode}
+          kbBoxRef={kbBoxRef}
+          kbStageRef={kbStageRef}
+          kbScale={kbScale}
+          keymap={keymap}
+          ledmap={ledmap}
+          selKks={selKks}
+          onSelect={onSelect}
+          dirtyKks={dirtyKks}
+          onContext={
+            !ledMode && leftOn ? (kk, x, y) => setCtx({ kk, x, y }) : undefined
+          }
+        />
       )}
 
       {view === "table" && (
@@ -268,7 +190,7 @@ export default function BindingsTab({
           view={view}
           onView={onView}
           layer={layer}
-          onLayer={handleLayer}
+          onLayer={onLayer}
           leftOn={leftOn}
           onDump={onDump}
           showRaw={showRaw}
@@ -284,13 +206,39 @@ export default function BindingsTab({
 
       {sel.length > 0 && (
         <SelectionPanel
-          assignHidden={view === "kb" && set != null}
           sel={sel}
+          actionMenu={
+            <KeyActionMenu
+              key={single != null ? `single-${layer}-${single}` : "multi"}
+              set={set}
+              wholeLabel={single != null ? wholeLabelOf(single) : "—"}
+              count={sel.length}
+              hidLabel={hidLabel}
+              onPickPlain={(a) => onQueueActionFor(sel, a)}
+              onPickSlot={(slot: Slot, a: ActionDef, next: BehaviorSet) =>
+                single != null &&
+                onQueueBehaviorSet(layer, single, next, `${slot} → ${a.label}`)
+              }
+              onClearSlot={(
+                slot: Slot,
+                next: BehaviorSet,
+                dropped: string[],
+              ) =>
+                single != null &&
+                onQueueBehaviorSet(
+                  layer,
+                  single,
+                  next,
+                  dropped.length
+                    ? `clear ${slot} (+ ${dropped.join(", ")})`
+                    : `clear ${slot}`,
+                  keysByLayer[layer],
+                )
+              }
+            />
+          }
           onRemovePair={onRemovePair}
           onClear={onClear}
-          pickedAction={pickedAction}
-          onPickAction={onPickAction}
-          onQueueAction={onQueueAction}
           panelColor={panelColor}
           onPanelColor={onPanelColor}
           customColors={customColors}
@@ -301,6 +249,57 @@ export default function BindingsTab({
           ledCount={ledCount}
           layer={layer}
         />
+      )}
+
+      {ctx != null && (
+        <div
+          ref={popRef}
+          className="fixed z-50 w-[32rem] rounded-lg border border-border bg-card p-3 shadow-lg"
+          style={{ left: px, top: py }}
+        >
+          <div className="mb-2 flex items-center gap-2">
+            <div className="text-xs font-medium text-muted-foreground">
+              {POS_KEY[String(ctx.kk)] ?? hex2(ctx.kk)} · KK 0x
+              {ctx.kk.toString(16)} · L{layer}
+            </div>
+            <button
+              type="button"
+              className="ml-auto rounded p-0.5 text-muted-foreground hover:text-foreground"
+              title="Close"
+              onClick={() => setCtx(null)}
+            >
+              <X className="size-4" />
+            </button>
+          </div>
+          <KeyActionMenu
+            key={`ctx-${layer}-${ctx.kk}`}
+            set={ctxSet}
+            wholeLabel={wholeLabelOf(ctx.kk)}
+            count={1}
+            hidLabel={hidLabel}
+            onPickPlain={(a) => onQueueActionFor([{ layer, kk: ctx.kk }], a)}
+            onPickSlot={(slot: Slot, a: ActionDef, next: BehaviorSet) =>
+              onQueueBehaviorSet(
+                layer,
+                ctx.kk,
+                next,
+                `${slot} → ${a.label}`,
+                keysByLayer[layer],
+              )
+            }
+            onClearSlot={(slot: Slot, next: BehaviorSet, dropped: string[]) =>
+              onQueueBehaviorSet(
+                layer,
+                ctx.kk,
+                next,
+                dropped.length
+                  ? `clear ${slot} (+ ${dropped.join(", ")})`
+                  : `clear ${slot}`,
+                keysByLayer[layer],
+              )
+            }
+          />
+        </div>
       )}
     </>
   );

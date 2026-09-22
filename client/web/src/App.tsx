@@ -32,7 +32,7 @@ import { useDraft } from "./hooks/useDraft";
 import { useFlash } from "./hooks/useFlash";
 import { useCustomColors } from "./hooks/useCustomColors";
 import { useKbFit } from "./hooks/useKbFit";
-import { queueAction, queueBehaviorSet, queueColor, queueFillLayer } from "./lib/queue";
+import { queueAction, queueBehaviorSet, queueColor, queueFillLayer, type SelKey } from "./lib/queue";
 import { buildKeymapExport, buildLedmapExport, saveJson } from "./lib/exporters";
 import { diffSnapshotToDraft, parseSnapshotFile } from "./lib/importers";
 import type { SnapMaps } from "./lib/importers";
@@ -59,7 +59,6 @@ export default function App() {
   const [layer, setLayer] = useState(urlInit.layer);
   const [showRaw, setShowRaw] = useState(false);
   const [ledMode, setLedMode] = useState(true);
-  const [pickedAction, setPickedAction] = useState<ActionDef | null>(null);
   const [panelColor, setPanelColor] = useState({ h: 180, s: 100 });
   const [tappingTerm, setTappingTerm] = useState(200);
   const [colorDlg, setColorDlg] = useState(false);
@@ -265,16 +264,10 @@ export default function App() {
     }
   }
 
-  function queueActionForSelection() {
-    if (!pickedAction) return;
-    const { queued } = queueAction(
-      draftRef.current,
-      sel,
-      pickedAction,
-      keysByLayer,
-    );
+  function queueActionFor(selKeys: SelKey[], a: ActionDef) {
+    const { queued } = queueAction(draftRef.current, selKeys, a, keysByLayer);
     bumpDraft();
-    log("inf", `queued action '${pickedAction.label}' for ${queued} key(s)`);
+    log("inf", `queued action '${a.label}' for ${queued} key(s)`);
   }
 
   function queueBehaviorSetForKey(
@@ -394,9 +387,7 @@ export default function App() {
               onClear={() => setSel([])}
               toggleKk={selection.toggleKk}
               toggleAllRowKks={selection.toggleAllRowKks}
-              pickedAction={pickedAction}
-              onPickAction={setPickedAction}
-              onQueueAction={queueActionForSelection}
+              onQueueActionFor={queueActionFor}
               keysByLayer={keysByLayer}
               onQueueBehaviorSet={queueBehaviorSetForKey}
               panelColor={panelColor}
