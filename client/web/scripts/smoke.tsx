@@ -30,6 +30,7 @@ import {
 } from '../src/lib/backups';
 import type { StorageLike } from '../src/lib/backups';
 import { TROUBLES, UNDARK_LADDER, assertWireAllowed } from '../src/lib/troubleshooting';
+import { customHidAction, groupKeyboardCategory, parseCustomHid } from '../src/lib/palette-groups';
 import { buildKeymapExport, buildLedmapExport } from '../src/lib/exporters';
 import { migrateSnapshot } from '../src/lib/importers';
 import { SNAPSHOT_VERSION } from '../src/lib/utils';
@@ -1116,4 +1117,37 @@ import { queueAction } from '../src/lib/queue';
   eq(throws(() => assertWireAllowed(0xfe, 0x10, 0x0a)), false, '30 guard allows fe/100a');
   eq(throws(() => assertWireAllowed(0x30, 0x10, 0x04)), false, '30 guard allows 30/1004');
 }
+
+// §31 palette physical rows + custom HID escape hatch (UHK #7)
+{
+  const kb = ACTIONS.filter((a) => a.category === 'Keyboard');
+  const g = groupKeyboardCategory(kb);
+  eq(g.rows[0].map((a) => a.label).join(''), '1234567890', '31 digits row order');
+  eq(g.rows[1].map((a) => a.label).join(''), 'QWERTYUIOP', '31 letters row 1');
+  eq(g.rows[2].map((a) => a.label).join(''), 'ASDFGHJKL', '31 letters row 2');
+  eq(g.rows[3].map((a) => a.label).join(''), 'ZXCVBNM', '31 letters row 3');
+  eq(g.rows.length, 15, `31 row count (${g.rows.length})`);
+  eq(g.rest.length, 0, `31 rest empty (got: ${g.rest.map((a) => a.label).join(',')})`);
+  const flat = [...g.rows.flat(), ...g.rest];
+  eq(flat.length, kb.length, `31 partition covers all (${flat.length}/${kb.length})`);
+  eq(new Set(flat.map((a) => a.id)).size, flat.length, '31 partition no dup ids');
+  eq(parseCustomHid('4f'), 0x4f, '31 parse 4f');
+  eq(parseCustomHid('0x1E'), 0x1e, '31 parse 0x1E');
+  eq(parseCustomHid(''), null, '31 parse empty null');
+  eq(parseCustomHid('zz'), null, '31 parse non-hex null');
+  eq(parseCustomHid('1f2'), null, '31 parse 3-digit null');
+  const c = customHidAction(0x39);
+  eq(c.id, 'hid-custom:57', `31 custom id (${c.id})`);
+  eq(
+    JSON.stringify(c.body()),
+    JSON.stringify([1, 4, 0x39, 0, 7, 0]),
+    '31 custom body = hid() bytes',
+  );
+  eq(
+    c.body().join(),
+    ACTIONS.find((a) => a.label === 'Caps Lock')!.body().join(),
+    '31 custom 0x39 == Caps Lock bytes',
+  );
+}
+
 void main();
