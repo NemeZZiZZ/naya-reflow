@@ -29,7 +29,7 @@ import {
   hashStr,
 } from '../src/lib/backups';
 import type { StorageLike } from '../src/lib/backups';
-import { TROUBLES, UNDARK_LADDER, type TroubleAction } from '../src/lib/troubleshooting';
+import { TROUBLES, UNDARK_LADDER, assertWireAllowed } from '../src/lib/troubleshooting';
 import { buildKeymapExport, buildLedmapExport } from '../src/lib/exporters';
 import { migrateSnapshot } from '../src/lib/importers';
 import { SNAPSHOT_VERSION } from '../src/lib/utils';
@@ -1039,17 +1039,16 @@ import { queueAction } from '../src/lib/queue';
   eq(readableInk(ledCss(60, 100)), '#111315', '29 ledCss yellow -> dark ink');
 }
 
-// §30 troubleshooting recipes: entries sane + undark ladder wire-exact.
+// §30 troubleshooting recipes: entries sane, plugin shape, wire-guarded.
 {
-  const KINDS = new Set<TroubleAction['kind']>([
-    'undark-left',
-    'undark-right',
-    'maxbrt-100',
-    'scanmode-1',
-    'reboot',
-    'redump',
-    'refresh-aux',
-  ]);
+  const throws = (fn: () => unknown) => {
+    try {
+      fn();
+      return false;
+    } catch {
+      return true;
+    }
+  };
   eq(TROUBLES.length >= 10, true, '30 at least 10 entries');
   eq(
     new Set(TROUBLES.map((t) => t.id)).size === TROUBLES.length,
@@ -1067,37 +1066,54 @@ import { queueAction } from '../src/lib/queue';
     true,
     '30 every entry has title/summary/details/steps',
   );
+  // plugin shape: side valid, label set, steps XOR run, declarative steps
+  // wire-guarded, right-side ladders confirmed (parking incident 2026-09-22)
   eq(
     TROUBLES.every(
       (t) =>
         !t.actions ||
         t.actions.every(
           (a) =>
-            KINDS.has(a.kind) &&
+            (a.side === 'left' || a.side === 'right' || a.side === 'any') &&
             a.label.length > 0 &&
-            // right-side ladders need a confirm (parking incident 2026-09-22)
+            (a.steps ? !a.run : !!a.run) &&
+            (!a.steps ||
+              a.steps.every((st) => !throws(() => assertWireAllowed(st.t, st.c0, st.c1)))) &&
             (a.side !== 'right' || !!a.confirm),
         ),
     ),
     true,
-    '30 action kinds whitelisted + right side confirmed',
+    '30 actions shaped + wire-allowed + right side confirmed',
   );
+  const dark = TROUBLES.find((t) => t.id === 'dark-half');
+  const undarkLeft = dark?.actions?.find((a) => a.label.includes('LEFT'));
+  eq(!!undarkLeft?.steps && undarkLeft.steps.length === 9, true, '30 dark-half LEFT ladder 9 steps');
   eq(
-    TROUBLES.some((t) => t.actions?.some((a) => a.kind === 'undark-left')),
-    true,
-    '30 undark-left offered',
-  );
-  // ladder = naya-undark.py wire sequence, verbatim
-  eq(UNDARK_LADDER.length, 9, '30 ladder 9 steps');
-  eq(
-    UNDARK_LADDER.map((s) => s.c1).join(','),
+    undarkLeft?.steps?.map((s) => s.c1).join(',') ??
+      '',
     [0x13, 0x10, 0x03, 0x12, 0x14, 0x50, 0x08, 0x11, 0x03].join(','),
-    '30 ladder c1 sequence',
+    '30 dark-half c1 sequence (naya-undark.py verbatim)',
   );
   eq(
-    JSON.stringify(UNDARK_LADDER.find((s) => s.c1 === 0x50)?.val),
-    JSON.stringify([255, 255, 255, 100]),
-    '30 ladder RGB step',
+    JSON.stringify(undarkLeft?.steps?.find((s) => s.c1 === 0x50)?.params),
+    JSON.stringify([0xff, 255, 255, 255, 100]),
+    '30 dark-half RGB step params (0xff target + RGB,100)',
   );
+  eq(
+    undarkLeft?.steps?.every((s) => s.tolerateNoReply === true) ?? false,
+    true,
+    '30 dark-half steps tolerate no-reply',
+  );
+  eq(UNDARK_LADDER.length, 9, '30 ladder 9 steps');
+  // runtime guard: banned verbs blocked, proven-safe ones allowed
+  eq(throws(() => assertWireAllowed(0xfa, 0x10, 0x02)), true, '30 guard blocks fa/1002');
+  eq(throws(() => assertWireAllowed(0xfa, 0x10, 0x06)), true, '30 guard blocks fa/1006');
+  eq(throws(() => assertWireAllowed(0xee, 0x10, 0xbe)), true, '30 guard blocks ee/10be');
+  eq(throws(() => assertWireAllowed(0xee, 0x10, 0xae)), true, '30 guard blocks ee/10ae');
+  eq(throws(() => assertWireAllowed(0x30, 0x10, 0xca)), true, '30 guard blocks 30/10ca');
+  eq(throws(() => assertWireAllowed(0xed, 0x10, 0x13)), false, '30 guard allows ed/1013');
+  eq(throws(() => assertWireAllowed(0xee, 0x10, 0xce)), false, '30 guard allows ee/10ce');
+  eq(throws(() => assertWireAllowed(0xfe, 0x10, 0x0a)), false, '30 guard allows fe/100a');
+  eq(throws(() => assertWireAllowed(0x30, 0x10, 0x04)), false, '30 guard allows 30/1004');
 }
 void main();

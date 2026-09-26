@@ -40,7 +40,11 @@ import type { SnapMaps } from "./lib/importers";
 import { listAutoBackups, loadAutoBackup } from "./lib/backups";
 import type { ActionDef } from "./lib/actions";
 import type { BehaviorSet } from "./lib/t10";
-import { UNDARK_LADDER, type TroubleAction } from "./lib/troubleshooting";
+import {
+  assertWireAllowed,
+  type TroubleAction,
+  type TroubleCtx,
+} from "./lib/troubleshooting";
 import type { KeyRec, LedRec, Side } from "./lib/naya";
 import { timeoutsMs } from "./lib/naya";
 import type { EditorView } from "./components/ViewLayerTabs";
@@ -208,72 +212,72 @@ export default function App() {
     if (a.confirm && !window.confirm(a.confirm)) return;
     const appSide: Side | null =
       a.side === "left" || a.side === "right" ? a.side : null;
-    if (appSide) {
-      const ses = sesRef.current.get(appSide);
-      if (!ses) {
-        toast.error(`Connect the ${appSide} half first`);
-        return;
-      }
+    const ses = appSide ? sesRef.current.get(appSide) : null;
+    if (appSide && !ses) {
+      toast.error(`Connect the ${appSide} half first`);
+      return;
     }
-    if (a.kind !== "refresh-aux" && busyRef.current) {
+    if (a.steps && busyRef.current) {
       toast.error("Device busy (flash or dump in flight) — try again after");
       return;
     }
-    setTroubleRun(a.kind);
-    try {
-      const ses = appSide ? sesRef.current.get(appSide)! : null;
-      switch (a.kind) {
-        case "undark-left":
-        case "undark-right": {
-          busyRef.current = true;
-          let okCount = 0;
-          for (const st of UNDARK_LADDER) {
-            try {
-              await ses!.cmd(0xed, 0x10, st.c1, Uint8Array.from([0xff, ...st.val]));
-              okCount++;
-              log("cdc", `undark ${st.label}: ACK`);
-            } catch {
-              log("err", `undark ${st.label}: no reply`);
-            }
-            await new Promise((r) => setTimeout(r, 350));
-          }
-          busyRef.current = false;
-          toast.success(
-            `Undark ladder: ${okCount}/${UNDARK_LADDER.length} ACKed — watch the board`,
-          );
-          log("inf", `undark ${a.side}: ${okCount}/${UNDARK_LADDER.length} ACKed`);
-          break;
+    setTroubleRun(a.label);
+    const ctx: TroubleCtx = {
+      send: async (t, c0, c1, params) => {
+        assertWireAllowed(t, c0, c1);
+        await ses!.cmd(t, c0, c1, Uint8Array.from(params ?? []));
+      },
+      confirm: (m) => window.confirm(m),
+      toast:
+        (m, kind = "info") =>
+          kind === "success"
+            ? toast.success(m)
+            : kind === "error"
+              ? toast.error(m)
+              : toast.info(m),
+      log,
+      sleep: (ms) => new Promise((r) => setTimeout(r, ms)),
+      dump: () => Promise.resolve(dump()),
+      refreshAux: () => Promise.resolve(refreshAux()),
+      reboot: async () => {
+        try {
+          await ctx.send(0xee, 0x10, 0xce, [0]);
+        } catch {
+          // expected: the device reboots mid-reply
         }
-        case "maxbrt-100":
-          await ses!.cmd(0xed, 0x10, 0x13, Uint8Array.from([0xff, 100]));
-          toast.success("Max brightness 100 sent");
-          log("cdc", "trouble: ED/1013 maxbrt=100 sent");
-          break;
-        case "scanmode-1":
-          await ses!.cmd(0xed, 0x10, 0x12, Uint8Array.from([0xff, 1]));
-          toast.success("Scan mode 1 sent");
-          log("cdc", "trouble: ED/1012 scanmode=1 sent");
-          break;
-        case "reboot":
+        toast.info("Safe reboot sent — reconnects in ~30 s");
+        log("cdc", "trouble: ee/10ce safe reboot sent");
+      },
+    };
+    try {
+      if (a.steps) {
+        busyRef.current = true;
+        let ok = 0;
+        const total = a.steps.length;
+        for (const [i, st] of a.steps.entries()) {
+          const name = st.note ?? `step ${i + 1}/${total}`;
           try {
-            await ses!.cmd(0xee, 0x10, 0xce, Uint8Array.of(0));
-          } catch {
-            // expected: the device reboots mid-reply
+            await ctx.send(st.t, st.c0, st.c1, st.params);
+            ok++;
+            log("cdc", `trouble ${name}: ACK`);
+          } catch (e) {
+            if (!st.tolerateNoReply) throw e;
+            log("err", `trouble ${name}: no reply (tolerated)`);
           }
-          toast.info("Safe reboot sent — reconnects in ~30 s");
-          log("cdc", "trouble: ee/10ce safe reboot sent");
-          break;
-        case "redump":
-          await dump();
-          break;
-        case "refresh-aux":
-          await refreshAux();
-          break;
+          await ctx.sleep(st.delayMs ?? 350);
+        }
+        if (ok === total) toast.success(`${a.label}: done — watch the board`);
+        else
+          toast.info(`${a.label}: ${ok}/${total} ACKed — watch the board`);
+        log("inf", `trouble ${a.label}: ${ok}/${total} ACKed`);
+      } else if (a.run) {
+        await a.run(ctx);
       }
     } catch (e) {
       toast.error(`Action failed: ${errMessage(e)}`);
-      log("err", `trouble ${a.kind}: ${errMessage(e)}`);
+      log("err", `trouble ${a.label}: ${errMessage(e)}`);
     } finally {
+      if (a.steps) busyRef.current = false;
       setTroubleRun(null);
     }
   }

@@ -55,7 +55,7 @@ export default function TroubleshootingTab({
                 <div className="flex flex-wrap gap-2">
                   {e.actions.map((a) => (
                     <Button
-                      key={a.kind}
+                      key={a.label}
                       variant="outline"
                       size="sm"
                       disabled={!sideOn(a.side) || running !== null}
@@ -67,7 +67,7 @@ export default function TroubleshootingTab({
                       onClick={() => onRun(a)}
                     >
                       <Play />
-                      {running === a.kind ? "Running…" : a.label}
+                      {running === a.label ? "Running…" : a.label}
                     </Button>
                   ))}
                 </div>
