@@ -29,6 +29,7 @@ import {
   hashStr,
 } from '../src/lib/backups';
 import type { StorageLike } from '../src/lib/backups';
+import { TROUBLES, UNDARK_LADDER, type TroubleAction } from '../src/lib/troubleshooting';
 import { buildKeymapExport, buildLedmapExport } from '../src/lib/exporters';
 import { migrateSnapshot } from '../src/lib/importers';
 import { SNAPSHOT_VERSION } from '../src/lib/utils';
@@ -1036,5 +1037,67 @@ import { queueAction } from '../src/lib/queue';
   // at L=50, so light ink; saturated blue stays dark -> light ink too)
   eq(readableInk(ledCss(0, 0)), '#f4f4f5', '29 ledCss mid-gray -> light ink');
   eq(readableInk(ledCss(60, 100)), '#111315', '29 ledCss yellow -> dark ink');
+}
+
+// §30 troubleshooting recipes: entries sane + undark ladder wire-exact.
+{
+  const KINDS = new Set<TroubleAction['kind']>([
+    'undark-left',
+    'undark-right',
+    'maxbrt-100',
+    'scanmode-1',
+    'reboot',
+    'redump',
+    'refresh-aux',
+  ]);
+  eq(TROUBLES.length >= 10, true, '30 at least 10 entries');
+  eq(
+    new Set(TROUBLES.map((t) => t.id)).size === TROUBLES.length,
+    true,
+    '30 unique ids',
+  );
+  eq(
+    TROUBLES.every(
+      (t) =>
+        t.title.length > 0 &&
+        t.summary.length > 0 &&
+        t.steps.length > 0 &&
+        t.details.length > 0,
+    ),
+    true,
+    '30 every entry has title/summary/details/steps',
+  );
+  eq(
+    TROUBLES.every(
+      (t) =>
+        !t.actions ||
+        t.actions.every(
+          (a) =>
+            KINDS.has(a.kind) &&
+            a.label.length > 0 &&
+            // right-side ladders need a confirm (parking incident 2026-09-22)
+            (a.side !== 'right' || !!a.confirm),
+        ),
+    ),
+    true,
+    '30 action kinds whitelisted + right side confirmed',
+  );
+  eq(
+    TROUBLES.some((t) => t.actions?.some((a) => a.kind === 'undark-left')),
+    true,
+    '30 undark-left offered',
+  );
+  // ladder = naya-undark.py wire sequence, verbatim
+  eq(UNDARK_LADDER.length, 9, '30 ladder 9 steps');
+  eq(
+    UNDARK_LADDER.map((s) => s.c1).join(','),
+    [0x13, 0x10, 0x03, 0x12, 0x14, 0x50, 0x08, 0x11, 0x03].join(','),
+    '30 ladder c1 sequence',
+  );
+  eq(
+    JSON.stringify(UNDARK_LADDER.find((s) => s.c1 === 0x50)?.val),
+    JSON.stringify([255, 255, 255, 100]),
+    '30 ladder RGB step',
+  );
 }
 void main();

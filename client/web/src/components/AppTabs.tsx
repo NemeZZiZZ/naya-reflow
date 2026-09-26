@@ -1,11 +1,18 @@
-// App-level tabs: Bindings / LED Map / Modules / Behavior / Devices, with
-// the save-menu slot and the Flash button (tabular-number draft badge) on
-// the right. Active tab is an accent underline — no gradients, no shadows.
+// App-level tabs: Bindings / LED Map / Modules / Behavior / Devices /
+// Troubleshooting, with the save-menu slot and the Flash button
+// (tabular-number draft badge) on the right. Active tab is an accent
+// underline — no gradients, no shadows.
 import type { ReactNode } from "react";
 import { PlugZap } from "lucide-react";
 import { Button } from "./ui/button";
 
-export type AppTab = "bindings" | "led" | "modules" | "behavior" | "devices";
+export type AppTab =
+  | "bindings"
+  | "led"
+  | "modules"
+  | "behavior"
+  | "devices"
+  | "trouble";
 
 const TABS: { id: AppTab; label: string }[] = [
   { id: "bindings", label: "Bindings" },
@@ -13,6 +20,7 @@ const TABS: { id: AppTab; label: string }[] = [
   { id: "modules", label: "Modules" },
   { id: "behavior", label: "Behavior" },
   { id: "devices", label: "Devices" },
+  { id: "trouble", label: "Troubleshooting" },
 ];
 
 export default function AppTabs({

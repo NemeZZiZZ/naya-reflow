@@ -14,6 +14,7 @@ import LedTab from "./components/tabs/LedTab";
 import ModulesTab from "./components/tabs/ModulesTab";
 import BehaviorTab from "./components/tabs/BehaviorTab";
 import DevicesTab from "./components/tabs/DevicesTab";
+import TroubleshootingTab from "./components/tabs/TroubleshootingTab";
 import ColorDialog from "./components/ColorDialog";
 import LogPanel from "./components/LogPanel";
 import DeviceSheet from "./components/DeviceSheet";
@@ -39,11 +40,15 @@ import type { SnapMaps } from "./lib/importers";
 import { listAutoBackups, loadAutoBackup } from "./lib/backups";
 import type { ActionDef } from "./lib/actions";
 import type { BehaviorSet } from "./lib/t10";
+import { UNDARK_LADDER, type TroubleAction } from "./lib/troubleshooting";
 import type { KeyRec, LedRec, Side } from "./lib/naya";
 import { timeoutsMs } from "./lib/naya";
 import type { EditorView } from "./components/ViewLayerTabs";
 
 export default function App() {
+  const errMessage = (e: unknown) =>
+    e instanceof Error ? e.message : String(e);
+
   // --- infrastructure ---------------------------------------------------
   const { logs, logRef, logCats, setLogCats, log, onFrame, clearLogs } =
     useLog();
@@ -195,6 +200,82 @@ export default function App() {
       log("inf", `export: ledmap ${L}: ${n} LEDs`);
     saveJson(r.fileName, r.data);
     log("inf", "export: ledmap JSON saved");
+  }
+
+  // --- troubleshooting actions ----------------------------------------------
+  const [troubleRun, setTroubleRun] = useState<string | null>(null);
+  async function runTrouble(a: TroubleAction) {
+    if (a.confirm && !window.confirm(a.confirm)) return;
+    const appSide: Side | null =
+      a.side === "left" || a.side === "right" ? a.side : null;
+    if (appSide) {
+      const ses = sesRef.current.get(appSide);
+      if (!ses) {
+        toast.error(`Connect the ${appSide} half first`);
+        return;
+      }
+    }
+    if (a.kind !== "refresh-aux" && busyRef.current) {
+      toast.error("Device busy (flash or dump in flight) — try again after");
+      return;
+    }
+    setTroubleRun(a.kind);
+    try {
+      const ses = appSide ? sesRef.current.get(appSide)! : null;
+      switch (a.kind) {
+        case "undark-left":
+        case "undark-right": {
+          busyRef.current = true;
+          let okCount = 0;
+          for (const st of UNDARK_LADDER) {
+            try {
+              await ses!.cmd(0xed, 0x10, st.c1, Uint8Array.from([0xff, ...st.val]));
+              okCount++;
+              log("cdc", `undark ${st.label}: ACK`);
+            } catch {
+              log("err", `undark ${st.label}: no reply`);
+            }
+            await new Promise((r) => setTimeout(r, 350));
+          }
+          busyRef.current = false;
+          toast.success(
+            `Undark ladder: ${okCount}/${UNDARK_LADDER.length} ACKed — watch the board`,
+          );
+          log("inf", `undark ${a.side}: ${okCount}/${UNDARK_LADDER.length} ACKed`);
+          break;
+        }
+        case "maxbrt-100":
+          await ses!.cmd(0xed, 0x10, 0x13, Uint8Array.from([0xff, 100]));
+          toast.success("Max brightness 100 sent");
+          log("cdc", "trouble: ED/1013 maxbrt=100 sent");
+          break;
+        case "scanmode-1":
+          await ses!.cmd(0xed, 0x10, 0x12, Uint8Array.from([0xff, 1]));
+          toast.success("Scan mode 1 sent");
+          log("cdc", "trouble: ED/1012 scanmode=1 sent");
+          break;
+        case "reboot":
+          try {
+            await ses!.cmd(0xee, 0x10, 0xce, Uint8Array.of(0));
+          } catch {
+            // expected: the device reboots mid-reply
+          }
+          toast.info("Safe reboot sent — reconnects in ~30 s");
+          log("cdc", "trouble: ee/10ce safe reboot sent");
+          break;
+        case "redump":
+          await dump();
+          break;
+        case "refresh-aux":
+          await refreshAux();
+          break;
+      }
+    } catch (e) {
+      toast.error(`Action failed: ${errMessage(e)}`);
+      log("err", `trouble ${a.kind}: ${errMessage(e)}`);
+    } finally {
+      setTroubleRun(null);
+    }
   }
 
   const importRef = useRef<HTMLInputElement>(null);
@@ -451,6 +532,15 @@ export default function App() {
               halves={halves}
               draftRef={draftRef}
               onDeviceInfo={() => setSheetOpen(true)}
+            />
+          )}
+
+          {tab === "trouble" && (
+            <TroubleshootingTab
+              leftOn={leftOn}
+              rightOn={rightOn}
+              running={troubleRun}
+              onRun={runTrouble}
             />
           )}
 

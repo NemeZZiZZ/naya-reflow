@@ -14,6 +14,7 @@ const TABS: readonly string[] = [
   "modules",
   "behavior",
   "devices",
+  "trouble",
 ];
 
 export interface UrlInit {
