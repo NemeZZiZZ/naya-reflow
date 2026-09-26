@@ -931,17 +931,17 @@ import { queueAction } from '../src/lib/queue';
   const blobLeds = leds.map((l) => l.length * 4);
 
   const st = mkStorage();
-  const r1 = saveAutoBackup(keys, leds, blobKeys, blobLeds, st);
+  const r1 = saveAutoBackup(keys, leds, blobKeys, blobLeds, undefined, st);
   eq(r1.status, 'saved', '27 backup saved');
   if (r1.status === 'saved')
     eq(r1.meta.bytes, blobKeys.reduce((a, b) => a + b, 0) + blobLeds.reduce((a, b) => a + b, 0), '27 meta bytes = blob totals');
 
-  const r2 = saveAutoBackup(keys, leds, blobKeys, blobLeds, st);
+  const r2 = saveAutoBackup(keys, leds, blobKeys, blobLeds, undefined, st);
   eq(r2.status === 'skipped' && r2.reason, 'unchanged', '27 identical backup deduped');
   eq(listAutoBackups(st).length, 1, '27 list still 1');
 
   keys[0][0].rec[3] = 0x14; // Z -> T
-  const r3 = saveAutoBackup(keys, leds, blobKeys, blobLeds, st);
+  const r3 = saveAutoBackup(keys, leds, blobKeys, blobLeds, undefined, st);
   eq(r3.status, 'saved', '27 changed state saved');
   const metas = listAutoBackups(st);
   eq(metas.length, 2, '27 list 2, newest first');
@@ -985,14 +985,20 @@ import { queueAction } from '../src/lib/queue';
   const exp = buildKeymapExport(keys, blobKeys, 0, true);
   if (exp) {
     const doc = exp.data as Record<string, unknown>;
-    eq(doc.v, 1, '27 exports carry v1');
-    doc.v = 2;
+    eq(doc.v, SNAPSHOT_VERSION, '27 exports carry current schema v');
+    doc.v = SNAPSHOT_VERSION + 1;
     const g = parseSnapshotFile(doc);
     eq('error' in g && g.error.includes('newer') ? 'newer' : 'other', 'newer', '27 future version rejected');
     delete doc.v;
     eq('error' in parseSnapshotFile(doc) ? 'err' : 'ok', 'ok', '27 missing v treated as v1');
-    const same = migrateSnapshot(doc);
-    eq(same === doc, true, '27 migrate v1 is identity');
+    const migrated = migrateSnapshot(doc) as Record<string, unknown>;
+    eq(migrated === doc, true, '27 migrate mutates in place');
+    eq(migrated.v, 2, '27 migrate v1 -> v2');
+    eq(
+      typeof migrated.notes === 'object' && migrated.notes !== null,
+      true,
+      '27 migrate adds notes {}',
+    );
   }
 
   // node without storage arg: localStorage undefined -> storage-skip
@@ -1003,6 +1009,80 @@ import { queueAction } from '../src/lib/queue';
   eq(hashStr('abc') === hashStr('abc'), true, '27 hash deterministic');
   eq(hashStr('abc') !== hashStr('abd'), true, '27 hash separates input');
   eq(/^[0-9a-f]{8}$/.test(hashStr('x')), true, '27 hash 8 hex chars');
+}
+
+// §32 per-key notes (UHK #8): schema v2 — export carries them, import
+// filters to the exported layers, backups round-trip them, dedupe sees them.
+{
+  const mkNoteRec = (kk: number): KeyRec => ({
+    kk,
+    t: 0x01,
+    rec: Uint8Array.from([kk, 0x01, 0x04, 0x1d, 0x00, 0x07, 0x00]),
+    offset: -1,
+  });
+  const keys: KeyRec[][] = [
+    [mkNoteRec(0x30)],
+    [mkNoteRec(0x31)],
+    [mkNoteRec(0x32)],
+  ];
+  const leds: LedRec[][] = [
+    [{ kk: 0x30, h: 100, s: 100, offset: -1 }],
+    [{ kk: 0x31, h: 100, s: 100, offset: -1 }],
+    [{ kk: 0x32, h: 100, s: 100, offset: -1 }],
+  ];
+  const blobKeys = keys.map((l) => l.reduce((a, r) => a + r.rec.length, 0));
+  const blobLeds = leds.map((l) => l.length * 4);
+  const notes: Record<string, string> = { '0:48': 'x', '2:48': 'y' };
+
+  const all = buildKeymapExport(keys, blobKeys, 0, true, notes);
+  eq(all !== null, true, '32 export with notes builds');
+  if (all) {
+    const snap = parseSnapshotFile(all.data);
+    eq('error' in snap ? 'err' : 'ok', 'ok', '32 all-layers parse');
+    if (!('error' in snap)) {
+      eq(snap.notes?.['0:48'], 'x', '32 note 0:48 survives');
+      eq(snap.notes?.['2:48'], 'y', '32 note 2:48 survives');
+    }
+  }
+  const one = buildKeymapExport(keys, blobKeys, 0, false, notes);
+  eq(one !== null, true, '32 single-layer export builds');
+  if (one) {
+    const snap = parseSnapshotFile(one.data);
+    eq('error' in snap ? 'err' : 'ok', 'ok', '32 single-layer parse');
+    if (!('error' in snap)) {
+      eq(snap.notes?.['0:48'], 'x', '32 in-layer note kept');
+      eq(snap.notes?.['2:48'], undefined, '32 out-of-layer note dropped');
+    }
+  }
+  // note-less v2 doc: doc.notes = {} -> parse yields notes undefined
+  const bare = buildKeymapExport(keys, blobKeys, 0, true);
+  if (bare) {
+    const snap = parseSnapshotFile(bare.data);
+    eq('error' in snap ? 'err' : 'ok', 'ok', '32 note-less v2 parses');
+    if (!('error' in snap)) eq(snap.notes, undefined, '32 no notes -> undefined');
+  }
+  // backups: notes ride along and join the content hash
+  const mkSt = (): StorageLike => {
+    const m = new Map<string, string>();
+    return {
+      getItem: (k) => m.get(k) ?? null,
+      setItem: (k, v) => void m.set(k, v),
+      removeItem: (k) => void m.delete(k),
+    };
+  };
+  const st = mkSt();
+  const b1 = saveAutoBackup(keys, leds, blobKeys, blobLeds, notes, st);
+  eq(b1.status, 'saved', '32 backup with notes saved');
+  const b2 = saveAutoBackup(keys, leds, blobKeys, blobLeds, notes, st);
+  eq(b2.status === 'skipped' && b2.reason, 'unchanged', '32 same notes deduped');
+  const b3 = saveAutoBackup(keys, leds, blobKeys, blobLeds, { ...notes, '0:48': 'z' }, st);
+  eq(b3.status, 'saved', '32 changed note breaks dedupe');
+  const metas = listAutoBackups(st);
+  const loaded = metas[0] ? loadAutoBackup(metas[0].id, st) : { error: 'none' };
+  eq('error' in loaded ? 'err' : 'ok', 'ok', '32 backup load parses');
+  if (!('error' in loaded)) {
+    eq(loaded.notes?.['0:48'], 'z', '32 backup note round-trips');
+  }
 }
 
 // §28 version matrix (UHK #14): package.json is part of the version

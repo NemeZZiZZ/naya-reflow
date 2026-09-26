@@ -56,6 +56,8 @@ export default function BindingsTab({
   onOpenColorDlg,
   onQueueColor,
   onFillLayer,
+  notes,
+  onSetNote,
   ledCount,
 }: {
   view: EditorView;
@@ -105,6 +107,9 @@ export default function BindingsTab({
   onOpenColorDlg: () => void;
   onQueueColor: () => void;
   onFillLayer: () => void;
+  /** per-key notes, key "L:kk" (host-side only) */
+  notes: Record<string, string>;
+  onSetNote: (kk: number, v: string) => void;
   ledCount: number;
 }) {
   // Right-click context popover target (keymap mode only; LED paint mode
@@ -122,6 +127,15 @@ export default function BindingsTab({
     () => (single != null ? behaviorSetOf(keysByLayer[layer] ?? [], single) : null),
     [keysByLayer, layer, single],
   );
+  // Notes of the viewed layer only, as a KK map for the keyboard markers.
+  const layerNotes = useMemo(() => {
+    const m = new Map<number, string>();
+    for (const [k, v] of Object.entries(notes)) {
+      const m2 = /^([0-2]):(\d+)$/.exec(k);
+      if (m2 && Number(m2[1]) === layer && v) m.set(Number(m2[2]), v);
+    }
+    return m;
+  }, [notes, layer]);
 
   function hidLabel(hid: number): string {
     const a = ACTIONS.find(
@@ -186,6 +200,7 @@ export default function BindingsTab({
           onSelect={onSelect}
           dirtyKks={dirtyKks}
           onContext={(kk, x, y) => setCtx({ kk, x, y })}
+          keyNotes={layerNotes}
         />
       )}
 
@@ -218,6 +233,8 @@ export default function BindingsTab({
               wholeLabel={single != null ? wholeLabelOf(single) : "—"}
               count={sel.length}
               hidLabel={hidLabel}
+              note={single != null ? layerNotes.get(single) : undefined}
+              onNote={single != null ? (v) => onSetNote(single, v) : undefined}
               onPickPlain={(a) => onQueueActionFor(sel, a)}
               onPickSlot={(slot: Slot, a: ActionDef, next: BehaviorSet) =>
                 single != null &&
@@ -281,6 +298,8 @@ export default function BindingsTab({
             wholeLabel={wholeLabelOf(ctx.kk)}
             count={1}
             hidLabel={hidLabel}
+            note={layerNotes.get(ctx.kk)}
+            onNote={(v) => onSetNote(ctx.kk, v)}
             onPickPlain={(a) => onQueueActionFor([{ layer, kk: ctx.kk }], a)}
             onPickSlot={(slot: Slot, a: ActionDef, next: BehaviorSet) =>
               onQueueBehaviorSet(

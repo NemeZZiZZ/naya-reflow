@@ -16,6 +16,7 @@ import {
 } from "../lib/t10";
 import { cn } from "../lib/utils";
 import { X } from "lucide-react";
+import { Input } from "./ui/input";
 
 const SLOT_NAMES: Record<Slot, string> = {
   tap: "Tap",
@@ -44,6 +45,8 @@ export default function KeyActionMenu({
   wholeLabel,
   count,
   hidLabel,
+  note,
+  onNote,
   onPickPlain,
   onPickSlot,
   onClearSlot,
@@ -54,6 +57,10 @@ export default function KeyActionMenu({
   wholeLabel: string;
   /** how many keys a whole-key pick targets */
   count: number;
+  /** free-text note for the target key (host-side only) */
+  note?: string;
+  /** when provided, the note editor is rendered */
+  onNote?: (v: string) => void;
   hidLabel: (hid: number) => string;
   onPickPlain: (a: ActionDef) => void;
   onPickSlot: (slot: Slot, a: ActionDef, next: BehaviorSet) => void;
@@ -218,6 +225,19 @@ export default function KeyActionMenu({
             Chain rule (wire format): Hold needs Tap, Double Tap needs Hold,
             Tap+Hold needs Double Tap. Clearing a slot clears its dependents.
           </p>
+        )}
+        {onNote && (
+          <div className="mt-2">
+            <label className="mb-1 block text-[11px] text-muted-foreground">
+              Note — stays on this computer, never flashed
+            </label>
+            <Input
+              value={note ?? ""}
+              onChange={(e) => onNote(e.target.value)}
+              placeholder="e.g. macro pad for Figma"
+              className="h-8 text-xs"
+            />
+          </div>
         )}
       </div>
     </div>

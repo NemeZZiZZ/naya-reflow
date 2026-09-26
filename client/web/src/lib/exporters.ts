@@ -29,15 +29,21 @@ export function buildKeymapExport(
   blobTotals: number[],
   layer: number,
   all: boolean,
+  notes?: Record<string, string>,
 ): ExportResult | null {
   const layers = all ? [0, 1, 2] : [layer];
   if (layers.some((L) => keysByLayer[L].length === 0)) return null;
+  // Notes are host-side only; carry the entries of the exported layers.
+  const carried: Record<string, string> = {};
+  for (const [k, v] of Object.entries(notes ?? {}))
+    if (layers.includes(Number(k.split(':')[0])) && v) carried[k] = v;
   const out: Record<string, unknown> = {
     tool: 'naya-reflow',
     kind: all ? 'keymap-all' : 'keymap-layer',
     v: SNAPSHOT_VERSION,
     side: 'left',
     exportedAt: new Date().toISOString(),
+    notes: carried,
     layers: {},
   };
   const counts: Record<string, number> = {};

@@ -15,13 +15,37 @@ export interface SnapMaps {
   leds: LedRec[][];
   /** layers present in the file (subset restores only touch these) */
   layers: number[];
+  /** per-key free-text notes (schema v2+), key "L:kk" — never flashed,
+   * carried through exports/backups only */
+  notes?: Record<string, string>;
 }
 
-/** Ordered migration chain for our own snapshot schema. Each future link:
- * `if ((obj.v ?? 1) < N) { …mutate…; obj.v = N; }`, oldest first. v1 is
- * the initial schema — nothing to do yet. */
+/** Ordered migration chain for our own snapshot schema. Each link:
+ * `if ((obj.v ?? 1) < N) { …mutate…; obj.v = N; }`, oldest first.
+ * v2: adds `notes` (per-key free-text notes). */
 export function migrateSnapshot(obj: Record<string, unknown>): Record<string, unknown> {
+  const v = typeof obj.v === 'number' ? obj.v : 1;
+  if (v < 2) {
+    if (!isObj(obj.notes)) obj.notes = {};
+    obj.v = 2;
+  }
   return obj;
+}
+
+/** Keep only well-formed "L:kk" -> non-empty string entries. */
+function pickNotes(
+  v: unknown,
+  layers: number[],
+): Record<string, string> | undefined {
+  if (!isObj(v)) return undefined;
+  const out: Record<string, string> = {};
+  for (const [k, val] of Object.entries(v)) {
+    const m = /^([0-2]):(\d+)$/.exec(k);
+    if (!m || typeof val !== "string" || val.length === 0) continue;
+    if (!layers.includes(Number(m[1]))) continue;
+    out[k] = val;
+  }
+  return Object.keys(out).length ? out : undefined;
 }
 
 function hexToBytes(hex: string): Uint8Array | null {
@@ -85,7 +109,8 @@ function parseExportLayers(
     layers.push(L);
   }
   if (layers.length === 0) return { error: 'export holds no layers' };
-  return { keys, leds, layers };
+  const notes = mode === 'keys' ? pickNotes(doc.notes, layers) : undefined;
+  return notes ? { keys, leds, layers, notes } : { keys, leds, layers };
 }
 
 /** Parse an unknown JSON value into per-layer key/LED maps, or an error. */
@@ -132,7 +157,12 @@ export function parseSnapshotFile(obj: unknown): SnapMaps | { error: string } {
       const lv = parseExportLayers(doc.leds as Record<string, unknown>, 'leds');
       if ('error' in lv) return lv;
       const layers = [...new Set([...kv.layers, ...lv.layers])].sort((a, b) => a - b);
-      return { keys: kv.keys, leds: lv.leds, layers };
+      return {
+        keys: kv.keys,
+        leds: lv.leds,
+        layers,
+        ...(kv.notes ? { notes: kv.notes } : {}),
+      };
     }
     const isKeys = (doc.kind as string).startsWith('keymap');
     const isLeds = (doc.kind as string).startsWith('ledmap');

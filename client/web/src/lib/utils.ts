@@ -10,5 +10,6 @@ export const hex2 = (n: number) => '0x' + n.toString(16).padStart(2, '0');
 
 /** Snapshot schema version for everything this app writes (exports,
  * auto-backups). Bump when a format change needs a migration step;
- * importers reject files from the future via a peek-guard. */
-export const SNAPSHOT_VERSION = 1;
+ * importers reject files from the future via a peek-guard.
+ * v2: adds `notes` (per-key free-text notes, key "L:kk"). */
+export const SNAPSHOT_VERSION = 2;

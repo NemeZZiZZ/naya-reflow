@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.0.0",
   "naya": {
-    "snapshotVersion": 1
+    "snapshotVersion": 2
   },
   "type": "module",
   "scripts": {

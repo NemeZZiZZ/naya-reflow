@@ -4,7 +4,7 @@
 //
 // Composition root: all state lives in hooks (useSessions / useLayers /
 // useDraft / …), all views in components. This file only wires them.
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Toaster, toast } from "sonner";
 import Header from "./components/Header";
 import type { AppTab } from "./components/AppTabs";
@@ -58,6 +58,23 @@ export default function App() {
     useLog();
   const busyRef = useRef(false); // user op in flight (polling yields to it)
   const [logOpen, toggleLog] = usePersistentFlag("naya-logopen", false);
+  // Per-key free-text notes (UHK #8): host-side only — localStorage, carried
+  // through exports and auto-backups, never flashed to the device.
+  const [notes, setNotes] = useState<Record<string, string>>(() => {
+    try {
+      const raw = localStorage.getItem("naya-key-notes");
+      return raw ? (JSON.parse(raw) as Record<string, string>) : {};
+    } catch {
+      return {};
+    }
+  });
+  useEffect(() => {
+    try {
+      localStorage.setItem("naya-key-notes", JSON.stringify(notes));
+    } catch {
+      /* private mode — notes stay in-memory for this session */
+    }
+  }, [notes]);
 
   // --- editor state -----------------------------------------------------
   // tab/view/layer (+ optional single selected key) start from the URL
@@ -118,6 +135,7 @@ export default function App() {
       blobKeys: blobTotals.keys,
       blobLeds: blobTotals.leds,
     },
+    notes,
     dumpAll: layers.dumpAll,
     bumpDraft,
     log,
@@ -183,7 +201,7 @@ export default function App() {
   }
 
   function exportKeys(all: boolean) {
-    const r = buildKeymapExport(keysByLayer, blobTotals.keys, layer, all);
+    const r = buildKeymapExport(keysByLayer, blobTotals.keys, layer, all, notes);
     if (!r) {
       log("err", "export keys: layer cache empty — Refresh first");
       return;
@@ -487,6 +505,16 @@ export default function App() {
               }}
               onQueueColor={queueColorForSelection}
               onFillLayer={fillLayerWithColor}
+              notes={notes}
+              onSetNote={(kk, v) => {
+                const key = `${layer}:${kk}`;
+                setNotes((prev) => {
+                  const next = { ...prev };
+                  if (v.trim() === "") delete next[key];
+                  else next[key] = v;
+                  return next;
+                });
+              }}
               ledCount={ledsByLayer[layer]?.length ?? 0}
             />
           )}

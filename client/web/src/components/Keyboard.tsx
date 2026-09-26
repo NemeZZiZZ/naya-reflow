@@ -90,9 +90,11 @@ interface KeyProps {
   onPaintClick?: (kk: number) => void;
   /** keymap-mode right click: open the config popover anchored here */
   onContext?: (kk: number, x: number, y: number) => void;
+  /** host-side note for this key (UHK corner-marker pattern) */
+  note?: string;
 }
 
-function Key({ pos, rec, led, ledMode, selected, dirty, onSelect, onPaintDown, onPaintEnter, onPaintClick, onContext }: KeyProps) {
+function Key({ pos, rec, led, ledMode, selected, dirty, onSelect, onPaintDown, onPaintEnter, onPaintClick, onContext, note }: KeyProps) {
   const kk = pos; // positionId == KK index (proven: 0=Esc/LA1, 0x30=Z/LC4 …)
   const label = rec ? shortLabel(rec) : (POS_KEY[String(pos)] ?? "");
   // action glyph for non-standard keys (currentColor => follows legend color);
@@ -148,6 +150,11 @@ function Key({ pos, rec, led, ledMode, selected, dirty, onSelect, onPaintDown, o
       {rec && (
         <div className="font-mono text-[10px] text-muted-foreground">
           {toHex(rec)}
+        </div>
+      )}
+      {note && (
+        <div className="max-w-60 whitespace-normal text-amber-300/90">
+          Note: {note}
         </div>
       )}
     </div>
@@ -206,6 +213,12 @@ function Key({ pos, rec, led, ledMode, selected, dirty, onSelect, onPaintDown, o
             title="queued change — not flashed yet"
           />
         )}
+        {note && (
+          <span
+            className="absolute left-0 top-0 size-0 border-l-[9px] border-l-amber-400/80 border-t-[9px] border-t-transparent"
+            title={`Note: ${note}`}
+          />
+        )}
       </div>
         </div>
       </TooltipTrigger>
@@ -236,6 +249,8 @@ interface KeyboardProps {
   cursorClass?: string;
   /** keymap-mode right click on a key: (kk, viewport x, viewport y) */
   onContext?: (kk: number, x: number, y: number) => void;
+  /** per-key notes of the viewed layer — amber corner-triangle marker */
+  keyNotes?: Map<number, string>;
 }
 
 export default function Keyboard({
@@ -249,6 +264,7 @@ export default function Keyboard({
   onPaint,
   cursorClass,
   onContext,
+  keyNotes,
 }: KeyboardProps) {
   const paintingRef = useRef(false);
   const lastPtrPaint = useRef(0);
@@ -297,6 +313,7 @@ export default function Keyboard({
       onPaintDown={paintDown}
       onPaintEnter={paintEnter}
       onPaintClick={paintClick}
+      note={keyNotes?.get(pos)}
       onContext={onPaint ? undefined : onContext}
     />
   );

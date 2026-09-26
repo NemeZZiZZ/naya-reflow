@@ -27,6 +27,7 @@ export default function KeyboardCard({
   onSelect,
   dirtyKks,
   onContext,
+  keyNotes,
 }: {
   view: EditorView;
   onView: (v: EditorView) => void;
@@ -45,6 +46,7 @@ export default function KeyboardCard({
   onSelect: (pos: number, kk: number, additive: boolean, allLayers: boolean) => void;
   dirtyKks: Set<number>;
   onContext?: (kk: number, x: number, y: number) => void;
+  keyNotes?: Map<number, string>;
 }) {
   return (
     <Card className="mb-3">
@@ -86,6 +88,7 @@ export default function KeyboardCard({
               disabled={!leftOn}
               dirty={dirtyKks}
               onContext={onContext}
+              keyNotes={keyNotes}
             />
           </div>
         </div>

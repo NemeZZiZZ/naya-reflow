@@ -78,9 +78,10 @@ export function saveAutoBackup(
   leds: LedRec[][],
   blobKeys: number[],
   blobLeds: number[],
+  notes?: Record<string, string>,
   storage?: StorageLike,
 ): SaveBackupResult {
-  const kExp = buildKeymapExport(keys, blobKeys, 0, true);
+  const kExp = buildKeymapExport(keys, blobKeys, 0, true, notes);
   const lExp = buildLedmapExport(leds, blobLeds, 0, true);
   if (!kExp || !lExp) return { status: 'skipped', reason: 'empty' };
   const doc = {
