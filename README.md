@@ -1,5 +1,21 @@
 # naya-reflow
 
+> **🗄️ ARCHIVED — development has moved to [create-reflow](https://github.com/NemeZZiZZ/create-reflow).**
+>
+> This repository is a read-only historical snapshot. The web client lives on
+> in create-reflow as `@create-reflow/client` (extracted together with the new
+> `@create-reflow/sdk`), where all further development happens and OpenFlow
+> JSON is becoming the native app format — see
+> [HANDOFF.md](https://github.com/NemeZZiZZ/create-reflow/blob/main/HANDOFF.md)
+> for the current state and roadmap.
+>
+> **⚠️ Most of the research data in this repository is already outdated.**
+> The reverse-engineering notes in [`docs/`](docs/), the captures and dumps in
+> [`research/`](research/) and the `toolkit/` findings reflect the state of
+> knowledge as of Sep–Oct 2026; a number of results have since been corrected
+> or superseded by cross-source work now wired into create-reflow. Do not rely
+> on anything here as authoritative — check create-reflow first.
+
 Open-source revival of the **Naya Create** split ergonomic keyboard.
 Naya B.V. went bankrupt in 2026 — this repo preserves the hardware knowledge,
 firmware backups and reverse-engineered protocols needed to keep the devices
